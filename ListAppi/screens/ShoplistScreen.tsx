@@ -4,6 +4,7 @@ import { Text, Button } from 'react-native-paper';
 import ScreenLayout from '../components/ScreenLayout';
 import { ActionModal } from '../components/ActionModal';
 import { ShareModal } from '../components/ShareModal';
+import ListModal from '../components/ListModal';
 
 interface ShoplistScreenProps {
   activeScreen: string
@@ -13,6 +14,7 @@ interface ShoplistScreenProps {
 const ShoplistScreen: React.FC<ShoplistScreenProps> = ({ activeScreen, onNavigate }) => {
   const [ActionModalVisible, setActionModalVisible] = useState(false)
   const [ShareModalVisible, setShareModalVisible] = useState(false)
+  const [listModalVisible, setListModalVisible] = useState(false)
 
   const handleOpenActionModal = () => setActionModalVisible(true)
   const handleCloseActionModal = () => setActionModalVisible(false)
@@ -33,6 +35,11 @@ const ShoplistScreen: React.FC<ShoplistScreenProps> = ({ activeScreen, onNavigat
         Hallinnoi ostoslistaasi.
       </Text>
       <View style={styles.buttonContainer}>
+        <Button mode="contained" onPress={() => setListModalVisible(true)}>
+          Lisää uusi ostoslista
+        </Button>
+      </View>
+      <View style={styles.buttonContainer}>
         <Button mode="contained" onPress={handleOpenActionModal}>
           Toiminnot (testi)
         </Button>
@@ -42,6 +49,14 @@ const ShoplistScreen: React.FC<ShoplistScreenProps> = ({ activeScreen, onNavigat
           Jaa (testi)
         </Button>
       </View>
+      <ListModal
+        visible={listModalVisible}
+        type="shopping"
+        onClose={() => setListModalVisible(false)}
+        onSave={(list) => {
+          console.log('Tallennettu ostoslista:', list)
+        }}
+      />
       <ActionModal
         visible={ActionModalVisible}
         onClose={handleCloseActionModal}
