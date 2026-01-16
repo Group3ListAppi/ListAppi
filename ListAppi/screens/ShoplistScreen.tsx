@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { Text, Button } from 'react-native-paper';
 import ScreenLayout from '../components/ScreenLayout';
 import { ActionModal } from '../components/ActionModal';
+import { ShareModal } from '../components/ShareModal';
 
 interface ShoplistScreenProps {
   activeScreen: string
@@ -10,11 +11,13 @@ interface ShoplistScreenProps {
 }
 
 const ShoplistScreen: React.FC<ShoplistScreenProps> = ({ activeScreen, onNavigate }) => {
-  const [modalVisible, setModalVisible] = useState(false)
+  const [ActionModalVisible, setActionModalVisible] = useState(false)
+  const [ShareModalVisible, setShareModalVisible] = useState(false)
 
-  const handleOpenModal = () => setModalVisible(true)
-  const handleCloseModal = () => setModalVisible(false)
-
+  const handleOpenActionModal = () => setActionModalVisible(true)
+  const handleCloseActionModal = () => setActionModalVisible(false)
+  const handleOpenShareModal = () => setShareModalVisible(true)
+  const handleCloseShareModal = () => setShareModalVisible(false)
   const handleShare = () => {
     console.log('Share action')
   }
@@ -30,17 +33,27 @@ const ShoplistScreen: React.FC<ShoplistScreenProps> = ({ activeScreen, onNavigat
         Hallinnoi ostoslistaasi.
       </Text>
       <View style={styles.buttonContainer}>
-        <Button mode="contained" onPress={handleOpenModal}>
-          Toiminnot
+        <Button mode="contained" onPress={handleOpenActionModal}>
+          Toiminnot (testi)
+        </Button>
+      </View>
+      <View style={styles.buttonContainer}>
+        <Button mode="contained" onPress={handleOpenShareModal}>
+          Jaa (testi)
         </Button>
       </View>
       <ActionModal
-        visible={modalVisible}
-        onClose={handleCloseModal}
+        visible={ActionModalVisible}
+        onClose={handleCloseActionModal}
         title="Valitse toiminto"
         actionIds={['share', 'remove']}
         onShare={handleShare}
         onRemove={handleRemove}
+      />
+      <ShareModal
+        visible={ShareModalVisible}
+        onClose={handleCloseShareModal}
+        title="Jaa ostoslista"
       />
     </ScreenLayout>
   )
