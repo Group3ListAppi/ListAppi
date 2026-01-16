@@ -32,14 +32,14 @@ export default function App() {
   }
 
   return (
-    <SafeAreaProvider>
-      <PaperProvider theme={theme}>
-        <SafeAreaView style={styles.container} edges={['left', 'right', 'top']}>
-          {renderScreen()}
-          <StatusBar style="auto" />
-        </SafeAreaView>
-      </PaperProvider>
-    </SafeAreaProvider>
+      <SafeAreaProvider>
+        <PaperProvider theme={theme}>
+          <SafeAreaView style={styles.container} edges={['left', 'right', 'top']}>
+            {renderScreen()}
+            <StatusBar style="auto" />
+          </SafeAreaView>
+        </PaperProvider>
+      </SafeAreaProvider>
   )
 }
 
