@@ -1,7 +1,8 @@
 import React from "react";
-import { View, StyleSheet, Modal, TouchableOpacity, ScrollView } from "react-native";
-import { Text, Button, useTheme } from "react-native-paper";
+import { View, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import { Text, useTheme } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { ModalBase } from "./ModalBase";
 
 export interface ActionButton {
   id: string
@@ -98,89 +99,38 @@ export const ActionModal: React.FC<ActionModalProps> = ({
     .filter((action): action is ActionButton => action !== null)
 
   return (
-    <Modal
-      transparent
-      visible={visible}
-      animationType="slide"
-      onRequestClose={onClose}
-    >
-      <View style={styles.overlay}>
-        <TouchableOpacity
-          style={styles.touchableOverlay}
-          activeOpacity={1}
-          onPress={onClose}
-        />
-        <View style={[styles.modalContainer, { backgroundColor: theme.colors.surface }]}>
-          <View style={styles.handleBar} />
-          <Text style={[styles.title, { color: theme.colors.onSurface }]}>
-            {title}
-          </Text>
-          <ScrollView style={styles.actionsContainer}>
-            {actions.map((action) => (
-              <TouchableOpacity
-                key={action.id}
-                onPress={() => {
-                  action.onPress()
-                  onClose()
-                }}
-                style={[styles.actionButton, { borderBottomColor: theme.colors.outlineVariant }]}
-              >
-                <View style={styles.actionContent}>
-                  {action.icon && (
-                      <MaterialCommunityIcons
-                        name={action.icon as any}
-                        size={24}
-                        color={theme.colors.onSurface}
-                        style={styles.actionIcon}
-                      />
-                    )}
-                  <Text style={[styles.actionText, { color: theme.colors.onSurface }]}>
-                    {action.label}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-          <Button mode="outlined" onPress={onClose} style={styles.closeButton}>
-            Sulje
-          </Button>
-        </View>
-      </View>
-    </Modal>
+    <ModalBase visible={visible} onClose={onClose} title={title}>
+      <ScrollView style={styles.actionsContainer}>
+        {actions.map((action) => (
+          <TouchableOpacity
+            key={action.id}
+            onPress={() => {
+              action.onPress()
+              onClose()
+            }}
+            style={[styles.actionButton, { borderBottomColor: theme.colors.outlineVariant }]}
+          >
+            <View style={styles.actionContent}>
+              {action.icon && (
+                  <MaterialCommunityIcons
+                    name={action.icon as any}
+                    size={24}
+                    color={theme.colors.onSurface}
+                    style={styles.actionIcon}
+                  />
+                )}
+              <Text style={[styles.actionText, { color: theme.colors.onSurface }]}>
+                {action.label}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+    </ModalBase>
   )
 }
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
-  touchableOverlay: {
-    flex: 1,
-  },
-  modalContainer: {
-    width: '100%',
-    maxHeight: '80%',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
-    elevation: 5,
-  },
-  handleBar: {
-    width: 40,
-    height: 5,
-    backgroundColor: '#ccc',
-    borderRadius: 2.5,
-    alignSelf: 'center',
-    marginBottom: 16,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
   actionsContainer: {
     marginBottom: 16,
   },
@@ -199,7 +149,4 @@ const styles = StyleSheet.create({
   actionText: {
     fontSize: 16,
   },
-  closeButton: {
-    marginTop: 8,
-  },
-});
+})
