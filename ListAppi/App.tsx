@@ -8,8 +8,12 @@ import HomeScreen from './screens/HomeScreen';
 import MenuScreen from './screens/MenuScreen';
 import RecipeScreen from './screens/RecipeScreen';
 import ShoplistScreen from './screens/ShoplistScreen';
+import AuthScreen from './screens/AuthScreen';
+
+import { useAuth } from './auth/useAuth'
 
 export default function App() {
+  const { user, initializing } = useAuth();
   const [activeScreen, setActiveScreen] = useState('home')
 
   const handleNavigate = (screen: string) => {
@@ -35,7 +39,7 @@ export default function App() {
     <SafeAreaProvider>
       <PaperProvider theme={theme}>
         <SafeAreaView style={styles.container} edges={['left', 'right', 'top']}>
-          {renderScreen()}
+          {initializing ? null : user ? renderScreen() : <AuthScreen />}
           <StatusBar style="auto" />
         </SafeAreaView>
       </PaperProvider>
