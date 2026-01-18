@@ -9,15 +9,27 @@ import MenuScreen from './screens/MenuScreen';
 import RecipeScreen from './screens/RecipeScreen';
 import ShoplistScreen from './screens/ShoplistScreen';
 import AuthScreen from './screens/AuthScreen';
+import SettingsScreen from './screens/SettingsScreen';
 
 import { useAuth } from './auth/useAuth'
 
 export default function App() {
   const { user, initializing } = useAuth();
   const [activeScreen, setActiveScreen] = useState('home')
+  const [history, setHistory] = useState<string[]>(["home"]);
 
   const handleNavigate = (screen: string) => {
-    setActiveScreen(screen)
+    setActiveScreen(screen);
+    setHistory((prev) => [...prev, screen]);
+  };
+
+  const handleBack = () => {
+    setHistory((prev) => {
+      if (prev.length <= 1) return prev; // ei minnekään takaisin
+      const next = prev.slice(0, -1);
+      setActiveScreen(next[next.length - 1]);
+      return next;
+    });
   };
 
   const renderScreen = () => {
@@ -30,6 +42,8 @@ export default function App() {
         return <RecipeScreen activeScreen={activeScreen} onNavigate={handleNavigate} />;
       case 'shoplist':
         return <ShoplistScreen activeScreen={activeScreen} onNavigate={handleNavigate} />;
+      case "settings":
+        return <SettingsScreen onBack={() => handleNavigate("home")} />;
       default:
         return <HomeScreen activeScreen={activeScreen} onNavigate={handleNavigate} />;
     }
