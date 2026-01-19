@@ -25,6 +25,12 @@ const ScreenLayout: React.FC<ScreenLayoutProps> = ({ activeScreen, onNavigate, c
         return "Ostoslista";
       case "settings":
         return "Asetukset";
+      case "account-settings":
+        return "Tilin asetukset";
+      case "notifications":
+        return "Ilmoitukset";
+      case "trash":
+        return "Roskakori";
       default:
         return "";
     }
@@ -34,7 +40,9 @@ const ScreenLayout: React.FC<ScreenLayoutProps> = ({ activeScreen, onNavigate, c
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <AppBar
         title={getTitle()}
-        onOpenSettings={() => onNavigate("settings")}
+        onSettings={() => onNavigate("settings")}
+        onNotifications={() => onNavigate("notifications")}
+        onTrash={() => onNavigate("trash")}
       />
       <View style={styles.content}>
         {children}
@@ -51,8 +59,6 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     padding: 16,
   },
 })
