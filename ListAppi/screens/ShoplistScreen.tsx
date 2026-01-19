@@ -5,6 +5,8 @@ import ScreenLayout from '../components/ScreenLayout';
 import { ActionModal } from '../components/ActionModal';
 import { ShareModal } from '../components/ShareModal';
 import ListModal from '../components/ListModal';
+import { ListButton } from '../components/ListButton';
+import { ListItem } from '../components/ListItem';
 
 interface ShoplistScreenProps {
   activeScreen: string
@@ -39,15 +41,7 @@ const ShoplistScreen: React.FC<ShoplistScreenProps> = ({ activeScreen, onNavigat
           Lisää uusi ostoslista
         </Button>
       </View>
-      <View style={styles.buttonContainer}>
-        <Button mode="contained" onPress={handleOpenActionModal}>
-          Toiminnot (testi)
-        </Button>
-      </View>
-      <View style={styles.buttonContainer}>
-        <Button mode="contained" onPress={handleOpenShareModal}>
-          Jaa (testi)
-        </Button>
+      <View>
       </View>
       <ListModal
         visible={listModalVisible}
