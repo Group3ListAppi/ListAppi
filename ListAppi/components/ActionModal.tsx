@@ -23,6 +23,7 @@ interface ActionModalProps {
   onLogout?: () => void
   onSettings?: () => void
   shareLabel?: string
+  removeLabel?: string
 }
 
 // Määeritellään toiminnot ja niiden ominaisuudet
@@ -74,7 +75,10 @@ export const ActionModal: React.FC<ActionModalProps> = ({
   onEdit,
   onRename,
   onRemove,
+  onSettings,
+  onLogout,
   shareLabel = 'Jaa lista',
+  removeLabel = 'Poista lista',
 }) => {
   const theme = useTheme()
 
@@ -83,6 +87,8 @@ export const ActionModal: React.FC<ActionModalProps> = ({
     onEdit: onEdit || (() => {}),
     onRename: onRename || (() => {}),
     onRemove: onRemove || (() => {}),
+    onSettings: onSettings || (() => {}),
+    onLogout: onLogout || (() => {}),
   }
 
   const actions: ActionButton[] = actionIds
@@ -92,7 +98,7 @@ export const ActionModal: React.FC<ActionModalProps> = ({
       const { onPressKey, ...rest } = definition
       return {
         ...rest,
-        label: id === 'share' ? shareLabel : rest.label, // Käytetään mukautettua labelia jakotoiminnolle
+        label: id === 'share' ? shareLabel : (id === 'remove' ? removeLabel : rest.label),
         onPress: actionCallbacks[onPressKey] as () => void,
       }
     })

@@ -15,35 +15,38 @@ const Navbar: React.FC<NavbarProps> = ({ activeScreen, onNavigate }) => {
     { key: 'menu', label: 'Ruokalistat', icon: 'silverware-fork-knife' },
     { key: 'recipes', label: 'Reseptit', icon: 'book-open-variant' },
     { key: 'shoplist', label: 'Ostoslista', icon: 'cart' },
+    { key: 'account-settings', label: 'Tili', icon: 'account-circle' },
   ]
 
   return (
     <Surface style={[styles.navbar, { backgroundColor: theme.colors.surface }]}>
-      {navItems.map((item) => (
-        <View key={item.key} style={styles.navItem}>
-          <IconButton
-            icon={item.icon}
-            size={24}
-            iconColor={activeScreen === item.key ? theme.colors.primary : theme.colors.onSurfaceVariant}
-            style={[
-              styles.iconButton,
-              activeScreen === item.key && { backgroundColor: theme.colors.primaryContainer }
-            ]}
-            onPress={() => onNavigate(item.key)}
-          />
-          <Text
-            variant="labelSmall"
-            style={[
-              styles.navLabel,
-              {
-                color: activeScreen === item.key ? theme.colors.primary : theme.colors.onSurfaceVariant
-              }
-            ]}
-          >
-            {item.label}
-          </Text>
-        </View>
-      ))}
+      <View style={styles.navItemsContainer}>
+        {navItems.map((item) => (
+          <View key={item.key} style={styles.navItem}>
+            <IconButton
+              icon={item.icon}
+              size={24}
+              iconColor={activeScreen === item.key ? theme.colors.primary : theme.colors.onSurfaceVariant}
+              style={[
+                styles.iconButton,
+                activeScreen === item.key && { backgroundColor: theme.colors.primaryContainer }
+              ]}
+              onPress={() => onNavigate(item.key)}
+            />
+            <Text
+              variant="labelSmall"
+              style={[
+                styles.navLabel,
+                {
+                  color: activeScreen === item.key ? theme.colors.primary : theme.colors.onSurfaceVariant
+                }
+              ]}
+            >
+              {item.label}
+            </Text>
+          </View>
+        ))}
+      </View>
     </Surface>
   )
 }
@@ -54,6 +57,12 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 4,
     paddingBottom: 50,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  navItemsContainer: {
+    flexDirection: 'row',
+    flex: 1,
   },
   navItem: {
     flex: 1,
