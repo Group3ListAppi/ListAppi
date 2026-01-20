@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { StyleSheet, View, ScrollView } from 'react-native'
-import { Text, Button, ActivityIndicator } from 'react-native-paper'
+import { Text, ActivityIndicator } from 'react-native-paper'
 import ScreenLayout from '../components/ScreenLayout'
 import RecipeModal from '../components/RecipeModal'
+import { AddNewButton } from '../components/AddNewButton'
 import { ListButton } from '../components/ListButton'
 import { useAuth } from '../auth/useAuth'
 import { saveRecipeToFirestore, getUserRecipes, deleteRecipeFromFirestore } from '../firebase/recipeUtils'
@@ -66,32 +67,41 @@ const RecipeScreen: React.FC<RecipeScreenProps> = ({ activeScreen, onNavigate })
 
   return (
     <ScreenLayout activeScreen={activeScreen} onNavigate={onNavigate}>
-      <Text variant="headlineMedium">Reseptit</Text>
-      <Text variant="bodyMedium" style={styles.description}>
-        Selaa ja hallinnoi reseptejä.
-      </Text>
-
-      <View style={styles.buttonContainer}>
-        <Button mode="contained" onPress={() => setRecipeModalVisible(true)}>
-          Lisää uusi resepti
-        </Button>
-      </View>
-
       {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator animating={true} size="large" />
         </View>
+      ) : recipes.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Text variant="headlineMedium">Reseptit</Text>
+          <Text variant="bodyMedium" style={styles.description}>
+            Selaa ja hallinnoi reseptejä.
+          </Text>
+
+          <AddNewButton
+            onPress={() => setRecipeModalVisible(true)}
+            label="Lisää uusi resepti"
+            animate={false}
+          />
+        </View>
       ) : (
-        <ScrollView style={styles.recipeListContainer}>
-          {recipes.map((recipe) => (
-            <ListButton
-              key={recipe.id}
-              listName={recipe.title}
-              onPress={() => onNavigate('recipe-detail', recipe)}
-              onDelete={() => handleDeleteRecipe(recipe.id)}
-            />
-          ))}
-        </ScrollView>
+        <>
+          <ScrollView style={styles.recipeListContainer}>
+            {recipes.map((recipe) => (
+              <ListButton
+                key={recipe.id}
+                listName={recipe.title}
+                imageUrl={recipe.image}
+                onPress={() => onNavigate('recipe-detail', recipe)}
+                onDelete={() => handleDeleteRecipe(recipe.id)}
+              />
+            ))}
+          </ScrollView>
+          <AddNewButton
+            onPress={() => setRecipeModalVisible(true)}
+            label="Lisää uusi resepti"
+          />
+        </>
       )}
 
       <RecipeModal
@@ -104,21 +114,22 @@ const RecipeScreen: React.FC<RecipeScreenProps> = ({ activeScreen, onNavigate })
 }
 
 const styles = StyleSheet.create({
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   description: {
     marginTop: 8,
-  },
-  buttonContainer: {
-    marginTop: 16,
+    textAlign: 'center',
   },
   recipeListContainer: {
-    marginTop: 16,
     flex: 1,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 24,
   },
 })
 

@@ -22,6 +22,8 @@ interface ActionModalProps {
   onRemove?: () => void
   onLogout?: () => void
   onSettings?: () => void
+  onCamera?: () => void
+  onGallery?: () => void
   shareLabel?: string
   removeLabel?: string
 }
@@ -64,6 +66,18 @@ const ACTION_DEFINITIONS: Record<string, Omit<ActionButton, 'onPress'> & { onPre
         icon: 'trash-can-outline',
         onPressKey: 'onRemove',
     },
+    camera: {
+        id: 'camera',
+        label: 'Kamera',
+        icon: 'camera',
+        onPressKey: 'onCamera',
+    },
+    gallery: {
+        id: 'gallery',
+        label: 'Galleria',
+        icon: 'image',
+        onPressKey: 'onGallery',
+    },
 }
 
 export const ActionModal: React.FC<ActionModalProps> = ({
@@ -77,6 +91,8 @@ export const ActionModal: React.FC<ActionModalProps> = ({
   onRemove,
   onSettings,
   onLogout,
+  onCamera,
+  onGallery,
   shareLabel = 'Jaa lista',
   removeLabel = 'Poista lista',
 }) => {
@@ -89,6 +105,8 @@ export const ActionModal: React.FC<ActionModalProps> = ({
     onRemove: onRemove || (() => {}),
     onSettings: onSettings || (() => {}),
     onLogout: onLogout || (() => {}),
+    onCamera: onCamera || (() => {}),
+    onGallery: onGallery || (() => {}),
   }
 
   const actions: ActionButton[] = actionIds
