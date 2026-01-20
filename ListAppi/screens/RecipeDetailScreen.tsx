@@ -1,5 +1,5 @@
 import React from 'react'
-import { StyleSheet, View, ScrollView, Linking } from 'react-native'
+import { StyleSheet, View, ScrollView, Linking, Image } from 'react-native'
 import { Text, Divider, useTheme, Chip, Button } from 'react-native-paper'
 import AppBar from '../components/AppBar'
 import type { CreateRecipeFormData } from '../components/RecipeModal'
@@ -43,6 +43,13 @@ const RecipeDetailScreen: React.FC<RecipeDetailScreenProps> = ({
             >
               Avaa resepti linkistä
             </Button>
+            <Divider style={styles.divider} />
+          </>
+        )}
+
+        {recipe.image && (
+          <>
+            <Image source={{ uri: recipe.image }} style={styles.recipeImage} />
             <Divider style={styles.divider} />
           </>
         )}
@@ -103,6 +110,7 @@ const RecipeDetailScreen: React.FC<RecipeDetailScreenProps> = ({
             </Chip>
           ))}
         </View>
+        <View style={{ height: 60 }} />
       </ScrollView>
     </View>
   )
@@ -119,6 +127,12 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
   },
   linkButton: {
+    marginBottom: 12,
+  },
+  recipeImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 8,
     marginBottom: 12,
   },
   sectionTitle: {

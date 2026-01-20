@@ -1,8 +1,10 @@
 import React, { useState } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { ScrollView, StyleSheet, View, Image, Pressable, Alert } from "react-native";
 import { TextInput, useTheme } from "react-native-paper";
+import * as ImagePicker from 'expo-image-picker';
 import { ModalBase } from "../components/ModalBase";
 import { SubmitButton } from "../components/SubmitButton";
+import { ActionModal } from "../components/ActionModal";
 import { DietType, MainIngredient, MealType } from "../types/RecipeMeta";
 import { Chip, Text } from "react-native-paper";
 
@@ -20,6 +22,7 @@ export interface CreateRecipeFormData {
     mainIngredient: MainIngredient | null;
     dietType: DietType[];
     link?: string;
+    image?: string;
 }
 
 const RecipeModal: React.FC<RecipeModalProps> = ({ visible, onClose, onSave }) => {
@@ -31,11 +34,62 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ visible, onClose, onSave }) =
     const [mealType, setMealType] = useState<MealType | null>(null);
     const [mainIngredient, setMainIngredient] = useState<MainIngredient | null>(null);
     const [dietType, setDietType] = useState<DietType[]>([]);
+    const [recipeImage, setRecipeImage] = useState<string | null>(null);
+    const [showImagePicker, setShowImagePicker] = useState(false);
 
     const toggleDietType = (tag: DietType) => {
         setDietType((prevTypes) =>
             prevTypes.includes(tag) ? prevTypes.filter((type) => type !== tag) : [...prevTypes, tag]
         );
+    };
+
+    const pickImage = async () => {
+        setShowImagePicker(true);
+    };
+
+    const pickFromGallery = async () => {
+        try {
+            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (status !== 'granted') {
+                Alert.alert('Oikeudet vaaditaan', 'Tarvitsemme pääsynkuvakirjastoon');
+                return;
+            }
+
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ['images'],
+                allowsEditing: true,
+                aspect: [4, 3],
+                quality: 0.8,
+            });
+
+            if (!result.canceled && result.assets && result.assets[0]) {
+                setRecipeImage(result.assets[0].uri);
+            }
+        } catch (error) {
+            Alert.alert('Virhe', 'Kuvan valinnassa tapahtui virhe');
+        }
+    };
+
+    const takeWithCamera = async () => {
+        try {
+            const { status } = await ImagePicker.requestCameraPermissionsAsync();
+            if (status !== 'granted') {
+                Alert.alert('Oikeudet vaaditaan', 'Tarvitsemme pääsyyn kameraan');
+                return;
+            }
+
+            const result = await ImagePicker.launchCameraAsync({
+                allowsEditing: true,
+                aspect: [4, 3],
+                quality: 0.8,
+            });
+
+            if (!result.canceled && result.assets && result.assets[0]) {
+                setRecipeImage(result.assets[0].uri);
+            }
+        } catch (error) {
+            Alert.alert('Virhe', 'Kameran käytössä tapahtui virhe');
+        }
     };
 
     const getValidationErrors = () => {
@@ -57,6 +111,7 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ visible, onClose, onSave }) =
         setMealType(null);
         setMainIngredient(null);
         setDietType([]);
+        setRecipeImage(null);
         onClose();
     };
 
@@ -72,6 +127,10 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ visible, onClose, onSave }) =
         
         if (link.trim()) {
             formData.link = link;
+        }
+
+        if (recipeImage) {
+            formData.image = recipeImage;
         }
         
         onSave?.(formData);
@@ -154,6 +213,19 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ visible, onClose, onSave }) =
                     textColor='black'
                     activeOutlineColor={theme.colors.primary}
                     />
+                {!recipeImage && (
+                    <Pressable onPress={pickImage} style={[styles.addImageButton, { backgroundColor: theme.colors.primaryContainer }]}>
+                        <Text style={styles.addImageText}>+ Lisää kuva reseptiin</Text>
+                    </Pressable>
+                )}
+                {recipeImage && (
+                    <View style={styles.imageContainer}>
+                        <Image source={{ uri: recipeImage }} style={styles.recipeImage} />
+                        <Pressable onPress={() => setRecipeImage(null)} style={styles.removeImageButton}>
+                            <Text style={styles.removeImageText}>Poista kuva</Text>
+                        </Pressable>
+                    </View>
+                )}
                     <SubmitButton
                         text="Tallenna resepti"
                         onPress={handleSave}
@@ -166,6 +238,14 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ visible, onClose, onSave }) =
                     )}
                     <View style={{ height: 60 }} />
             </ScrollView>
+            <ActionModal
+                visible={showImagePicker}
+                onClose={() => setShowImagePicker(false)}
+                title="Valitse kuva"
+                actionIds={['camera', 'gallery']}
+                onCamera={takeWithCamera}
+                onGallery={pickFromGallery}
+            />
         </ModalBase>
     );
 };
@@ -190,5 +270,37 @@ const styles = StyleSheet.create({
         fontSize: 14,
         marginTop: 8,
         textAlign: 'center',
+    },
+    addImageButton: {
+        padding: 12,
+        marginBottom: 16,
+        borderWidth: 0,
+        borderRadius: 8,
+        alignItems: 'center',
+    },
+    addImageText: {
+        color: 'black',
+        fontSize: 16,
+        fontWeight: '500',
+    },
+    imageContainer: {
+        marginBottom: 16,
+        alignItems: 'center',
+    },
+    recipeImage: {
+        width: '100%',
+        height: 200,
+        borderRadius: 8,
+        marginBottom: 12,
+    },
+    removeImageButton: {
+        padding: 8,
+        backgroundColor: '#d32f2f',
+        borderRadius: 6,
+    },
+    removeImageText: {
+        color: 'white',
+        fontSize: 14,
+        fontWeight: '500',
     },
 });
