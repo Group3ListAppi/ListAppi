@@ -9,6 +9,7 @@ import theme from './theme';
 import HomeScreen from './screens/HomeScreen';
 import MenuScreen from './screens/MenuScreen';
 import RecipeScreen from './screens/RecipeScreen';
+import RecipeDetailScreen from './screens/RecipeDetailScreen';
 import ShoplistScreen from './screens/ShoplistScreen';
 import AuthScreen from './screens/AuthScreen';
 import SettingsScreen from './screens/SettingsScreen';
@@ -17,11 +18,13 @@ import TrashScreen from './screens/TrashScreen';
 import AccountSettingScreen from './screens/AccountSettingScreen';
 
 import { useAuth } from './auth/useAuth'
+import type { Recipe } from './firebase/recipeUtils'
 
 export default function App() {
   const { user, initializing } = useAuth();
   const [activeScreen, setActiveScreen] = useState('home')
   const [history, setHistory] = useState<string[]>(["home"]);
+  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
 
   // Lataa ja käyttää keepScreenOn-asetusta sovelluksen käynnistyessä
   useEffect(() => {
@@ -38,7 +41,10 @@ export default function App() {
     applyKeepScreenOnSetting();
   }, []);
 
-  const handleNavigate = (screen: string) => {
+  const handleNavigate = (screen: string, data?: any) => {
+    if (screen === 'recipe-detail' && data) {
+      setSelectedRecipe(data);
+    }
     setActiveScreen(screen);
     setHistory((prev) => [...prev, screen]);
   };
@@ -60,6 +66,15 @@ export default function App() {
         return <MenuScreen activeScreen={activeScreen} onNavigate={handleNavigate} />;
       case 'recipes':
         return <RecipeScreen activeScreen={activeScreen} onNavigate={handleNavigate} />;
+      case 'recipe-detail':
+        return selectedRecipe ? (
+          <RecipeDetailScreen
+            recipe={selectedRecipe}
+            activeScreen={activeScreen}
+            onNavigate={handleNavigate}
+            onBack={handleBack}
+          />
+        ) : null;
       case 'shoplist':
         return <ShoplistScreen activeScreen={activeScreen} onNavigate={handleNavigate} />;
       case "settings":

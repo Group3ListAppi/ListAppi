@@ -13,11 +13,15 @@ export const SubmitButton: React.FC<SubmitButtonProps> = ({ text, onPress, disab
 
   return (
     <Button
-      mode="contained"
+      mode={disabled ? "outlined" : "contained"}
       onPress={onPress}
       disabled={disabled}
-      style={styles.button}
-      labelStyle={styles.label}
+      style={[
+        styles.button,
+        disabled && { borderColor: theme.colors.primaryContainer },
+        !disabled && { backgroundColor: theme.colors.primaryContainer }
+      ]}
+      labelStyle={[styles.label, { color: disabled ? 'white' : 'black' }]}
     >
       {text}
     </Button>
