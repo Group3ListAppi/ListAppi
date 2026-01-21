@@ -56,7 +56,7 @@ export default function App() {
     if (screen === 'add-recipe' && data?.editRecipe) {
       setEditRecipe(data.editRecipe);
     } else if (screen === 'add-recipe' && !data?.editRecipe) {
-      setEditRecipe(null); // Clear edit mode for new recipe
+      setEditRecipe(null);
     }
     if (screen === 'menu-detail' && data) {
       setSelectedMenuList(data);
@@ -78,7 +78,7 @@ export default function App() {
     if (!user?.uid) return
     try {
       if (editRecipe) {
-        // Update existing recipe
+
         await updateRecipeInFirestore(editRecipe.id, recipe)
         const updatedRecipes = recipes.map(r => 
           r.id === editRecipe.id 
@@ -87,7 +87,7 @@ export default function App() {
         )
         setRecipes(updatedRecipes)
       } else {
-        // Create new recipe
+
         const recipeId = await saveRecipeToFirestore(recipe, user.uid)
         const newRecipe: Recipe = {
           ...recipe,

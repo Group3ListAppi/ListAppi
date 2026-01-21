@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { StyleSheet, View, ScrollView, TouchableOpacity } from 'react-native'
-import { Text, ActivityIndicator, Searchbar, useTheme } from 'react-native-paper'
+import { Text, ActivityIndicator, useTheme } from 'react-native-paper'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import ScreenLayout from '../components/ScreenLayout'
 import { AddNewButton } from '../components/AddNewButton'
 import { ListButton } from '../components/ListButton'
+import { SearchBar } from '../components/SearchBar'
 import { useAuth } from '../auth/useAuth'
 import { saveRecipeToFirestore, getUserRecipes, moveRecipeToTrash } from '../firebase/recipeUtils'
 import { FilterModal, type FilterOptions } from '../components/FilterModal'
@@ -119,13 +120,10 @@ const RecipeScreen: React.FC<RecipeScreenProps> = ({ activeScreen, onNavigate, r
       ) : (
         <View style={styles.scrollContainer}>
           <View style={styles.searchFilterContainer}>
-            <Searchbar
+            <SearchBar
               placeholder="Hae reseptiä..."
-              onChangeText={setSearchQuery}
               value={searchQuery}
-              style={[styles.searchbar, { backgroundColor: '#333333', borderWidth: 2, borderColor: '#90EE90' }]}
-              inputStyle={{ color: 'white' }}
-              placeholderTextColor="#BDBDBD"
+              onChangeText={setSearchQuery}
             />
             <TouchableOpacity
               style={[styles.filterButton, { backgroundColor: theme.colors.primary }]}
