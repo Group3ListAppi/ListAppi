@@ -99,7 +99,7 @@ const RecipeScreen: React.FC<RecipeScreenProps> = ({ activeScreen, onNavigate, r
   }
 
   return (
-    <ScreenLayout activeScreen={activeScreen} onNavigate={onNavigate}>
+    <ScreenLayout activeScreen={activeScreen} onNavigate={onNavigate} fabLabel="Lisää uusi resepti" showFAB={true} onFABPress={() => onNavigate('add-recipe')}>
       {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator animating={true} size="large" />
@@ -154,12 +154,6 @@ const RecipeScreen: React.FC<RecipeScreenProps> = ({ activeScreen, onNavigate, r
               />
             ))}
           </ScrollView>
-          <View style={styles.floatingButtonWrapper}>
-            <AddNewButton
-              onPress={() => onNavigate('add-recipe')}
-              label="Lisää uusi resepti"
-            />
-          </View>
         </View>
       )}
       <FilterModal

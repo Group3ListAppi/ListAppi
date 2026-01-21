@@ -6,6 +6,7 @@ import { ListButton } from "../components/ListButton";
 import { useAuth } from "../auth/useAuth";
 import { getTrashItems, permanentlyDeleteTrashItem, restoreRecipeFromTrash } from "../firebase/recipeUtils";
 import type { DeletedItem } from "../firebase/recipeUtils";
+import ScreenLayout from "../components/ScreenLayout";
 
 type Props = {
   activeScreen: string;
@@ -98,14 +99,14 @@ export default function TrashScreen({ activeScreen, onBack, onNavigate }: Props)
   };
 
   return (
-    <View style={[styles.root, { backgroundColor: theme.colors.background }]}>
-      <AppBar
-        title="Roskakori"
-        onBack={onBack}
-        onSettings={() => onNavigate("settings")}
-        onNotifications={() => onNavigate("notifications")}
-        onTrash={() => onNavigate("trash")}
-      />
+    <ScreenLayout 
+      activeScreen={activeScreen} 
+      onNavigate={onNavigate} 
+      showNav={false}
+      showBack={true}
+      onBack={onBack}
+      customTitle="Roskakori"
+    >
       {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator animating={true} size="large" />
@@ -125,7 +126,7 @@ export default function TrashScreen({ activeScreen, onBack, onNavigate }: Props)
           <View style={{ height: 100 }} />
         </ScrollView>
       )}
-    </View>
+    </ScreenLayout>
   );
 }
 

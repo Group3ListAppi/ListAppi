@@ -49,7 +49,7 @@ export const AddNewButton: React.FC<AddNewButtonProps> = ({ onPress, label, anim
   });
 
   return (
-    <View style={styles.expandedContainer}>
+    <View style={styles.container}>
       <Animated.View style={[{ width: buttonWidth, marginLeft, overflow: 'hidden', pointerEvents: animationComplete ? 'none' : 'auto', opacity: expandedButtonOpacity }]}>
         <Button
           mode="contained"
@@ -79,10 +79,10 @@ export const AddNewButton: React.FC<AddNewButtonProps> = ({ onPress, label, anim
 };
 
 const styles = StyleSheet.create({
-  expandedContainer: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+  container: {
     alignItems: 'flex-end',
+    paddingRight: 16,
+    paddingBottom: 100,
   },
   expandedButton: {
     borderRadius: 30,
@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
   },
   compactButtonWrapper: {
     position: 'absolute',
-    right: 12,
+    right: 16,
     bottom: 16,
   },
   compactButton: {

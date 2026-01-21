@@ -3,14 +3,22 @@ import { View, StyleSheet } from 'react-native';
 import { useTheme } from 'react-native-paper';
 import Navbar from './Navbar';
 import AppBar from './AppBar';
+import { AddNewButton } from './AddNewButton';
 
 interface ScreenLayoutProps {
   activeScreen: string
   onNavigate: (screen: string) => void
   children: React.ReactNode
+  showFAB?: boolean
+  onFABPress?: () => void
+  fabLabel?: string
+  showNav?: boolean
+  showBack?: boolean
+  onBack?: () => void
+  customTitle?: string
 }
 
-const ScreenLayout: React.FC<ScreenLayoutProps> = ({ activeScreen, onNavigate, children }) => {
+const ScreenLayout: React.FC<ScreenLayoutProps> = ({ activeScreen, onNavigate, children, showFAB = false, onFABPress, fabLabel = '', showNav = true, showBack = false, onBack, customTitle }) => {
   const theme = useTheme()
 
   const getTitle = () => {
@@ -38,16 +46,28 @@ const ScreenLayout: React.FC<ScreenLayoutProps> = ({ activeScreen, onNavigate, c
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <AppBar
-        title={getTitle()}
-        onSettings={() => onNavigate("settings")}
-        onNotifications={() => onNavigate("notifications")}
-        onTrash={() => onNavigate("trash")}
-      />
+      {showBack ? (
+        <AppBar
+          title={customTitle || getTitle()}
+          onBack={onBack}
+        />
+      ) : (
+        <AppBar
+          title={customTitle || getTitle()}
+          onSettings={() => onNavigate("settings")}
+          onNotifications={() => onNavigate("notifications")}
+          onTrash={() => onNavigate("trash")}
+        />
+      )}
       <View style={styles.content}>
         {children}
       </View>
-      <Navbar activeScreen={activeScreen} onNavigate={onNavigate} />
+      {showFAB && onFABPress && (
+        <View style={styles.fabWrapper}>
+          <AddNewButton onPress={onFABPress} label={fabLabel} />
+        </View>
+      )}
+      {showNav && <Navbar activeScreen={activeScreen} onNavigate={onNavigate} />}
     </View>
   )
 }
@@ -56,10 +76,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     flexDirection: 'column',
+    position: 'relative',
   },
   content: {
     flex: 1,
     padding: 16,
+  },
+  fabWrapper: {
+    position: 'absolute',
+    bottom: 80,
+    right: 16,
+    zIndex: 10,
   },
 })
 
