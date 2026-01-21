@@ -11,6 +11,7 @@ import MenuScreen from './screens/MenuScreen';
 import RecipeScreen from './screens/RecipeScreen';
 import AddRecipeScreen from './screens/AddRecipeScreen';
 import RecipeDetailScreen from './screens/RecipeDetailScreen';
+import MenuDetailScreen from './screens/MenuDetailScreen';
 import ShoplistScreen from './screens/ShoplistScreen';
 import AuthScreen from './screens/AuthScreen';
 import SettingsScreen from './screens/SettingsScreen';
@@ -20,6 +21,7 @@ import AccountSettingScreen from './screens/AccountSettingScreen';
 
 import { useAuth } from './auth/useAuth'
 import type { Recipe } from './firebase/recipeUtils'
+import type { MenuList } from './firebase/menuUtils';
 import type { CreateRecipeFormData } from './components/RecipeModal'
 import { saveRecipeToFirestore, updateRecipeInFirestore } from './firebase/recipeUtils'
 
@@ -28,6 +30,7 @@ export default function App() {
   const [activeScreen, setActiveScreen] = useState('home')
   const [history, setHistory] = useState<string[]>(["home"]);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
+  const [selectedMenuList, setSelectedMenuList] = useState<MenuList | null>(null);
   const [editRecipe, setEditRecipe] = useState<Recipe | null>(null);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
 
@@ -54,6 +57,9 @@ export default function App() {
       setEditRecipe(data.editRecipe);
     } else if (screen === 'add-recipe' && !data?.editRecipe) {
       setEditRecipe(null); // Clear edit mode for new recipe
+    }
+    if (screen === 'menu-detail' && data) {
+      setSelectedMenuList(data);
     }
     setActiveScreen(screen);
     setHistory((prev) => [...prev, screen]);
@@ -103,6 +109,15 @@ export default function App() {
         return <HomeScreen activeScreen={activeScreen} onNavigate={handleNavigate} />;
       case 'menu':
         return <MenuScreen activeScreen={activeScreen} onNavigate={handleNavigate} />;
+      case 'menu-detail':
+        return selectedMenuList ? (
+          <MenuDetailScreen
+            menuList={selectedMenuList}
+            activeScreen={activeScreen}
+            onNavigate={handleNavigate}
+            onBack={handleBack}
+          />
+        ) : null;
       case 'recipes':
         return <RecipeScreen activeScreen={activeScreen} onNavigate={handleNavigate} recipes={recipes} setRecipes={setRecipes} />;
       case 'add-recipe':
