@@ -11,19 +11,18 @@ interface AddNewButtonProps {
 
 export const AddNewButton: React.FC<AddNewButtonProps> = ({ onPress, label, animate = true }) => {
   const theme = useTheme();
-  const [isExpanded, setIsExpanded] = useState(true);
   const positionAnim = useRef(new Animated.Value(0)).current;
+  const [animationComplete, setAnimationComplete] = useState(false);
 
   useEffect(() => {
     if (!animate) return;
     
     const timer = setTimeout(() => {
-      setIsExpanded(false);
       Animated.timing(positionAnim, {
         toValue: 1,
-        duration: 500,
+        duration: 1000,
         useNativeDriver: false,
-      }).start();
+      }).start(() => setAnimationComplete(true));
     }, 10000);
 
     return () => clearTimeout(timer);
@@ -31,7 +30,7 @@ export const AddNewButton: React.FC<AddNewButtonProps> = ({ onPress, label, anim
 
   const buttonWidth = positionAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [340, 60],
+    outputRange: [200, 60],
   });
 
   const marginLeft = positionAnim.interpolate({
@@ -39,32 +38,43 @@ export const AddNewButton: React.FC<AddNewButtonProps> = ({ onPress, label, anim
     outputRange: [0, 280],
   });
 
-  return isExpanded ? (
+  const opacity = positionAnim.interpolate({
+    inputRange: [0, 0.8, 1],
+    outputRange: [1, 0.3, 0],
+  });
+
+  const expandedButtonOpacity = positionAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 0],
+  });
+
+  return (
     <View style={styles.expandedContainer}>
-      <Button
-        mode="contained"
-        onPress={onPress}
-        style={[styles.expandedButton, { backgroundColor: theme.colors.primaryContainer }]}
-        labelStyle={{ color: 'black' }}
-        icon={() => (
-          <MaterialCommunityIcons name="plus" size={20} color="black" />
-        )}
-      >
-        {label}
-      </Button>
+      <Animated.View style={[{ width: buttonWidth, marginLeft, overflow: 'hidden', pointerEvents: animationComplete ? 'none' : 'auto', opacity: expandedButtonOpacity }]}>
+        <Button
+          mode="contained"
+          onPress={onPress}
+          style={[styles.expandedButton, { backgroundColor: theme.colors.primary }]}
+          labelStyle={{ color: 'white' }}
+          icon={() => (
+            <MaterialCommunityIcons name="plus" size={20} color="white" />
+          )}
+        >
+          {label}
+        </Button>
+      </Animated.View>
+      <Animated.View style={[styles.compactButtonWrapper, { opacity: positionAnim }]}>
+        <TouchableOpacity
+          onPress={onPress}
+          style={[
+            styles.compactButton,
+            { backgroundColor: theme.colors.primary },
+          ]}
+        >
+          <MaterialCommunityIcons name="plus" size={24} color="white" />
+        </TouchableOpacity>
+      </Animated.View>
     </View>
-  ) : (
-    <Animated.View style={[styles.animatedContainer, { marginLeft }]}>
-      <TouchableOpacity
-        onPress={onPress}
-        style={[
-          styles.compactButton,
-          { backgroundColor: theme.colors.primaryContainer },
-        ]}
-      >
-        <MaterialCommunityIcons name="plus" size={24} color="black" />
-      </TouchableOpacity>
-    </Animated.View>
   );
 };
 
@@ -72,15 +82,17 @@ const styles = StyleSheet.create({
   expandedContainer: {
     paddingHorizontal: 16,
     paddingBottom: 16,
+    alignItems: 'flex-end',
   },
   expandedButton: {
     borderRadius: 30,
     height: 60,
     justifyContent: 'center',
   },
-  animatedContainer: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+  compactButtonWrapper: {
+    position: 'absolute',
+    right: 12,
+    bottom: 16,
   },
   compactButton: {
     width: 60,

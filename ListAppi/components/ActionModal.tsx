@@ -24,6 +24,11 @@ interface ActionModalProps {
   onSettings?: () => void
   onCamera?: () => void
   onGallery?: () => void
+  onShareRecipe?: () => void
+  onEditRecipe?: () => void
+  onDeleteRecipe?: () => void
+  onRestore?: () => void
+  onPermanentlyDelete?: () => void
   shareLabel?: string
   removeLabel?: string
 }
@@ -78,6 +83,36 @@ const ACTION_DEFINITIONS: Record<string, Omit<ActionButton, 'onPress'> & { onPre
         icon: 'image',
         onPressKey: 'onGallery',
     },
+    shareRecipe: {
+        id: 'shareRecipe',
+        label: 'Jaa resepti',
+        icon: 'share-variant',
+        onPressKey: 'onShareRecipe',
+    },
+    editRecipe: {
+        id: 'editRecipe',
+        label: 'Muokkaa reseptiä',
+        icon: 'pencil',
+        onPressKey: 'onEditRecipe',
+    },
+    deleteRecipe: {
+        id: 'deleteRecipe',
+        label: 'Poista resepti',
+        icon: 'trash-can-outline',
+        onPressKey: 'onDeleteRecipe',
+    },
+    restore: {
+        id: 'restore',
+        label: 'Palauta resepti',
+        icon: 'restore',
+        onPressKey: 'onRestore',
+    },
+    deletePermanent: {
+        id: 'deletePermanent',
+        label: 'Poista pysyvästi',
+        icon: 'delete-forever',
+        onPressKey: 'onPermanentlyDelete',
+    },
 }
 
 export const ActionModal: React.FC<ActionModalProps> = ({
@@ -93,6 +128,11 @@ export const ActionModal: React.FC<ActionModalProps> = ({
   onLogout,
   onCamera,
   onGallery,
+  onShareRecipe,
+  onEditRecipe,
+  onDeleteRecipe,
+  onRestore,
+  onPermanentlyDelete,
   shareLabel = 'Jaa lista',
   removeLabel = 'Poista lista',
 }) => {
@@ -107,6 +147,11 @@ export const ActionModal: React.FC<ActionModalProps> = ({
     onLogout: onLogout || (() => {}),
     onCamera: onCamera || (() => {}),
     onGallery: onGallery || (() => {}),
+    onShareRecipe: onShareRecipe || (() => {}),
+    onEditRecipe: onEditRecipe || (() => {}),
+    onDeleteRecipe: onDeleteRecipe || (() => {}),
+    onRestore: onRestore || (() => {}),
+    onPermanentlyDelete: onPermanentlyDelete || (() => {}),
   }
 
   const actions: ActionButton[] = actionIds

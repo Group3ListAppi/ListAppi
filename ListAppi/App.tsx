@@ -9,6 +9,7 @@ import theme from './theme';
 import HomeScreen from './screens/HomeScreen';
 import MenuScreen from './screens/MenuScreen';
 import RecipeScreen from './screens/RecipeScreen';
+import AddRecipeScreen from './screens/AddRecipeScreen';
 import RecipeDetailScreen from './screens/RecipeDetailScreen';
 import ShoplistScreen from './screens/ShoplistScreen';
 import AuthScreen from './screens/AuthScreen';
@@ -19,12 +20,16 @@ import AccountSettingScreen from './screens/AccountSettingScreen';
 
 import { useAuth } from './auth/useAuth'
 import type { Recipe } from './firebase/recipeUtils'
+import type { CreateRecipeFormData } from './components/RecipeModal'
+import { saveRecipeToFirestore, updateRecipeInFirestore } from './firebase/recipeUtils'
 
 export default function App() {
   const { user, initializing } = useAuth();
   const [activeScreen, setActiveScreen] = useState('home')
   const [history, setHistory] = useState<string[]>(["home"]);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
+  const [editRecipe, setEditRecipe] = useState<Recipe | null>(null);
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
 
   // Lataa ja käyttää keepScreenOn-asetusta sovelluksen käynnistyessä
   useEffect(() => {
@@ -45,6 +50,11 @@ export default function App() {
     if (screen === 'recipe-detail' && data) {
       setSelectedRecipe(data);
     }
+    if (screen === 'add-recipe' && data?.editRecipe) {
+      setEditRecipe(data.editRecipe);
+    } else if (screen === 'add-recipe' && !data?.editRecipe) {
+      setEditRecipe(null); // Clear edit mode for new recipe
+    }
     setActiveScreen(screen);
     setHistory((prev) => [...prev, screen]);
   };
@@ -58,6 +68,35 @@ export default function App() {
     });
   };
 
+  const handleSaveRecipe = async (recipe: CreateRecipeFormData) => {
+    if (!user?.uid) return
+    try {
+      if (editRecipe) {
+        // Update existing recipe
+        await updateRecipeInFirestore(editRecipe.id, recipe)
+        const updatedRecipes = recipes.map(r => 
+          r.id === editRecipe.id 
+            ? { ...editRecipe, ...recipe }
+            : r
+        )
+        setRecipes(updatedRecipes)
+      } else {
+        // Create new recipe
+        const recipeId = await saveRecipeToFirestore(recipe, user.uid)
+        const newRecipe: Recipe = {
+          ...recipe,
+          id: recipeId,
+          createdAt: new Date(),
+        }
+        setRecipes([...recipes, newRecipe])
+      }
+      setEditRecipe(null)
+      handleNavigate('recipes')
+    } catch (error) {
+      console.error('Error saving recipe:', error)
+    }
+  };
+
   const renderScreen = () => {
     switch (activeScreen) {
       case 'home':
@@ -65,7 +104,9 @@ export default function App() {
       case 'menu':
         return <MenuScreen activeScreen={activeScreen} onNavigate={handleNavigate} />;
       case 'recipes':
-        return <RecipeScreen activeScreen={activeScreen} onNavigate={handleNavigate} />;
+        return <RecipeScreen activeScreen={activeScreen} onNavigate={handleNavigate} recipes={recipes} setRecipes={setRecipes} />;
+      case 'add-recipe':
+        return <AddRecipeScreen onSave={handleSaveRecipe} onBack={handleBack} editRecipe={editRecipe} />;
       case 'recipe-detail':
         return selectedRecipe ? (
           <RecipeDetailScreen

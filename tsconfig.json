@@ -1,0 +1,3 @@
+{
+  "extends": "./ListAppi/tsconfig.json"
+}

@@ -1,7 +1,7 @@
 import React from "react";
-import { StyleSheet } from "react-native";
-import { Text } from "react-native-paper";
-import ScreenLayout from "../components/ScreenLayout";
+import { StyleSheet, View } from "react-native";
+import { Text, useTheme } from "react-native-paper";
+import AppBar from "../components/AppBar";
 
 type Props = {
   activeScreen: string;
@@ -10,11 +10,26 @@ type Props = {
 };
 
 export default function NotificationsScreen({ activeScreen, onBack, onNavigate }: Props) {
+  const theme = useTheme();
   return (
-    <ScreenLayout activeScreen={activeScreen} onNavigate={onNavigate}>
-      <Text variant="headlineMedium">Ilmoitukset</Text>
-    </ScreenLayout>
+    <View style={[styles.root, { backgroundColor: theme.colors.background }]}>
+      <AppBar
+        title="Ilmoitukset"
+        onBack={onBack}
+        onSettings={() => onNavigate("settings")}
+        onNotifications={() => onNavigate("notifications")}
+        onTrash={() => onNavigate("trash")}
+      />
+      <Text variant="headlineMedium" style={styles.content}>Ilmoitukset</Text>
+    </View>
   );
 }
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
+  content: {
+    padding: 16,
+  },
+});
