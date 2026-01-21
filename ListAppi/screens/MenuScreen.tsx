@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, ScrollView } from 'react-native';
-import { Text, Button, ActivityIndicator } from 'react-native-paper';
+import { Text, Button, ActivityIndicator, Searchbar } from 'react-native-paper';
 import ScreenLayout from '../components/ScreenLayout';
 import ListModal from '../components/ListModal';
 import { AddNewButton } from '../components/AddNewButton';
@@ -24,6 +24,7 @@ const MenuScreen: React.FC<MenuScreenProps> = ({ activeScreen, onNavigate }) => 
   const { user } = useAuth()
   const [menuLists, setMenuLists] = useState<MenuList[]>([])
   const [loading, setLoading] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     if (user?.uid && activeScreen === 'menu') {
@@ -54,6 +55,7 @@ const MenuScreen: React.FC<MenuScreenProps> = ({ activeScreen, onNavigate }) => 
         type: "menu",
         userId: user.uid,
         createdAt: new Date(),
+        recipes: [],
       };
       setMenuLists([...menuLists, newList]);
       setListModalVisible(false);
@@ -70,6 +72,10 @@ const MenuScreen: React.FC<MenuScreenProps> = ({ activeScreen, onNavigate }) => 
       console.error('Error deleting menu list:', error);
     }
   };
+
+  const filteredLists = menuLists.filter(list =>
+    list.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <ScreenLayout activeScreen={activeScreen} onNavigate={onNavigate}>
@@ -92,22 +98,34 @@ const MenuScreen: React.FC<MenuScreenProps> = ({ activeScreen, onNavigate }) => 
         </View>
       ) : (
         <>
-        <ScrollView style={styles.listContainer}>
-          {menuLists.map((list) => (
-            <ListButton
-              key={list.id}
-              listName={list.name}
-              onPress={() => onNavigate('menu-detail', list)}
-              onDelete={() => handleDeleteMenuList(list.id)}
+          <View style={styles.searchContainer}>
+            <Searchbar
+              placeholder="Hae ruokalistaa..."
+              onChangeText={setSearchQuery}
+              value={searchQuery}
+              style={[styles.searchbar, { backgroundColor: '#333333', borderWidth: 2, borderColor: '#90EE90' }]}
+              inputStyle={{ color: 'white' }}
+              placeholderTextColor="#BDBDBD"
             />
-          ))}
-        </ScrollView>
+          </View>
+          
+          <ScrollView style={styles.listContainer}>
+            {filteredLists.map((list) => (
+              <ListButton
+                key={list.id}
+                listName={list.name}
+                createdAt={list.createdAt}
+                onPress={() => onNavigate('menu-detail', list)}
+                onDelete={() => handleDeleteMenuList(list.id)}
+              />
+            ))}
+          </ScrollView>
 
-      <AddNewButton
-        onPress={() => setListModalVisible(true)}
-        label="Lisää uusi ruokalista"
-      />
-      </>
+          <AddNewButton
+            onPress={() => setListModalVisible(true)}
+            label="Lisää uusi ruokalista"
+          />
+        </>
       )}
 
       <ListModal
@@ -138,6 +156,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-})
+  searchContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  searchbar: {
+    height: 40,
+  },
+});
 
-export default MenuScreen
+export default MenuScreen;
