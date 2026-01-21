@@ -24,6 +24,7 @@ interface ListButtonProps {
   isChecked?: boolean
   onCheckChange?: (checked: boolean) => void
   removeLabel?: string
+  createdAt?: Date
 }
 
 export const ListButton: React.FC<ListButtonProps> = ({
@@ -44,6 +45,7 @@ export const ListButton: React.FC<ListButtonProps> = ({
   isChecked = false,
   onCheckChange,
   removeLabel = 'Poista lista',
+  createdAt,
 }) => {
   const theme = useTheme()
   const [modalVisible, setModalVisible] = useState(false)
@@ -72,6 +74,16 @@ export const ListButton: React.FC<ListButtonProps> = ({
             >
               {listName}
             </Text>
+            {createdAt && (
+              <Text
+                style={[
+                  styles.createdAt,
+                  { color: theme.colors.onSurfaceVariant },
+                ]}
+              >
+                Luotu {new Date(createdAt).toLocaleDateString('fi-FI')}
+              </Text>
+            )}
             <View style={styles.avatarWrapper}>
               {ownerAvatar ? (
                 <Avatar.Image
@@ -168,6 +180,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     marginBottom: 4,
+  },
+  createdAt: {
+    fontSize: 12,
+    marginTop: 2,
   },
   itemsCount: {
     fontSize: 14,
