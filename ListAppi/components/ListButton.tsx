@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { View, StyleSheet, TouchableOpacity, Image } from "react-native";
-import { Text, Avatar, useTheme } from "react-native-paper";
+import { Text, Avatar, useTheme, Checkbox } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { ActionModal } from "./ActionModal";
 
@@ -20,6 +20,10 @@ interface ListButtonProps {
   customActionIds?: string[]
   onRestore?: () => void
   onPermanentlyDelete?: () => void
+  showCheckbox?: boolean
+  isChecked?: boolean
+  onCheckChange?: (checked: boolean) => void
+  removeLabel?: string
 }
 
 export const ListButton: React.FC<ListButtonProps> = ({
@@ -36,6 +40,10 @@ export const ListButton: React.FC<ListButtonProps> = ({
   customActionIds,
   onRestore,
   onPermanentlyDelete,
+  showCheckbox = false,
+  isChecked = false,
+  onCheckChange,
+  removeLabel = 'Poista lista',
 }) => {
   const theme = useTheme()
   const [modalVisible, setModalVisible] = useState(false)
@@ -44,8 +52,8 @@ export const ListButton: React.FC<ListButtonProps> = ({
 
   return (
     <>
-      <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
-        <View style={[styles.container, { backgroundColor: theme.colors.primaryContainer }]}>
+      <View style={[styles.container, { backgroundColor: theme.colors.surface }]}>
+        <TouchableOpacity onPress={onPress} style={styles.touchableArea} activeOpacity={0.7}>
           {imageUrl && (
             <View style={styles.imageWrapper}>
               <Image
@@ -54,12 +62,11 @@ export const ListButton: React.FC<ListButtonProps> = ({
               />
             </View>
           )}
-
           <View style={styles.contentWrapper}>
             <Text
               style={[
                 styles.listName,
-                { color: theme.colors.onPrimaryContainer },
+                { color: theme.colors.onSurface },
               ]}
               numberOfLines={2}
             >
@@ -85,19 +92,31 @@ export const ListButton: React.FC<ListButtonProps> = ({
               )}
             </View>
           </View>
-          <TouchableOpacity
-            onPress={() => setModalVisible(true)}
-            style={styles.menuIconWrapper}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <MaterialCommunityIcons
-              name="dots-vertical"
-              size={24}
-              color={theme.colors.onPrimaryContainer}
+        </TouchableOpacity>
+
+        {showCheckbox && (
+          <View style={{ backgroundColor: 'white', borderRadius: 4 }}>
+            <Checkbox
+              status={isChecked ? "checked" : "unchecked"}
+              onPress={() => onCheckChange?.(!isChecked)}
+              color={theme.colors.primary}
+              uncheckedColor={theme.colors.primary}
             />
-          </TouchableOpacity>
-        </View>
-      </TouchableOpacity>
+          </View>
+        )}
+
+        <TouchableOpacity
+          onPress={() => setModalVisible(true)}
+          style={styles.menuIconWrapper}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <MaterialCommunityIcons
+            name="dots-vertical"
+            size={24}
+            color={theme.colors.onSurface}
+          />
+        </TouchableOpacity>
+      </View>
 
       <ActionModal
         visible={modalVisible}
@@ -111,6 +130,7 @@ export const ListButton: React.FC<ListButtonProps> = ({
         onDeleteRecipe={onDelete}
         onRestore={onRestore}
         onPermanentlyDelete={onPermanentlyDelete}
+        removeLabel={removeLabel}
       />
     </>
   )
@@ -122,10 +142,15 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 16,
-    paddingVertical: 16,
-    borderRadius: 12,
-    marginVertical: 8,
+    paddingVertical: 12,
+    marginVertical: 4,
     marginHorizontal: 16,
+    borderRadius: 8,
+  },
+  touchableArea: {
+    flexDirection: "row",
+    flex: 1,
+    alignItems: "center",
   },
   imageWrapper: {
     marginRight: 12,

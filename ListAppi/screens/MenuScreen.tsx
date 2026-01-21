@@ -54,6 +54,7 @@ const MenuScreen: React.FC<MenuScreenProps> = ({ activeScreen, onNavigate }) => 
         type: "menu",
         userId: user.uid,
         createdAt: new Date(),
+        recipes: [],
       };
       setMenuLists([...menuLists, newList]);
       setListModalVisible(false);
