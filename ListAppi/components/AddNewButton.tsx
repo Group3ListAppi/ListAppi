@@ -80,9 +80,11 @@ export const AddNewButton: React.FC<AddNewButtonProps> = ({ onPress, label, anim
 
 const styles = StyleSheet.create({
   container: {
+    position: 'absolute',
+    bottom: 100,
+    right: 0,
     alignItems: 'flex-end',
     paddingRight: 16,
-    paddingBottom: 100,
   },
   expandedButton: {
     borderRadius: 30,
@@ -92,7 +94,7 @@ const styles = StyleSheet.create({
   compactButtonWrapper: {
     position: 'absolute',
     right: 16,
-    bottom: 16,
+    bottom: 0,
   },
   compactButton: {
     width: 60,
