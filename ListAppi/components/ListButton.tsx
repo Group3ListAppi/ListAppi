@@ -15,6 +15,11 @@ interface ListButtonProps {
   onMenuPress?: () => void
   onDelete?: () => void
   onShare?: () => void
+  onEdit?: () => void
+  isRecipe?: boolean
+  customActionIds?: string[]
+  onRestore?: () => void
+  onPermanentlyDelete?: () => void
 }
 
 export const ListButton: React.FC<ListButtonProps> = ({
@@ -26,9 +31,16 @@ export const ListButton: React.FC<ListButtonProps> = ({
   onMenuPress,
   onDelete,
   onShare,
+  onEdit,
+  isRecipe = false,
+  customActionIds,
+  onRestore,
+  onPermanentlyDelete,
 }) => {
   const theme = useTheme()
   const [modalVisible, setModalVisible] = useState(false)
+
+  const actionIds = customActionIds || (isRecipe ? ['shareRecipe', 'editRecipe', 'deleteRecipe'] : ['share', 'remove'])
 
   return (
     <>
@@ -91,9 +103,14 @@ export const ListButton: React.FC<ListButtonProps> = ({
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
         title={listName}
-        actionIds={['share', 'remove']}
+        actionIds={actionIds}
         onShare={onShare}
         onRemove={onDelete}
+        onShareRecipe={onShare}
+        onEditRecipe={onEdit}
+        onDeleteRecipe={onDelete}
+        onRestore={onRestore}
+        onPermanentlyDelete={onPermanentlyDelete}
       />
     </>
   )

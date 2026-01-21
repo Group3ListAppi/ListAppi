@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { StyleSheet, ScrollView } from "react-native";
+import { StyleSheet, ScrollView, View } from "react-native";
 import { Text, useTheme, List, Switch } from "react-native-paper";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ScreenOrientation from "expo-screen-orientation";
-import ScreenLayout from "../components/ScreenLayout";
+import AppBar from "../components/AppBar";
 
 type Props = {
   activeScreen: string;
@@ -53,7 +53,14 @@ export default function SettingsScreen({ activeScreen, onBack, onNavigate }: Pro
   };
 
   return (
-    <ScreenLayout activeScreen={activeScreen} onNavigate={onNavigate}>
+    <View style={[styles.root, { backgroundColor: theme.colors.background }]}>
+      <AppBar
+        title="Asetukset"
+        onBack={onBack}
+        onSettings={() => onNavigate("settings")}
+        onNotifications={() => onNavigate("notifications")}
+        onTrash={() => onNavigate("trash")}
+      />
       <ScrollView style={styles.content}>
         {/* Yleiset */}
         <List.Section>
@@ -115,11 +122,14 @@ export default function SettingsScreen({ activeScreen, onBack, onNavigate }: Pro
           />
         </List.Section>
       </ScrollView>
-    </ScreenLayout>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
   container: {
     flex: 1,
   },

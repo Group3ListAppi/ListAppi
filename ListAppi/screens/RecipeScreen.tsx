@@ -1,25 +1,34 @@
 import React, { useState, useEffect } from 'react'
-import { StyleSheet, View, ScrollView } from 'react-native'
-import { Text, ActivityIndicator } from 'react-native-paper'
+import { StyleSheet, View, ScrollView, TouchableOpacity } from 'react-native'
+import { Text, ActivityIndicator, Searchbar, useTheme } from 'react-native-paper'
+import { MaterialCommunityIcons } from '@expo/vector-icons'
 import ScreenLayout from '../components/ScreenLayout'
-import RecipeModal from '../components/RecipeModal'
 import { AddNewButton } from '../components/AddNewButton'
 import { ListButton } from '../components/ListButton'
 import { useAuth } from '../auth/useAuth'
-import { saveRecipeToFirestore, getUserRecipes, deleteRecipeFromFirestore } from '../firebase/recipeUtils'
+import { saveRecipeToFirestore, getUserRecipes, moveRecipeToTrash } from '../firebase/recipeUtils'
+import { FilterModal, type FilterOptions } from '../components/FilterModal'
 import type { CreateRecipeFormData } from '../components/RecipeModal'
 import type { Recipe } from '../firebase/recipeUtils'
 
 interface RecipeScreenProps {
   activeScreen: string
   onNavigate: (screen: string, data?: any) => void
+  recipes: Recipe[]
+  setRecipes: (recipes: Recipe[]) => void
 }
 
-const RecipeScreen: React.FC<RecipeScreenProps> = ({ activeScreen, onNavigate }) => {
+const RecipeScreen: React.FC<RecipeScreenProps> = ({ activeScreen, onNavigate, recipes, setRecipes }) => {
   const { user } = useAuth()
-  const [recipeModalVisible, setRecipeModalVisible] = useState(false)
-  const [recipes, setRecipes] = useState<Recipe[]>([])
+  const theme = useTheme()
   const [loading, setLoading] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [filterModalVisible, setFilterModalVisible] = useState(false)
+  const [filters, setFilters] = useState<FilterOptions>({
+    mealTypes: [],
+    mainIngredients: [],
+    dietTypes: [],
+  })
 
   useEffect(() => {
     if (user?.uid) {
@@ -50,7 +59,7 @@ const RecipeScreen: React.FC<RecipeScreenProps> = ({ activeScreen, onNavigate })
         createdAt: new Date(),
       }
       setRecipes([...recipes, newRecipe])
-      setRecipeModalVisible(false)
+      onNavigate('recipe')
     } catch (error) {
       console.error('Error saving recipe:', error)
     }
@@ -58,11 +67,34 @@ const RecipeScreen: React.FC<RecipeScreenProps> = ({ activeScreen, onNavigate })
 
   const handleDeleteRecipe = async (id: string) => {
     try {
-      await deleteRecipeFromFirestore(id)
-      setRecipes(recipes.filter(recipe => recipe.id !== id))
+      const recipeToDelete = recipes.find(r => r.id === id)
+      if (recipeToDelete && user?.uid) {
+        await moveRecipeToTrash(id, recipeToDelete, user.uid)
+        setRecipes(recipes.filter(recipe => recipe.id !== id))
+      }
     } catch (error) {
       console.error('Error deleting recipe:', error)
     }
+  }
+
+  const getFilteredRecipes = () => {
+    return recipes.filter((recipe) => {
+      const matchesSearch =
+        recipe.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        recipe.ingredients?.toLowerCase().includes(searchQuery.toLowerCase())
+
+      const matchesMealType =
+        filters.mealTypes.length === 0 || filters.mealTypes.includes(recipe.mealType)
+
+      const matchesIngredient =
+        filters.mainIngredients.length === 0 || filters.mainIngredients.includes(recipe.mainIngredient)
+
+      const matchesDietType =
+        filters.dietTypes.length === 0 ||
+        (recipe.dietType && recipe.dietType.some((d) => filters.dietTypes.includes(d)))
+
+      return matchesSearch && matchesMealType && matchesIngredient && matchesDietType
+    })
   }
 
   return (
@@ -79,35 +111,64 @@ const RecipeScreen: React.FC<RecipeScreenProps> = ({ activeScreen, onNavigate })
           </Text>
 
           <AddNewButton
-            onPress={() => setRecipeModalVisible(true)}
+            onPress={() => onNavigate('add-recipe')}
             label="Lisää uusi resepti"
             animate={false}
           />
         </View>
       ) : (
-        <>
+        <View style={styles.scrollContainer}>
+          <View style={styles.searchFilterContainer}>
+            <Searchbar
+              placeholder="Hae reseptiä..."
+              onChangeText={setSearchQuery}
+              value={searchQuery}
+              style={[styles.searchbar, { backgroundColor: '#333333', borderWidth: 2, borderColor: '#90EE90' }]}
+              inputStyle={{ color: 'white' }}
+              placeholderTextColor="#BDBDBD"
+            />
+            <TouchableOpacity
+              style={[styles.filterButton, { backgroundColor: theme.colors.primary }]}
+              onPress={() => setFilterModalVisible(true)}
+            >
+              <MaterialCommunityIcons
+                name="filter-variant"
+                size={24}
+                color={theme.colors.onPrimary}
+              />
+              <Text style={[styles.filterButtonText, { color: theme.colors.onPrimary }]}>
+                Suodata
+              </Text>
+            </TouchableOpacity>
+          </View>
           <ScrollView style={styles.recipeListContainer}>
-            {recipes.map((recipe) => (
+            {getFilteredRecipes().map((recipe) => (
               <ListButton
                 key={recipe.id}
                 listName={recipe.title}
                 imageUrl={recipe.image}
+                isRecipe={true}
                 onPress={() => onNavigate('recipe-detail', recipe)}
+                onEdit={() => onNavigate('add-recipe', { editRecipe: recipe })}
                 onDelete={() => handleDeleteRecipe(recipe.id)}
+                onShare={() => {
+                }}
               />
             ))}
           </ScrollView>
-          <AddNewButton
-            onPress={() => setRecipeModalVisible(true)}
-            label="Lisää uusi resepti"
-          />
-        </>
+          <View style={styles.floatingButtonWrapper}>
+            <AddNewButton
+              onPress={() => onNavigate('add-recipe')}
+              label="Lisää uusi resepti"
+            />
+          </View>
+        </View>
       )}
-
-      <RecipeModal
-        visible={recipeModalVisible}
-        onClose={() => setRecipeModalVisible(false)}
-        onSave={handleSaveRecipe}
+      <FilterModal
+        visible={filterModalVisible}
+        onClose={() => setFilterModalVisible(false)}
+        onApply={(newFilters) => setFilters(newFilters)}
+        selectedFilters={filters}
       />
     </ScreenLayout>
   )
@@ -116,15 +177,50 @@ const RecipeScreen: React.FC<RecipeScreenProps> = ({ activeScreen, onNavigate })
 const styles = StyleSheet.create({
   emptyContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   description: {
     marginTop: 8,
     textAlign: 'center',
   },
+  scrollContainer: {
+    flex: 1,
+    position: 'relative',
+  },
+  searchFilterContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 8,
+    alignItems: 'center',
+  },
+  searchbar: {
+    flex: 1,
+    height: 40,
+  },
+  filterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    gap: 6,
+  },
+  filterButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
   recipeListContainer: {
     flex: 1,
+  },
+  floatingButtonWrapper: {
+    position: 'absolute',
+    bottom: 50,
+    right: 16,
+    alignItems: 'center',
+  },
+  buttonWrapper: {
+    marginTop: 16,
   },
   loadingContainer: {
     flex: 1,

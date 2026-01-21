@@ -1,7 +1,11 @@
-import React from "react";
-import { StyleSheet } from "react-native";
-import { Text } from "react-native-paper";
-import ScreenLayout from "../components/ScreenLayout";
+import React, { useState, useEffect } from "react";
+import { StyleSheet, View, ScrollView } from "react-native";
+import { Text, ActivityIndicator, useTheme } from "react-native-paper";
+import AppBar from "../components/AppBar";
+import { ListButton } from "../components/ListButton";
+import { useAuth } from "../auth/useAuth";
+import { getTrashItems, permanentlyDeleteTrashItem, restoreRecipeFromTrash } from "../firebase/recipeUtils";
+import type { DeletedItem } from "../firebase/recipeUtils";
 
 type Props = {
   activeScreen: string;
@@ -9,12 +13,156 @@ type Props = {
   onNavigate: (screen: string) => void;
 };
 
+const TRASH_RETENTION_DAYS = 30;
+
 export default function TrashScreen({ activeScreen, onBack, onNavigate }: Props) {
+  const { user } = useAuth();
+  const theme = useTheme();
+  const [trashItems, setTrashItems] = useState<DeletedItem[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (user?.uid) {
+      loadTrashItems();
+    }
+  }, [user?.uid]);
+
+  const loadTrashItems = async () => {
+    if (!user?.uid) return;
+    try {
+      setLoading(true);
+      const items = await getTrashItems(user.uid);
+      setTrashItems(items);
+    } catch (error) {
+      console.error("Error loading trash items:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getDaysUntilPermanentDelete = (deletedAt: Date) => {
+    const now = new Date();
+    const deletedDate = new Date(deletedAt);
+    const diffTime = Math.abs(now.getTime() - deletedDate.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return Math.max(0, TRASH_RETENTION_DAYS - diffDays);
+  };
+
+  const handleRestore = async (trashId: string, recipeId: string, recipeData?: any) => {
+    try {
+      await restoreRecipeFromTrash(recipeId, recipeData);
+      setTrashItems(trashItems.filter(item => item.id !== trashId));
+      onNavigate('recipes');
+    } catch (error) {
+      console.error("Error restoring item:", error);
+    }
+  };
+
+  const handlePermanentlyDelete = async (trashId: string, recipeId: string) => {
+    try {
+      await permanentlyDeleteTrashItem(trashId, recipeId);
+      setTrashItems(trashItems.filter(item => item.id !== trashId));
+    } catch (error) {
+      console.error("Error permanently deleting item:", error);
+    }
+  };
+
+  const recipeItems = trashItems.filter(item => item.type === "recipe");
+  const shoplistItems = trashItems.filter(item => item.type === "shoplist");
+  const foodlistItems = trashItems.filter(item => item.type === "foodlist");
+
+  const renderCategory = (title: string, items: DeletedItem[]) => {
+    if (items.length === 0) return null;
+
+    return (
+      <View key={title} style={styles.categoryContainer}>
+        <Text variant="titleMedium" style={[styles.categoryTitle, { color: theme.colors.primary }]}>
+          {title}
+        </Text>
+        {items.map((item) => (
+          <View key={item.id}>
+            <ListButton
+              listName={item.data.title}
+              imageUrl={item.data.image}
+              customActionIds={['restore', 'deletePermanent']}
+              onRestore={() => handleRestore(item.id, item.recipeId || item.data.id, item.data)}
+              onPermanentlyDelete={() => handlePermanentlyDelete(item.id, item.recipeId || item.data.id)}
+            />
+            <Text style={[styles.retentionText, { color: theme.colors.outline }]}>
+              Poistetaan pysyvästi {getDaysUntilPermanentDelete(item.deletedAt)} päivän kuluttua
+            </Text>
+          </View>
+        ))}
+      </View>
+    );
+  };
+
   return (
-    <ScreenLayout activeScreen={activeScreen} onNavigate={onNavigate}>
-      <Text variant="headlineMedium">Roskakori</Text>
-    </ScreenLayout>
+    <View style={[styles.root, { backgroundColor: theme.colors.background }]}>
+      <AppBar
+        title="Roskakori"
+        onBack={onBack}
+        onSettings={() => onNavigate("settings")}
+        onNotifications={() => onNavigate("notifications")}
+        onTrash={() => onNavigate("trash")}
+      />
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator animating={true} size="large" />
+        </View>
+      ) : trashItems.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Text variant="headlineMedium">Roskakori</Text>
+          <Text variant="bodyMedium" style={styles.emptyText}>
+            Roskakori on tyhjä
+          </Text>
+        </View>
+      ) : (
+        <ScrollView style={styles.container}>
+          {renderCategory("Reseptit", recipeItems)}
+          {renderCategory("Ostoslistat", shoplistItems)}
+          {renderCategory("Ruokalistat", foodlistItems)}
+          <View style={{ height: 100 }} />
+        </ScrollView>
+      )}
+    </View>
   );
 }
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
+  container: {
+    flex: 1,
+    paddingTop: 16,
+  },
+  categoryContainer: {
+    marginBottom: 24,
+  },
+  categoryTitle: {
+    paddingHorizontal: 16,
+    marginBottom: 12,
+    fontWeight: "600",
+  },
+  retentionText: {
+    textAlign: "center",
+    fontSize: 12,
+    marginTop: 8,
+    marginHorizontal: 16,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  emptyText: {
+    marginTop: 8,
+    textAlign: "center",
+  },
+});
