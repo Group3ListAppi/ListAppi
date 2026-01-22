@@ -1,7 +1,17 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, StyleSheet, ScrollView } from "react-native";
-import { Text, useTheme, Chip } from "react-native-paper";
+import { Text, useTheme } from "react-native-paper";
 import { ModalBase } from "./ModalBase";
+import { SubmitButton } from "./SubmitButton";
+import { FilterChip } from "./FilterChip";
+import {
+  MEAL_TYPES,
+  MEAL_TYPE_LABELS,
+  MAIN_INGREDIENTS,
+  MAIN_INGREDIENT_LABELS,
+  DIET_TYPES,
+  DIET_TYPE_LABELS,
+} from "../types/filterConstants";
 
 export interface FilterOptions {
   mealTypes: string[];
@@ -16,76 +26,6 @@ interface FilterModalProps {
   selectedFilters: FilterOptions;
 }
 
-const MEAL_TYPES = [
-  "airfryer-ruoat",
-  "keitot",
-  "salaatit",
-  "pastat",
-  "hampurilaiset",
-  "pihvit",
-  "uuniruoat",
-  "pataruoat",
-  "tacot ja tortillat",
-  "muu",
-];
-
-const MEAL_TYPE_LABELS: Record<string, string> = {
-  "airfryer-ruoat": "Airfryer-ruoat",
-  keitot: "Keitot",
-  salaatit: "Salaatit",
-  pastat: "Pastat",
-  hampurilaiset: "Hampurilaiset",
-  pihvit: "Pihvit",
-  uuniruoat: "Uuniruoat",
-  pataruoat: "Pataruoat",
-  "tacot ja tortillat": "Tacot ja tortillat",
-  muu: "Muu",
-};
-
-const MAIN_INGREDIENTS = [
-  "liha",
-  "jauheliha",
-  "makkara",
-  "broileri",
-  "kala",
-  "äyriäiset",
-  "kananmuna",
-  "kasvis",
-  "kasviproteiini",
-  "muu",
-];
-
-const MAIN_INGREDIENT_LABELS: Record<string, string> = {
-  liha: "Liha",
-  jauheliha: "Jauheliha",
-  makkara: "Makkara",
-  broileri: "Broileri",
-  kala: "Kala",
-  äyriäiset: "Äyriäiset",
-  kananmuna: "Kananmuna",
-  kasvis: "Kasvis",
-  kasviproteiini: "Kasviproteiini",
-  muu: "Muu",
-};
-
-const DIET_TYPES = [
-  "gluteeniton",
-  "kananmunaton",
-  "kasvis",
-  "laktoositon",
-  "maidoton",
-  "vegaaninen",
-];
-
-const DIET_TYPE_LABELS: Record<string, string> = {
-  gluteeniton: "Gluteeniton",
-  kananmunaton: "Kananmunaton",
-  kasvis: "Kasvis",
-  laktoositon: "Laktoositon",
-  maidoton: "Maidoton",
-  vegaaninen: "Vegaaninen",
-};
-
 export const FilterModal: React.FC<FilterModalProps> = ({
   visible,
   onClose,
@@ -94,6 +34,12 @@ export const FilterModal: React.FC<FilterModalProps> = ({
 }) => {
   const theme = useTheme();
   const [filters, setFilters] = useState<FilterOptions>(selectedFilters);
+
+  useEffect(() => {
+    if (visible) {
+      setFilters(selectedFilters);
+    }
+  }, [visible, selectedFilters]);
 
   const handleMealTypeToggle = (mealType: string) => {
     setFilters((prev) => ({
@@ -140,128 +86,63 @@ export const FilterModal: React.FC<FilterModalProps> = ({
   return (
     <ModalBase visible={visible} onClose={onClose} title="Suodata reseptejä">
       <ScrollView contentContainerStyle={styles.container} scrollEnabled={true}>
-        <Text variant="titleSmall" style={[styles.sectionTitle, { color: theme.colors.primary }]}>
+        <Text variant="titleSmall" style={[styles.sectionTitle,]}>
           Ruokalaji
         </Text>
         <View style={styles.chipRow}>
           {MEAL_TYPES.map((mealType) => (
-            <Chip
+            <FilterChip
               key={mealType}
+              label={MEAL_TYPE_LABELS[mealType]}
               selected={filters.mealTypes.includes(mealType)}
               onPress={() => handleMealTypeToggle(mealType)}
-              selectedColor="black"
-              style={
-                filters.mealTypes.includes(mealType)
-                  ? { backgroundColor: theme.colors.primaryContainer }
-                  : {
-                      backgroundColor: theme.colors.surface,
-                      borderWidth: 2,
-                      borderColor: theme.colors.primaryContainer,
-                    }
-              }
-              textStyle={
-                filters.mealTypes.includes(mealType)
-                  ? { color: "black" }
-                  : { color: "#FFFFFF" }
-              }
-            >
-              {MEAL_TYPE_LABELS[mealType]}
-            </Chip>
+            />
           ))}
         </View>
 
-        <Text variant="titleSmall" style={[styles.sectionTitle, { color: theme.colors.primary }]}>
+        <Text variant="titleSmall" style={[styles.sectionTitle,]}>
           Pääraaka-aine
         </Text>
         <View style={styles.chipRow}>
           {MAIN_INGREDIENTS.map((ingredient) => (
-            <Chip
+            <FilterChip
               key={ingredient}
+              label={MAIN_INGREDIENT_LABELS[ingredient]}
               selected={filters.mainIngredients.includes(ingredient)}
               onPress={() => handleMainIngredientToggle(ingredient)}
-              selectedColor="black"
-              style={
-                filters.mainIngredients.includes(ingredient)
-                  ? { backgroundColor: theme.colors.primaryContainer }
-                  : {
-                      backgroundColor: theme.colors.surface,
-                      borderWidth: 2,
-                      borderColor: theme.colors.primaryContainer,
-                    }
-              }
-              textStyle={
-                filters.mainIngredients.includes(ingredient)
-                  ? { color: "black" }
-                  : { color: "#FFFFFF" }
-              }
-            >
-              {MAIN_INGREDIENT_LABELS[ingredient]}
-            </Chip>
+            />
           ))}
         </View>
 
-        <Text variant="titleSmall" style={[styles.sectionTitle, { color: theme.colors.primary }]}>
+        <Text variant="titleSmall" style={[styles.sectionTitle,]}>
           Ruokavaliot
         </Text>
         <View style={styles.chipRow}>
           {DIET_TYPES.map((dietType) => (
-            <Chip
+            <FilterChip
               key={dietType}
+              label={DIET_TYPE_LABELS[dietType]}
               selected={filters.dietTypes.includes(dietType)}
               onPress={() => handleDietTypeToggle(dietType)}
-              selectedColor="black"
-              style={
-                filters.dietTypes.includes(dietType)
-                  ? { backgroundColor: theme.colors.primaryContainer }
-                  : {
-                      backgroundColor: theme.colors.surface,
-                      borderWidth: 2,
-                      borderColor: theme.colors.primaryContainer,
-                    }
-              }
-              textStyle={
-                filters.dietTypes.includes(dietType)
-                  ? { color: "black" }
-                  : { color: "#FFFFFF" }
-              }
-            >
-              {DIET_TYPE_LABELS[dietType]}
-            </Chip>
+            />
           ))}
         </View>
 
-        <Chip
-          icon="check"
-          style={[styles.applyButton, { backgroundColor: theme.colors.primary }]}
-          textStyle={[styles.applyButtonText, { color: theme.colors.onPrimary }]}
-          onPress={handleApply}
-        >
-          Käytä suodattimia
-        </Chip>
+        <View style={styles.buttonContainer}>
+          <SubmitButton
+            text="Käytä suodattimia"
+            onPress={handleApply}
+          />
+        </View>
 
-        <Chip
-          icon="close"
-          disabled={!hasActiveFilters}
-          style={[
-            styles.clearButton,
-            hasActiveFilters
-              ? { backgroundColor: '#FFE0E0' }
-              : { 
-                  backgroundColor: '#333333',
-                  borderWidth: 2,
-                  borderColor: '#FFB3B3'
-                }
-          ]}
-          textStyle={[
-            styles.clearButtonText,
-            hasActiveFilters
-              ? { color: 'black' }
-              : { color: 'white' }
-          ]}
-          onPress={handleClearFilters}
-        >
-          Tyhjennä suodattimet
-        </Chip>
+        <View style={styles.buttonContainer}>
+          <SubmitButton
+            text="Tyhjennä suodattimet"
+            onPress={handleClearFilters}
+            disabled={!hasActiveFilters}
+            variant="danger"
+          />
+        </View>
       </ScrollView>
     </ModalBase>
   );
@@ -269,7 +150,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: 8,
+    paddingVertical: 0,
     paddingBottom: 50,
   },
   sectionTitle: {
@@ -285,21 +166,8 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 8,
   },
-  applyButton: {
-    marginHorizontal: 16,
-    marginVertical: 16,
-  },
-  applyButtonText: {
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  clearButton: {
-    marginHorizontal: 16,
+  buttonContainer: {
+    paddingHorizontal: 16,
     marginVertical: 8,
-    marginBottom: 16,
-  },
-  clearButtonText: {
-    fontSize: 14,
-    fontWeight: "600",
   },
 });

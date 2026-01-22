@@ -13,6 +13,7 @@ import {
   type MenuList,
 } from '../firebase/menuUtils';
 import { type CreateListFormData } from '../components/ListModal';
+import { SearchBar } from '../components/SearchBar';
 
 interface MenuScreenProps {
   activeScreen: string
@@ -78,7 +79,7 @@ const MenuScreen: React.FC<MenuScreenProps> = ({ activeScreen, onNavigate }) => 
   );
 
   return (
-    <ScreenLayout activeScreen={activeScreen} onNavigate={onNavigate}>
+    <ScreenLayout activeScreen={activeScreen} onNavigate={onNavigate} fabLabel="Lisää uusi ruokalista" showFAB={true} onFABPress={() => setListModalVisible(true)}>
       {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator animating size="large" />
@@ -99,13 +100,10 @@ const MenuScreen: React.FC<MenuScreenProps> = ({ activeScreen, onNavigate }) => 
       ) : (
         <>
           <View style={styles.searchContainer}>
-            <Searchbar
+            <SearchBar
               placeholder="Hae ruokalistaa..."
               onChangeText={setSearchQuery}
               value={searchQuery}
-              style={[styles.searchbar, { backgroundColor: '#333333', borderWidth: 2, borderColor: '#90EE90' }]}
-              inputStyle={{ color: 'white' }}
-              placeholderTextColor="#BDBDBD"
             />
           </View>
           
@@ -120,11 +118,6 @@ const MenuScreen: React.FC<MenuScreenProps> = ({ activeScreen, onNavigate }) => 
               />
             ))}
           </ScrollView>
-
-          <AddNewButton
-            onPress={() => setListModalVisible(true)}
-            label="Lisää uusi ruokalista"
-          />
         </>
       )}
 
@@ -157,6 +150,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   searchContainer: {
+    flexDirection: 'row',
     paddingHorizontal: 16,
     paddingVertical: 12,
   },

@@ -4,6 +4,7 @@ import { Text, useTheme, List, Switch } from "react-native-paper";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ScreenOrientation from "expo-screen-orientation";
 import AppBar from "../components/AppBar";
+import ScreenLayout from "../components/ScreenLayout";
 
 type Props = {
   activeScreen: string;
@@ -53,14 +54,14 @@ export default function SettingsScreen({ activeScreen, onBack, onNavigate }: Pro
   };
 
   return (
-    <View style={[styles.root, { backgroundColor: theme.colors.background }]}>
-      <AppBar
-        title="Asetukset"
-        onBack={onBack}
-        onSettings={() => onNavigate("settings")}
-        onNotifications={() => onNavigate("notifications")}
-        onTrash={() => onNavigate("trash")}
-      />
+    <ScreenLayout 
+      activeScreen={activeScreen} 
+      onNavigate={onNavigate} 
+      showNav={false}
+      showBack={true}
+      onBack={onBack}
+      customTitle="Asetukset"
+    >
       <ScrollView style={styles.content}>
         {/* Yleiset */}
         <List.Section>
@@ -122,7 +123,7 @@ export default function SettingsScreen({ activeScreen, onBack, onNavigate }: Pro
           />
         </List.Section>
       </ScrollView>
-    </View>
+    </ScreenLayout>
   );
 }
 

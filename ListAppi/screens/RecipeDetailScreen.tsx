@@ -3,6 +3,7 @@ import { StyleSheet, View, ScrollView, Linking, Image } from 'react-native'
 import { Text, Divider, useTheme, Chip, Button } from 'react-native-paper'
 import AppBar from '../components/AppBar'
 import type { CreateRecipeFormData } from '../components/RecipeModal'
+import ScreenLayout from '../components/ScreenLayout'
 
 interface Recipe extends CreateRecipeFormData {
   id: string
@@ -25,14 +26,14 @@ const RecipeDetailScreen: React.FC<RecipeDetailScreenProps> = ({
   const theme = useTheme()
 
   return (
-    <View style={[styles.root, { backgroundColor: theme.colors.background }]}>
-      <AppBar
-        title={recipe.title}
-        onBack={onBack}
-        onSettings={() => onNavigate("settings")}
-        onNotifications={() => onNavigate("notifications")}
-        onTrash={() => onNavigate("trash")}
-      />
+    <ScreenLayout 
+      activeScreen={activeScreen} 
+      onNavigate={onNavigate} 
+      showNav={false}
+      showBack={true}
+      onBack={onBack}
+      customTitle={recipe.title}
+    >
       <ScrollView style={styles.container}>
         {recipe.link && (
           <>
@@ -112,7 +113,7 @@ const RecipeDetailScreen: React.FC<RecipeDetailScreenProps> = ({
         </View>
         <View style={{ height: 60 }} />
       </ScrollView>
-    </View>
+    </ScreenLayout>
   )
 }
 

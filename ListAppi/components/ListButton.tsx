@@ -54,7 +54,7 @@ export const ListButton: React.FC<ListButtonProps> = ({
 
   return (
     <>
-      <View style={[styles.container, { backgroundColor: theme.colors.surface }]}>
+      <View style={[styles.container, { backgroundColor: theme.colors.primaryContainer }]}>
         <TouchableOpacity onPress={onPress} style={styles.touchableArea} activeOpacity={0.7}>
           {imageUrl && (
             <View style={styles.imageWrapper}>

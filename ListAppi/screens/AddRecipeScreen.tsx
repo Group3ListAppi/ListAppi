@@ -1,12 +1,21 @@
 import React, { useState } from "react";
-import { ScrollView, StyleSheet, View, Image, Pressable, Alert } from "react-native";
-import { TextInput, useTheme } from "react-native-paper";
+ import { ScrollView, StyleSheet, View, Image, Pressable, Alert } from "react-native";
+import { useTheme, Text } from "react-native-paper";
 import * as ImagePicker from 'expo-image-picker';
 import AppBar from "../components/AppBar";
 import { SubmitButton } from "../components/SubmitButton";
 import { ActionModal } from "../components/ActionModal";
+import { Input } from "../components/Input";
+import { FilterChip } from "../components/FilterChip";
 import { DietType, MainIngredient, MealType } from "../types/RecipeMeta";
-import { Chip, Text } from "react-native-paper";
+import {
+  MEAL_TYPES,
+  MEAL_TYPE_LABELS,
+  MAIN_INGREDIENTS,
+  MAIN_INGREDIENT_LABELS,
+  DIET_TYPES,
+  DIET_TYPE_LABELS,
+} from "../types/filterConstants";
 import type { CreateRecipeFormData } from "../components/RecipeModal";
 
 interface AddRecipeScreenProps {
@@ -137,77 +146,64 @@ const AddRecipeScreen: React.FC<AddRecipeScreenProps> = ({ onSave, onBack, editR
                 onBack={handleBack}
             />
             <ScrollView style={styles.container}>
-                <TextInput
-                    label="Reseptin nimi *"
-                    value={title}
-                    onChangeText={setTitle}
-                    mode="outlined"
-                    style={styles.input}
-                    outlineColor={theme.colors.primaryContainer}
-                    activeOutlineColor={theme.colors.primaryContainer}
-                />
-                <TextInput
-                    label="Linkki reseptiin"
-                    onChangeText={setLink}
-                    mode="outlined"
-                    style={styles.input}
-                    outlineColor={theme.colors.primaryContainer}
-                    activeOutlineColor={theme.colors.primaryContainer}
-                />
+            <Input
+                label="Reseptin nimi *"
+                value={title}
+                onChangeText={setTitle}
+            />
+            <Input
+                label="Linkki reseptiin"
+                value={link}
+                onChangeText={setLink}
+            />
                 <Text variant="titleSmall" style={styles.sectionTitle}>Ruokalaji *</Text>
                 <View style={styles.chipRow}>
-                    <Chip selected={mealType === 'airfryer-ruoat'} onPress={() => setMealType('airfryer-ruoat')} selectedColor='black' style={mealType === 'airfryer-ruoat' ? { backgroundColor: theme.colors.primaryContainer } : { backgroundColor: theme.colors.surface, borderWidth: 2, borderColor: theme.colors.primaryContainer }} textStyle={mealType === 'airfryer-ruoat' ? { color: 'black' } : { color: '#FFFFFF' }}>Airfryer-ruoat</Chip>
-                    <Chip selected={mealType === 'keitot'} onPress={() => setMealType('keitot')} selectedColor='black' style={mealType === 'keitot' ? { backgroundColor: theme.colors.primaryContainer } : { backgroundColor: theme.colors.surface, borderWidth: 2, borderColor: theme.colors.primaryContainer }} textStyle={mealType === 'keitot' ? { color: 'black' } : { color: '#FFFFFF' }}>Keitot</Chip>
-                    <Chip selected={mealType === 'salaatit'} onPress={() => setMealType('salaatit')} selectedColor='black' style={mealType === 'salaatit' ? { backgroundColor: theme.colors.primaryContainer } : { backgroundColor: theme.colors.surface, borderWidth: 2, borderColor: theme.colors.primaryContainer }} textStyle={mealType === 'salaatit' ? { color: 'black' } : { color: '#FFFFFF' }}>Salaatit</Chip>
-                    <Chip selected={mealType === 'pastat'} onPress={() => setMealType('pastat')} selectedColor='black' style={mealType === 'pastat' ? { backgroundColor: theme.colors.primaryContainer } : { backgroundColor: theme.colors.surface, borderWidth: 2, borderColor: theme.colors.primaryContainer }} textStyle={mealType === 'pastat' ? { color: 'black' } : { color: '#FFFFFF' }}>Pastat</Chip>
-                    <Chip selected={mealType === 'hampurilaiset'} onPress={() => setMealType('hampurilaiset')} selectedColor='black' style={mealType === 'hampurilaiset' ? { backgroundColor: theme.colors.primaryContainer } : { backgroundColor: theme.colors.surface, borderWidth: 2, borderColor: theme.colors.primaryContainer }} textStyle={mealType === 'hampurilaiset' ? { color: 'black' } : { color: '#FFFFFF' }}>Hampurilaiset</Chip>
-                    <Chip selected={mealType === 'pihvit'} onPress={() => setMealType('pihvit')} selectedColor='black' style={mealType === 'pihvit' ? { backgroundColor: theme.colors.primaryContainer } : { backgroundColor: theme.colors.surface, borderWidth: 2, borderColor: theme.colors.primaryContainer }} textStyle={mealType === 'pihvit' ? { color: 'black' } : { color: '#FFFFFF' }}>Pihvit</Chip>
-                    <Chip selected={mealType === 'uuniruoat'} onPress={() => setMealType('uuniruoat')} selectedColor='black' style={mealType === 'uuniruoat' ? { backgroundColor: theme.colors.primaryContainer } : { backgroundColor: theme.colors.surface, borderWidth: 2, borderColor: theme.colors.primaryContainer }} textStyle={mealType === 'uuniruoat' ? { color: 'black' } : { color: '#FFFFFF' }}>Uuniruoat</Chip>
-                    <Chip selected={mealType === 'pataruoat'} onPress={() => setMealType('pataruoat')} selectedColor='black' style={mealType === 'pataruoat' ? { backgroundColor: theme.colors.primaryContainer } : { backgroundColor: theme.colors.surface, borderWidth: 2, borderColor: theme.colors.primaryContainer }} textStyle={mealType === 'pataruoat' ? { color: 'black' } : { color: '#FFFFFF' }}>Pataruoat</Chip>
-                    <Chip selected={mealType === 'tacot ja tortillat'} onPress={() => setMealType('tacot ja tortillat')} selectedColor='black' style={mealType === 'tacot ja tortillat' ? { backgroundColor: theme.colors.primaryContainer } : { backgroundColor: theme.colors.surface, borderWidth: 2, borderColor: theme.colors.primaryContainer }} textStyle={mealType === 'tacot ja tortillat' ? { color: 'black' } : { color: '#FFFFFF' }}>Tacot ja tortillat</Chip>
-                    <Chip selected={mealType === 'muu'} onPress={() => setMealType('muu')} selectedColor='black' style={mealType === 'muu' ? { backgroundColor: theme.colors.primaryContainer } : { backgroundColor: theme.colors.surface, borderWidth: 2, borderColor: theme.colors.primaryContainer }} textStyle={mealType === 'muu' ? { color: 'black' } : { color: '#FFFFFF' }}>Muu</Chip>
+                  {MEAL_TYPES.map((meal) => (
+                    <FilterChip
+                      key={meal}
+                      label={MEAL_TYPE_LABELS[meal]}
+                      selected={mealType === meal}
+                      onPress={() => setMealType(meal)}
+                    />
+                  ))}
                 </View>
                 <Text variant="titleSmall" style={styles.sectionTitle}>Pääraaka-aine *</Text>
                 <View style={styles.chipRow}>
-                    <Chip selected={mainIngredient === 'liha'} onPress={() => setMainIngredient('liha')} selectedColor='black' style={mainIngredient === 'liha' ? { backgroundColor: theme.colors.primaryContainer } : { backgroundColor: theme.colors.surface, borderWidth: 2, borderColor: theme.colors.primaryContainer }} textStyle={mainIngredient === 'liha' ? { color: 'black' } : { color: '#FFFFFF' }}>Liha</Chip>
-                    <Chip selected={mainIngredient === 'jauheliha'} onPress={() => setMainIngredient('jauheliha')} selectedColor='black' style={mainIngredient === 'jauheliha' ? { backgroundColor: theme.colors.primaryContainer } : { backgroundColor: theme.colors.surface, borderWidth: 2, borderColor: theme.colors.primaryContainer }} textStyle={mainIngredient === 'jauheliha' ? { color: 'black' } : { color: '#FFFFFF' }}>Jauheliha</Chip>
-                    <Chip selected={mainIngredient === 'makkara'} onPress={() => setMainIngredient('makkara')} selectedColor='black' style={mainIngredient === 'makkara' ? { backgroundColor: theme.colors.primaryContainer } : { backgroundColor: theme.colors.surface, borderWidth: 2, borderColor: theme.colors.primaryContainer }} textStyle={mainIngredient === 'makkara' ? { color: 'black' } : { color: '#FFFFFF' }}>Makkara</Chip>
-                    <Chip selected={mainIngredient === 'broileri'} onPress={() => setMainIngredient('broileri')} selectedColor='black' style={mainIngredient === 'broileri' ? { backgroundColor: theme.colors.primaryContainer } : { backgroundColor: theme.colors.surface, borderWidth: 2, borderColor: theme.colors.primaryContainer }} textStyle={mainIngredient === 'broileri' ? { color: 'black' } : { color: '#FFFFFF' }}>Broileri</Chip>
-                    <Chip selected={mainIngredient === 'kala'} onPress={() => setMainIngredient('kala')} selectedColor='black' style={mainIngredient === 'kala' ? { backgroundColor: theme.colors.primaryContainer } : { backgroundColor: theme.colors.surface, borderWidth: 2, borderColor: theme.colors.primaryContainer }} textStyle={mainIngredient === 'kala' ? { color: 'black' } : { color: '#FFFFFF' }}>Kala</Chip>
-                    <Chip selected={mainIngredient === 'äyriäiset'} onPress={() => setMainIngredient('äyriäiset')} selectedColor='black' style={mainIngredient === 'äyriäiset' ? { backgroundColor: theme.colors.primaryContainer } : { backgroundColor: theme.colors.surface, borderWidth: 2, borderColor: theme.colors.primaryContainer }} textStyle={mainIngredient === 'äyriäiset' ? { color: 'black' } : { color: '#FFFFFF' }}>Äyriäiset</Chip>
-                    <Chip selected={mainIngredient === 'kananmuna'} onPress={() => setMainIngredient('kananmuna')} selectedColor='black' style={mainIngredient === 'kananmuna' ? { backgroundColor: theme.colors.primaryContainer } : { backgroundColor: theme.colors.surface, borderWidth: 2, borderColor: theme.colors.primaryContainer }} textStyle={mainIngredient === 'kananmuna' ? { color: 'black' } : { color: '#FFFFFF' }}>Kananmuna</Chip>
-                    <Chip selected={mainIngredient === 'kasvis'} onPress={() => setMainIngredient('kasvis')} selectedColor='black' style={mainIngredient === 'kasvis' ? { backgroundColor: theme.colors.primaryContainer } : { backgroundColor: theme.colors.surface, borderWidth: 2, borderColor: theme.colors.primaryContainer }} textStyle={mainIngredient === 'kasvis' ? { color: 'black' } : { color: '#FFFFFF' }}>Kasvis</Chip>
-                    <Chip selected={mainIngredient === 'kasviproteiini'} onPress={() => setMainIngredient('kasviproteiini')} selectedColor='black' style={mainIngredient === 'kasviproteiini' ? { backgroundColor: theme.colors.primaryContainer } : { backgroundColor: theme.colors.surface, borderWidth: 2, borderColor: theme.colors.primaryContainer }} textStyle={mainIngredient === 'kasviproteiini' ? { color: 'black' } : { color: '#FFFFFF' }}>Kasviproteiini</Chip>
-                    <Chip selected={mainIngredient === 'muu'} onPress={() => setMainIngredient('muu')} selectedColor='black' style={mainIngredient === 'muu' ? { backgroundColor: theme.colors.primaryContainer } : { backgroundColor: theme.colors.surface, borderWidth: 2, borderColor: theme.colors.primaryContainer }} textStyle={mainIngredient === 'muu' ? { color: 'black' } : { color: '#FFFFFF' }}>Muu</Chip>
+                  {MAIN_INGREDIENTS.map((ingredient) => (
+                    <FilterChip
+                      key={ingredient}
+                      label={MAIN_INGREDIENT_LABELS[ingredient]}
+                      selected={mainIngredient === ingredient}
+                      onPress={() => setMainIngredient(ingredient)}
+                    />
+                  ))}
                 </View>
                 <Text variant="titleSmall" style={styles.sectionTitle}>Ruokavaliot</Text>
                 <View style={styles.chipRow}>
-                    <Chip selected={dietType.includes('gluteeniton')} onPress={() => toggleDietType('gluteeniton')} selectedColor='black' style={dietType.includes('gluteeniton') ? { backgroundColor: theme.colors.primaryContainer } : { backgroundColor: theme.colors.surface, borderWidth: 2, borderColor: theme.colors.primaryContainer }} textStyle={dietType.includes('gluteeniton') ? { color: 'black' } : { color: '#FFFFFF' }}>Gluteeniton</Chip>
-                    <Chip selected={dietType.includes('kananmunaton')} onPress={() => toggleDietType('kananmunaton')} selectedColor='black' style={dietType.includes('kananmunaton') ? { backgroundColor: theme.colors.primaryContainer } : { backgroundColor: theme.colors.surface, borderWidth: 2, borderColor: theme.colors.primaryContainer }} textStyle={dietType.includes('kananmunaton') ? { color: 'black' } : { color: '#FFFFFF' }}>Kananmunaton</Chip>
-                    <Chip selected={dietType.includes('kasvis')} onPress={() => toggleDietType('kasvis')} selectedColor='black' style={dietType.includes('kasvis') ? { backgroundColor: theme.colors.primaryContainer } : { backgroundColor: theme.colors.surface, borderWidth: 2, borderColor: theme.colors.primaryContainer }} textStyle={dietType.includes('kasvis') ? { color: 'black' } : { color: '#FFFFFF' }}>Kasvis</Chip>
-                    <Chip selected={dietType.includes('laktoositon')} onPress={() => toggleDietType('laktoositon')} selectedColor='black' style={dietType.includes('laktoositon') ? { backgroundColor: theme.colors.primaryContainer } : { backgroundColor: theme.colors.surface, borderWidth: 2, borderColor: theme.colors.primaryContainer }} textStyle={dietType.includes('laktoositon') ? { color: 'black' } : { color: '#FFFFFF' }}>Laktoositon</Chip>
-                    <Chip selected={dietType.includes('maidoton')} onPress={() => toggleDietType('maidoton')} selectedColor='black' style={dietType.includes('maidoton') ? { backgroundColor: theme.colors.primaryContainer } : { backgroundColor: theme.colors.surface, borderWidth: 2, borderColor: theme.colors.primaryContainer }} textStyle={dietType.includes('maidoton') ? { color: 'black' } : { color: '#FFFFFF' }}>Maidoton</Chip>
-                    <Chip selected={dietType.includes('vegaaninen')} onPress={() => toggleDietType('vegaaninen')} selectedColor='black' style={dietType.includes('vegaaninen') ? { backgroundColor: theme.colors.primaryContainer } : { backgroundColor: theme.colors.surface, borderWidth: 2, borderColor: theme.colors.primaryContainer }} textStyle={dietType.includes('vegaaninen') ? { color: 'black' } : { color: '#FFFFFF' }}>Vegaaminen</Chip>
+                  {DIET_TYPES.map((diet) => (
+                    <FilterChip
+                      key={diet}
+                      label={DIET_TYPE_LABELS[diet]}
+                      selected={dietType.includes(diet)}
+                      onPress={() => toggleDietType(diet)}
+                    />
+                  ))}
                 </View>
-                <Text variant="titleSmall" style={styles.sectionTitle}>Ainekset</Text>
-                <TextInput
+                <Input
+                    label="Ainekset"
                     value={ingredients}
                     onChangeText={setIngredients}
                     multiline
                     numberOfLines={50}
-                    style={[styles.input, { backgroundColor: 'white', color: 'black', minHeight: 200 }]}
-                    textColor='black'
-                    activeOutlineColor={theme.colors.primary}
+                    minHeight={200}
                 />
-                <Text variant="titleSmall" style={styles.sectionTitle}>Ohjeet</Text>
-                <TextInput
+                <Input
+                    label="Ohjeet"
                     value={instructions}
                     onChangeText={setInstructions}
                     multiline
                     numberOfLines={100}
-                    style={[styles.input, { backgroundColor: 'white', color: 'black', minHeight: 200 }]}
-                    textColor='black'
-                    activeOutlineColor={theme.colors.primary}
+                    minHeight={200}
                 />
                 {!recipeImage && (
                     <Pressable onPress={pickImage} style={[styles.addImageButton, { backgroundColor: theme.colors.primaryContainer }]}>

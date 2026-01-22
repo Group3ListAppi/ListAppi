@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { StyleSheet, View, ScrollView, TouchableOpacity, Image } from "react-native";
-import { Text, useTheme, Checkbox, IconButton, Modal, Portal } from "react-native-paper";
-import AppBar from "../components/AppBar";
+import { StyleSheet, View, ScrollView, TouchableOpacity } from "react-native";
+import { Text, useTheme, Modal, Portal } from "react-native-paper";
 import { ListButton } from "../components/ListButton";
-import { AddNewButton } from "../components/AddNewButton";
 import { ModalBase } from "../components/ModalBase";
 import { getUserRecipes } from "../firebase/recipeUtils";
 import { addRecipeToMenuList, removeRecipeFromMenuList, toggleRecipeDoneInMenuList, getUserMenuLists } from "../firebase/menuUtils";
 import type { MenuList } from "../firebase/menuUtils";
 import type { Recipe } from "../firebase/recipeUtils";
+import ScreenLayout from "../components/ScreenLayout";
 
 interface MenuDetailScreenProps {
   menuList: MenuList;
@@ -86,14 +85,17 @@ const MenuDetailScreen: React.FC<MenuDetailScreenProps> = ({
   };
 
   return (
-    <View style={[styles.root, { backgroundColor: theme.colors.background }]}>
-      <AppBar
-        title={menuList.name}
-        onBack={onBack}
-        onSettings={() => onNavigate("settings")}
-        onNotifications={() => onNavigate("notifications")}
-      />
-
+    <ScreenLayout 
+      activeScreen={activeScreen} 
+      onNavigate={onNavigate} 
+      showNav={false}
+      showBack={true}
+      onBack={onBack}
+      customTitle={menuList.name}
+      showFAB={true}
+      onFABPress={() => setAddRecipeModalVisible(true)}
+      fabLabel="Lisää resepti"
+    >
       <ScrollView style={styles.container}>
         {recipes.map((recipe) => (
           <ListButton
@@ -110,13 +112,6 @@ const MenuDetailScreen: React.FC<MenuDetailScreenProps> = ({
           />
         ))}
       </ScrollView>
-
-      <View style={styles.addButtonWrapper}>
-        <AddNewButton
-          onPress={() => setAddRecipeModalVisible(true)}
-          label="Lisää resepti"
-        />
-      </View>
 
       <Portal>
         <Modal visible={addRecipeModalVisible} onDismiss={() => setAddRecipeModalVisible(false)}>
@@ -137,7 +132,7 @@ const MenuDetailScreen: React.FC<MenuDetailScreenProps> = ({
           </ModalBase>
         </Modal>
       </Portal>
-    </View>
+    </ScreenLayout>
   );
 };
 
@@ -148,11 +143,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingTop: 16,
-  },
-  addButtonWrapper: {
-    position: 'absolute',
-    bottom: 16,
-    right: 16,
   },
   recipeSelectItem: {
     padding: 16,

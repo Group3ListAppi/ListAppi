@@ -6,10 +6,29 @@ interface SubmitButtonProps {
   text: string
   onPress: () => void
   disabled?: boolean
+  variant?: 'default' | 'danger'
 }
 
-export const SubmitButton: React.FC<SubmitButtonProps> = ({ text, onPress, disabled = false }) => {
+export const SubmitButton: React.FC<SubmitButtonProps> = ({ text, onPress, disabled = false, variant = 'default' }) => {
   const theme = useTheme()
+
+  if (variant === 'danger') {
+    return (
+      <Button
+        mode={disabled ? "outlined" : "contained"}
+        onPress={onPress}
+        disabled={disabled}
+        style={[
+          styles.button,
+          disabled && { borderColor: '#FFB3B3' },
+          !disabled && { backgroundColor: '#FFB3B3' }
+        ]}
+        labelStyle={[styles.label, { color: disabled ? '#FFB3B3' : 'black' }]}
+      >
+        {text}
+      </Button>
+    )
+  }
 
   return (
     <Button
