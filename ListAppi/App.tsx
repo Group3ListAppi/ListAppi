@@ -10,6 +10,7 @@ import HomeScreen from './screens/HomeScreen';
 import MenuScreen from './screens/MenuScreen';
 import RecipeScreen from './screens/RecipeScreen';
 import AddRecipeScreen from './screens/AddRecipeScreen';
+import AddRecipeToMenuScreen from './screens/AddRecipeToMenuScreen';
 import RecipeDetailScreen from './screens/RecipeDetailScreen';
 import MenuDetailScreen from './screens/MenuDetailScreen';
 import ShoplistScreen from './screens/ShoplistScreen';
@@ -58,7 +59,7 @@ export default function App() {
     } else if (screen === 'add-recipe' && !data?.editRecipe) {
       setEditRecipe(null);
     }
-    if (screen === 'menu-detail' && data) {
+    if ((screen === 'menu-detail' || screen === 'add-recipe-to-menu') && data) {
       setSelectedMenuList(data);
     }
     setActiveScreen(screen);
@@ -112,6 +113,15 @@ export default function App() {
       case 'menu-detail':
         return selectedMenuList ? (
           <MenuDetailScreen
+            menuList={selectedMenuList}
+            activeScreen={activeScreen}
+            onNavigate={handleNavigate}
+            onBack={handleBack}
+          />
+        ) : null;
+        case 'add-recipe-to-menu':
+        return selectedMenuList ? (
+          <AddRecipeToMenuScreen
             menuList={selectedMenuList}
             activeScreen={activeScreen}
             onNavigate={handleNavigate}
