@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { StyleSheet, View, ScrollView, TouchableOpacity } from "react-native";
-import { Text, useTheme, Modal, Portal } from "react-native-paper";
+import { StyleSheet, ScrollView } from "react-native";
+import { useTheme } from "react-native-paper";
 import { ListButton } from "../components/ListButton";
-import { ModalBase } from "../components/ModalBase";
 import { getUserRecipes } from "../firebase/recipeUtils";
-import { addRecipeToMenuList, removeRecipeFromMenuList, toggleRecipeDoneInMenuList, getUserMenuLists } from "../firebase/menuUtils";
+import { removeRecipeFromMenuList, toggleRecipeDoneInMenuList, getUserMenuLists } from "../firebase/menuUtils";
 import type { MenuList } from "../firebase/menuUtils";
 import type { Recipe } from "../firebase/recipeUtils";
 import ScreenLayout from "../components/ScreenLayout";
@@ -24,14 +23,13 @@ const MenuDetailScreen: React.FC<MenuDetailScreenProps> = ({
 }) => {
   const theme = useTheme();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
-  const [addRecipeModalVisible, setAddRecipeModalVisible] = useState(false);
-  const [allRecipes, setAllRecipes] = useState<Recipe[]>([]);
   const [menuList, setMenuList] = useState<MenuList>(initialMenuList);
 
   useEffect(() => {
-    loadMenuList();
-    loadAllRecipes();
-  }, []);
+    if (activeScreen === "menu-detail") {
+      loadMenuList();
+    }
+  }, [activeScreen]);
 
   const loadMenuList = async () => {
     try {
@@ -53,11 +51,6 @@ const MenuDetailScreen: React.FC<MenuDetailScreenProps> = ({
     setRecipes(filteredRecipes);
   };
 
-  const loadAllRecipes = async () => {
-    const userRecipes = await getUserRecipes(menuList.userId);
-    setAllRecipes(userRecipes);
-  };
-
   const getRecipeDone = (recipeId: string) => {
     return menuList.recipes.find(r => r.recipeId === recipeId)?.done ?? false;
   };
@@ -75,14 +68,6 @@ const MenuDetailScreen: React.FC<MenuDetailScreenProps> = ({
     }
   };
 
-  const handleAddRecipe = async (recipeId: string) => {
-    const alreadyInMenu = menuList.recipes.some(r => r.recipeId === recipeId);
-    if (!alreadyInMenu) {
-      await addRecipeToMenuList(menuList.id, recipeId);
-      loadMenuList();
-    }
-    setAddRecipeModalVisible(false);
-  };
 
   return (
     <ScreenLayout 
@@ -93,7 +78,7 @@ const MenuDetailScreen: React.FC<MenuDetailScreenProps> = ({
       onBack={onBack}
       customTitle={menuList.name}
       showFAB={true}
-      onFABPress={() => setAddRecipeModalVisible(true)}
+      onFABPress={() => onNavigate("add-recipe-to-menu", menuList)}
       fabLabel="Lisää resepti"
     >
       <ScrollView style={styles.container}>
@@ -112,26 +97,6 @@ const MenuDetailScreen: React.FC<MenuDetailScreenProps> = ({
           />
         ))}
       </ScrollView>
-
-      <Portal>
-        <Modal visible={addRecipeModalVisible} onDismiss={() => setAddRecipeModalVisible(false)}>
-          <ModalBase visible={addRecipeModalVisible} onClose={() => setAddRecipeModalVisible(false)} title="Valitse resepti">
-            <ScrollView>
-              {allRecipes
-                .filter(recipe => !menuList.recipes.some(mr => mr.recipeId === recipe.id))
-                .map((recipe) => (
-                  <TouchableOpacity
-                    key={recipe.id}
-                    onPress={() => handleAddRecipe(recipe.id)}
-                    style={styles.recipeSelectItem}
-                  >
-                    <Text>{recipe.title}</Text>
-                  </TouchableOpacity>
-                ))}
-            </ScrollView>
-          </ModalBase>
-        </Modal>
-      </Portal>
     </ScreenLayout>
   );
 };
