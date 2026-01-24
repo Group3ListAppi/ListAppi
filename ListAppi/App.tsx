@@ -14,6 +14,8 @@ import AddRecipeToMenuScreen from './screens/AddRecipeToMenuScreen';
 import RecipeDetailScreen from './screens/RecipeDetailScreen';
 import MenuDetailScreen from './screens/MenuDetailScreen';
 import ShoplistScreen from './screens/ShoplistScreen';
+import ShoplistDetailScreen from './screens/ShoplistDetailScreen'
+import type { Shoplist } from './firebase/shoplistUtils'
 import AuthScreen from './screens/AuthScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import NotificationsScreen from './screens/NotificationsScreen';
@@ -34,6 +36,7 @@ export default function App() {
   const [selectedMenuList, setSelectedMenuList] = useState<MenuList | null>(null);
   const [editRecipe, setEditRecipe] = useState<Recipe | null>(null);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [selectedShoplist, setSelectedShoplist] = useState<Shoplist | null>(null)
 
   // Lataa ja käyttää keepScreenOn-asetusta sovelluksen käynnistyessä
   useEffect(() => {
@@ -61,6 +64,9 @@ export default function App() {
     }
     if ((screen === 'menu-detail' || screen === 'add-recipe-to-menu') && data) {
       setSelectedMenuList(data);
+    }
+    if (screen === 'shoplist-detail' && data) {
+      setSelectedShoplist(data)
     }
     setActiveScreen(screen);
     setHistory((prev) => [...prev, screen]);
@@ -143,6 +149,15 @@ export default function App() {
         ) : null;
       case 'shoplist':
         return <ShoplistScreen activeScreen={activeScreen} onNavigate={handleNavigate} />;
+      case 'shoplist-detail':
+        return selectedShoplist ? (
+          <ShoplistDetailScreen
+            shoplist={selectedShoplist}
+            activeScreen={activeScreen}
+            onNavigate={handleNavigate}
+            onBack={handleBack}
+          />
+        ) : null
       case "settings":
         return <SettingsScreen activeScreen={activeScreen} onBack={handleBack} onNavigate={handleNavigate} />;
       case "notifications":

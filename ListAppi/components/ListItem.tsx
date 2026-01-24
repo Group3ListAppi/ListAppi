@@ -8,6 +8,8 @@ interface ListItemProps {
   isChecked?: boolean;
   onCheckChange?: (checked: boolean) => void;
   onPress?: () => void;
+  onLongPress?: () => void; 
+  delayLongPress?: number; 
 }
 
 export const ListItem: React.FC<ListItemProps> = ({
@@ -16,6 +18,8 @@ export const ListItem: React.FC<ListItemProps> = ({
   isChecked = false,
   onCheckChange,
   onPress,
+  onLongPress, 
+  delayLongPress = 400, 
 }) => {
   const theme = useTheme();
   const [checked, setChecked] = useState(isChecked);
@@ -26,7 +30,12 @@ export const ListItem: React.FC<ListItemProps> = ({
   };
 
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
+    <TouchableOpacity 
+      onPress={onPress}
+      onLongPress={onLongPress} 
+      delayLongPress={delayLongPress} 
+      activeOpacity={0.7}
+      >
       <View
         style={[
           styles.container,

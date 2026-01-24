@@ -26,6 +26,7 @@ export interface DeletedItem {
   type: 'recipe' | 'shoplist' | 'foodlist'
   data: Recipe | any
   recipeId?: string
+  shoplistId?: string
   deletedAt: Date
 }
 
@@ -166,6 +167,7 @@ export const getTrashItems = async (userId: string): Promise<DeletedItem[]> => {
         type: doc.data().type,
         data: doc.data().data,
         recipeId: doc.data().recipeId,
+        shoplistId: doc.data().shoplistId,
         deletedAt: doc.data().deletedAt?.toDate(),
       } as DeletedItem)
     })
