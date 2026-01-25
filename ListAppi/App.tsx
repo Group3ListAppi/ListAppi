@@ -27,6 +27,8 @@ import type { Recipe } from './firebase/recipeUtils'
 import type { MenuList } from './firebase/menuUtils';
 import type { CreateRecipeFormData } from './components/RecipeModal'
 import { saveRecipeToFirestore, updateRecipeInFirestore } from './firebase/recipeUtils'
+import ChooseNameScreen from "./screens/ChooseNameScreen"
+import { ensureUserProfile, getUserProfile } from "./firebase/userProfileUtils"
 
 export default function App() {
   const { user, initializing } = useAuth();
@@ -37,6 +39,8 @@ export default function App() {
   const [editRecipe, setEditRecipe] = useState<Recipe | null>(null);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [selectedShoplist, setSelectedShoplist] = useState<Shoplist | null>(null)
+  const [needsName, setNeedsName] = useState(false)
+  const [checkingProfile, setCheckingProfile] = useState(true)
 
   // Lataa ja käyttää keepScreenOn-asetusta sovelluksen käynnistyessä
   useEffect(() => {
@@ -65,6 +69,37 @@ export default function App() {
       setRecipes([]); 
     }
   }, [user, initializing]);
+
+  //Näyttönimen valinta
+  useEffect(() => {
+    const run = async () => {
+      if (initializing) return
+
+      if (!user) {
+        setNeedsName(false)
+        setCheckingProfile(false)
+        return
+      }
+
+      setCheckingProfile(true)
+      try {
+        await ensureUserProfile(user.uid, user.email ?? null)
+
+        const profile = await getUserProfile(user.uid)
+        const hasName = !!profile?.displayName && profile.displayName.trim().length >= 2
+
+        setNeedsName(!hasName)
+      } catch (e) {
+        console.log("Profile check failed:", e)
+        // turvallinen fallback: pakota nimen valinta jos epävarma
+        setNeedsName(true)
+      } finally {
+        setCheckingProfile(false)
+      }
+    }
+
+    run()
+  }, [user, initializing])
 
   const handleNavigate = (screen: string, data?: any) => {
     if (screen === 'recipe-detail' && data) {
@@ -188,7 +223,13 @@ export default function App() {
     <SafeAreaProvider>
       <PaperProvider theme={theme}>
         <SafeAreaView style={styles.container} edges={['left', 'right']}>
-          {initializing ? null : user ? renderScreen() : <AuthScreen />}
+          {initializing ? null : !user ? (
+            <AuthScreen />
+          ) : checkingProfile ? null : needsName ? (
+            <ChooseNameScreen onDone={() => setNeedsName(false)} />
+          ) : (
+            renderScreen()
+          )}
           <StatusBar style="light" backgroundColor={theme.colors.background} />
         </SafeAreaView>
       </PaperProvider>
