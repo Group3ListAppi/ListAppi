@@ -7,6 +7,7 @@ import { SubmitButton } from "../components/SubmitButton";
 import { ActionModal } from "../components/ActionModal";
 import { DietType, MainIngredient, MealType } from "../types/RecipeMeta";
 import { Chip, Text } from "react-native-paper";
+import { convertImageToBase64 } from "../utils/imageUtils";
 
 interface RecipeModalProps {
     visible: boolean;
@@ -36,6 +37,7 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ visible, onClose, onSave }) =
     const [dietType, setDietType] = useState<DietType[]>([]);
     const [recipeImage, setRecipeImage] = useState<string | null>(null);
     const [showImagePicker, setShowImagePicker] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
 
     const toggleDietType = (tag: DietType) => {
         setDietType((prevTypes) =>
@@ -59,7 +61,7 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ visible, onClose, onSave }) =
                 mediaTypes: ['images'],
                 allowsEditing: true,
                 aspect: [4, 3],
-                quality: 0.8,
+                quality: 0.6,
             });
 
             if (!result.canceled && result.assets && result.assets[0]) {
@@ -81,7 +83,7 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ visible, onClose, onSave }) =
             const result = await ImagePicker.launchCameraAsync({
                 allowsEditing: true,
                 aspect: [4, 3],
-                quality: 0.8,
+                quality: 0.6,
             });
 
             if (!result.canceled && result.assets && result.assets[0]) {
@@ -115,26 +117,40 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ visible, onClose, onSave }) =
         onClose();
     };
 
-    const handleSave = () => {
-        const formData: CreateRecipeFormData = {
-            title,
-            ingredients,
-            instructions,
-            mealType,
-            mainIngredient,
-            dietType,
-        };
-        
-        if (link.trim()) {
-            formData.link = link;
-        }
+    const handleSave = async () => {
+        setIsSaving(true);
+        try {
+            const formData: CreateRecipeFormData = {
+                title,
+                ingredients,
+                instructions,
+                mealType,
+                mainIngredient,
+                dietType,
+            };
+            
+            if (link.trim()) {
+                formData.link = link;
+            }
 
-        if (recipeImage) {
-            formData.image = recipeImage;
+            if (recipeImage) {
+                try {
+                    // Käänä kuva base64-muotoon ennen tallennusta
+                    formData.image = await convertImageToBase64(recipeImage);
+                    console.log('Image converted successfully');
+                } catch (error) {
+                    Alert.alert('Virhe', 'Kuvan käsittelyssä tapahtui virhe');
+                    console.error('Error converting image:', error);
+                    setIsSaving(false);
+                    return;
+                }
+            }
+            
+            await onSave?.(formData);
+            handleClose();
+        } finally {
+            setIsSaving(false);
         }
-        
-        onSave?.(formData);
-        handleClose();
     };
 
     return (
@@ -229,7 +245,7 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ visible, onClose, onSave }) =
                     <SubmitButton
                         text="Tallenna resepti"
                         onPress={handleSave}
-                        disabled={!isValid}
+                        disabled={!isValid || isSaving}
                     />
                     {!isValid && (
                         <Text style={styles.errorText}>

@@ -17,6 +17,7 @@ import {
   DIET_TYPE_LABELS,
 } from "../types/filterConstants";
 import type { CreateRecipeFormData } from "../components/RecipeModal";
+import { convertImageToBase64 } from "../firebase/imageUtils";
 
 interface AddRecipeScreenProps {
   onSave?: (recipe: CreateRecipeFormData) => void;
@@ -45,6 +46,7 @@ const AddRecipeScreen: React.FC<AddRecipeScreenProps> = ({ onSave, onBack, editR
     const [dietType, setDietType] = useState<DietType[]>(editRecipe?.dietType ?? []);
     const [recipeImage, setRecipeImage] = useState<string | null>(editRecipe?.image ?? null);
     const [showImagePicker, setShowImagePicker] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
 
     const isEditMode = !!editRecipe;
 
@@ -118,25 +120,39 @@ const AddRecipeScreen: React.FC<AddRecipeScreenProps> = ({ onSave, onBack, editR
         onBack();
     };
 
-    const handleSave = () => {
-        const formData: CreateRecipeFormData = {
-            title,
-            ingredients,
-            instructions,
-            mealType,
-            mainIngredient,
-            dietType,
-        };
-        
-        if (link.trim()) {
-            formData.link = link;
-        }
+    const handleSave = async () => {
+        setIsSaving(true);
+        try {
+            const formData: CreateRecipeFormData = {
+                title,
+                ingredients,
+                instructions,
+                mealType,
+                mainIngredient,
+                dietType,
+            };
+            
+            if (link.trim()) {
+                formData.link = link;
+            }
 
-        if (recipeImage) {
-            formData.image = recipeImage;
+            if (recipeImage) {
+                try {
+                    // Käännä kuva base64-muotoon ennen tallennusta
+                    formData.image = await convertImageToBase64(recipeImage);
+                    console.log('Image converted successfully');
+                } catch (error) {
+                    Alert.alert('Virhe', 'Kuvan käsittelyssä tapahtui virhe');
+                    console.error('Error converting image:', error);
+                    setIsSaving(false);
+                    return;
+                }
+            }
+            
+            await onSave?.(formData);
+        } finally {
+            setIsSaving(false);
         }
-        
-        onSave?.(formData);
     };
 
     return (
@@ -221,7 +237,7 @@ const AddRecipeScreen: React.FC<AddRecipeScreenProps> = ({ onSave, onBack, editR
                 <SubmitButton
                     text={isEditMode ? "Tallenna muutokset" : "Tallenna resepti"}
                     onPress={handleSave}
-                    disabled={!isValid}
+                    disabled={!isValid || isSaving}
                 />
                 {!isValid && (
                     <Text style={styles.errorText}>

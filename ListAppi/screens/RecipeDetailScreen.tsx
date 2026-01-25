@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { StyleSheet, View, ScrollView, Linking, Image } from 'react-native'
 import { Text, Divider, useTheme, Chip, Button } from 'react-native-paper'
 import AppBar from '../components/AppBar'
@@ -24,6 +24,7 @@ const RecipeDetailScreen: React.FC<RecipeDetailScreenProps> = ({
   onBack,
 }) => {
   const theme = useTheme()
+  const [imageError, setImageError] = useState(false)
 
   return (
     <ScreenLayout 
@@ -48,9 +49,27 @@ const RecipeDetailScreen: React.FC<RecipeDetailScreenProps> = ({
           </>
         )}
 
-        {recipe.image && (
+        {recipe.image && !imageError && (
           <>
-            <Image source={{ uri: recipe.image }} style={styles.recipeImage} />
+            <Image 
+              source={{ uri: recipe.image }} 
+              style={styles.recipeImage}
+              onError={() => {
+                console.warn('Image failed to load:', recipe.image?.substring(0, 50));
+                setImageError(true);
+              }}
+            />
+            <Divider style={styles.divider} />
+          </>
+        )}
+
+        {recipe.image && imageError && (
+          <>
+            <View style={[styles.recipeImage, { backgroundColor: theme.colors.surfaceVariant, justifyContent: 'center', alignItems: 'center' }]}>
+              <Text style={{ color: theme.colors.onSurfaceVariant }}>
+                Kuva ei saatavilla
+              </Text>
+            </View>
             <Divider style={styles.divider} />
           </>
         )}
