@@ -1,8 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, ScrollView, View } from 'react-native';
 import { Text, useTheme, List, Avatar } from 'react-native-paper';
 import ScreenLayout from '../components/ScreenLayout';
 import { useAuth } from '../auth/useAuth';
+import EditDisplayNameDialog from "../components/EditDisplayNameDialog"
+import { getUserProfile } from "../firebase/userProfileUtils"
+
 
 interface AccountSettingScreenProps {
   activeScreen: string
@@ -13,6 +16,26 @@ interface AccountSettingScreenProps {
 const AccountSettingScreen: React.FC<AccountSettingScreenProps> = ({ activeScreen, onBack, onNavigate }) => {
   const theme = useTheme();
   const { user } = useAuth();
+  const [displayName, setDisplayName] = useState("")
+  const [editNameOpen, setEditNameOpen] = useState(false)
+
+// Lataa näyttönimi Firestoresta kun screen aukeaa / user vaihtuu
+  useEffect(() => {
+    const run = async () => {
+      if (!user?.uid) return
+      try {
+        const profile = await getUserProfile(user.uid)
+        const name = (profile?.displayName ?? user.displayName ?? "").trim()
+        setDisplayName(name)
+      } catch {
+        setDisplayName((user.displayName ?? "").trim())
+      }
+    }
+    run()
+  }, [user?.uid])
+
+  const avatarLetter = (displayName?.charAt(0) || user?.displayName?.charAt(0) || "U").toUpperCase()
+
 
   const handleAccountAction = (action: string) => {
     console.log("Account action:", action);
@@ -20,6 +43,12 @@ const AccountSettingScreen: React.FC<AccountSettingScreenProps> = ({ activeScree
 
   return (
     <ScreenLayout activeScreen={activeScreen} onNavigate={onNavigate}>
+       <EditDisplayNameDialog
+        visible={editNameOpen}
+        initialName={displayName}
+        onClose={() => setEditNameOpen(false)}
+        onSaved={(newName) => setDisplayName(newName)}
+      />
       <ScrollView>
         {/* Avatar ja sähköposti */}
         <View style={styles.userSection}>
@@ -38,8 +67,10 @@ const AccountSettingScreen: React.FC<AccountSettingScreenProps> = ({ activeScree
           <List.Subheader>Tilin hallinta</List.Subheader>
           <List.Item
             title="Muuta nimeä"
+            description={displayName ? `Nykyinen: ${displayName}` : "Aseta näyttönimi"}
             left={(props) => <List.Icon {...props} icon="account-edit" />}
-            onPress={() => handleAccountAction("Muuta nimeä")}
+            // 3) Avaa dialogi tästä
+            onPress={() => setEditNameOpen(true)}
           />
           <List.Item
             title="Vaihda sähköposti"
