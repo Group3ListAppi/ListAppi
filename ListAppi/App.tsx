@@ -53,6 +53,19 @@ export default function App() {
     applyKeepScreenOnSetting();
   }, []);
 
+  //Resetoidaan navigaatio/historia uloskirjautuessa
+  useEffect(() => {
+    if (!initializing && !user) {
+      setActiveScreen("home");
+      setHistory(["home"]);
+      setSelectedRecipe(null);
+      setSelectedMenuList(null);
+      setSelectedShoplist(null);
+      setEditRecipe(null);
+      setRecipes([]); 
+    }
+  }, [user, initializing]);
+
   const handleNavigate = (screen: string, data?: any) => {
     if (screen === 'recipe-detail' && data) {
       setSelectedRecipe(data);

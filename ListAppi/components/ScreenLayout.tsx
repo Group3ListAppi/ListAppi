@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Alert } from 'react-native';
 import { useTheme } from 'react-native-paper';
 import Navbar from './Navbar';
 import AppBar from './AppBar';
 import { AddNewButton } from './AddNewButton';
+import { logout } from '../auth/signOut';
 
 interface ScreenLayoutProps {
   activeScreen: string
@@ -20,6 +21,15 @@ interface ScreenLayoutProps {
 
 const ScreenLayout: React.FC<ScreenLayoutProps> = ({ activeScreen, onNavigate, children, showFAB = false, onFABPress, fabLabel = '', showNav = true, showBack = false, onBack, customTitle }) => {
   const theme = useTheme()
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (e) {
+      console.error(e);
+      Alert.alert("Virhe", "Uloskirjautuminen epäonnistui.");
+    }
+  };
 
   const getTitle = () => {
     switch (activeScreen) {
@@ -50,6 +60,7 @@ const ScreenLayout: React.FC<ScreenLayoutProps> = ({ activeScreen, onNavigate, c
         <AppBar
           title={customTitle || getTitle()}
           onBack={onBack}
+          onLogout={handleLogout}
         />
       ) : (
         <AppBar
@@ -57,6 +68,7 @@ const ScreenLayout: React.FC<ScreenLayoutProps> = ({ activeScreen, onNavigate, c
           onSettings={() => onNavigate("settings")}
           onNotifications={() => onNavigate("notifications")}
           onTrash={() => onNavigate("trash")}
+          onLogout={handleLogout}
         />
       )}
       <View style={styles.content}>
