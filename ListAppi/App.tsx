@@ -5,7 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ScreenOrientation from 'expo-screen-orientation';
-import theme from './theme';
+import { themes, ThemeKey } from './theme';
 import HomeScreen from './screens/HomeScreen';
 import MenuScreen from './screens/MenuScreen';
 import RecipeScreen from './screens/RecipeScreen';
@@ -18,6 +18,7 @@ import ShoplistDetailScreen from './screens/ShoplistDetailScreen'
 import type { Shoplist } from './firebase/shoplistUtils'
 import AuthScreen from './screens/AuthScreen';
 import SettingsScreen from './screens/SettingsScreen';
+import StyleScreen from './screens/StyleScreen';
 import NotificationsScreen from './screens/NotificationsScreen';
 import TrashScreen from './screens/TrashScreen';
 import AccountSettingScreen from './screens/AccountSettingScreen';
@@ -41,6 +42,15 @@ export default function App() {
   const [selectedShoplist, setSelectedShoplist] = useState<Shoplist | null>(null)
   const [needsName, setNeedsName] = useState(false)
   const [checkingProfile, setCheckingProfile] = useState(true)
+  const [selectedTheme, setSelectedTheme] = useState<ThemeKey>('dark');
+
+  useEffect(() => {
+  const loadTheme = async () => {
+    const saved = await AsyncStorage.getItem('selectedTheme');
+    if (saved) setSelectedTheme(saved as ThemeKey);
+  };
+  loadTheme();
+}, []);
 
   // Lataa ja käyttää keepScreenOn-asetusta sovelluksen käynnistyessä
   useEffect(() => {
@@ -208,6 +218,8 @@ export default function App() {
         ) : null
       case "settings":
         return <SettingsScreen activeScreen={activeScreen} onBack={handleBack} onNavigate={handleNavigate} />;
+      case "StyleScreen":
+        return <StyleScreen activeScreen={activeScreen} onBack={handleBack} onNavigate={handleNavigate} onThemeChange={setSelectedTheme} />;
       case "notifications":
         return <NotificationsScreen activeScreen={activeScreen} onBack={handleBack} onNavigate={handleNavigate} />;
       case "trash":
@@ -221,7 +233,7 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <PaperProvider theme={theme}>
+      <PaperProvider theme={themes[selectedTheme]}>
         <SafeAreaView style={styles.container} edges={['left', 'right']}>
           {initializing ? null : !user ? (
             <AuthScreen />
@@ -230,7 +242,7 @@ export default function App() {
           ) : (
             renderScreen()
           )}
-          <StatusBar style="light" backgroundColor={theme.colors.background} />
+          <StatusBar style={selectedTheme === 'light' ? 'dark' : 'light'} backgroundColor={themes[selectedTheme].colors.background} />
         </SafeAreaView>
       </PaperProvider>
     </SafeAreaProvider>

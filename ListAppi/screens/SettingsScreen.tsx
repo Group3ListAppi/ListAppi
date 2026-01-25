@@ -49,8 +49,11 @@ export default function SettingsScreen({ activeScreen, onBack, onNavigate }: Pro
   };
 
   const handleNavigation = (section: string) => {
-    // Käsittele navigointi eri asetuksiin
-    console.log("Navigating to:", section);
+    if (section === "Tyyli") {
+      onNavigate("StyleScreen");
+    } else {
+      console.log("Navigating to:", section);
+    }
   };
 
   return (

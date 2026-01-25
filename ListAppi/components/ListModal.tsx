@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { ScrollView, StyleSheet } from "react-native";
-import { TextInput } from "react-native-paper";
 import { ModalBase } from "../components/ModalBase";
 import { SubmitButton } from "../components/SubmitButton";
+import { Input } from "./Input";
 
 export type ListType = "menu" | "shopping";
 
@@ -44,11 +44,10 @@ const ListModal: React.FC<ListModalProps> = ({
     return (
         <ModalBase visible={visible} title={title} onClose={handleClose}>
             <ScrollView>
-                <TextInput
+                <Input
                     label="Listan nimi"
                     value={name}
                     onChangeText={setName}
-                    style={styles.input}
                 />
                 <SubmitButton
                     text="Tallenna"
@@ -61,9 +60,3 @@ const ListModal: React.FC<ListModalProps> = ({
 };
 
 export default ListModal;
-
-const styles = StyleSheet.create({
-    input: {
-        marginBottom: 16,
-    },
-});
