@@ -1,6 +1,6 @@
 import { MD3LightTheme, MD3DarkTheme } from 'react-native-paper';
 
-export type ThemeKey = 'dark' | 'light' | 'blue' | 'purple'
+export type ThemeKey = 'dark' | 'light' | 'blue' | 'purple' | 'lightBlue' | 'lightPurple'
 
 // Tumma teema vihreillä aksenteilla (alkuperäinen)
 const darkTheme = {
@@ -47,6 +47,21 @@ const blueTheme = {
   },
 }
 
+// Vaalea teema sinisillä aksenteilla
+const lightBlueTheme = {
+  ...MD3LightTheme,
+  colors: {
+    ...MD3LightTheme.colors,
+    surface: '#FFFFFF',
+    primary: '#2196F3',
+    primaryContainer: '#BBDEFB',
+    onSurface: '#000000',
+    onSurfaceVariant: '#5F6368',
+    background: '#F5F5F5',
+    outline: '#DDDDDD',
+  },
+}
+
 // Tumma teema violeteilla aksenteilla
 const purpleTheme = {
   ...MD3DarkTheme,
@@ -62,11 +77,28 @@ const purpleTheme = {
   },
 }
 
+// Vaalea teema violeteilla aksenteilla
+const lightPurpleTheme = {
+  ...MD3LightTheme,
+  colors: {
+    ...MD3LightTheme.colors,
+    surface: '#FFFFFF',
+    primary: '#9C27B0',
+    primaryContainer: '#E1BEE7',
+    onSurface: '#000000',
+    onSurfaceVariant: '#5F6368',
+    background: '#F5F5F5',
+    outline: '#DDDDDD',
+  },
+}
+
 export const themes = {
   dark: darkTheme,
   light: lightTheme,
   blue: blueTheme,
   purple: purpleTheme,
+  lightBlue: lightBlueTheme,
+  lightPurple: lightPurpleTheme,
 }
 
 // Oletuksena tumma teema

@@ -1,5 +1,5 @@
 import React from "react";
-import { StyleSheet } from "react-native";
+import { StyleSheet, KeyboardTypeOptions } from "react-native";
 import { TextInput, useTheme } from "react-native-paper";
 
 interface InputProps {
@@ -10,6 +10,8 @@ interface InputProps {
   multiline?: boolean;
   numberOfLines?: number;
   minHeight?: number;
+  autoCorrect?: boolean;
+  keyboardType?: KeyboardTypeOptions;
 }
 
 export const Input: React.FC<InputProps> = ({
@@ -20,6 +22,8 @@ export const Input: React.FC<InputProps> = ({
   multiline = false,
   numberOfLines = 1,
   minHeight,
+  autoCorrect,
+  keyboardType,
 }) => {
   const theme = useTheme();
 
@@ -32,6 +36,8 @@ export const Input: React.FC<InputProps> = ({
       mode="outlined"
       multiline={multiline}
       numberOfLines={numberOfLines}
+      autoCorrect={autoCorrect}
+      keyboardType={keyboardType}
       style={[
         styles.input,
         multiline && { backgroundColor: "white", color: "black", minHeight },

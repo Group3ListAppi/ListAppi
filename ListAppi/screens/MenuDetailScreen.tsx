@@ -7,6 +7,7 @@ import { removeRecipeFromMenuList, toggleRecipeDoneInMenuList, getUserMenuLists 
 import type { MenuList } from "../firebase/menuUtils";
 import type { Recipe } from "../firebase/recipeUtils";
 import ScreenLayout from "../components/ScreenLayout";
+import { useAuth } from "../auth/useAuth";
 
 interface MenuDetailScreenProps {
   menuList: MenuList;
@@ -22,6 +23,7 @@ const MenuDetailScreen: React.FC<MenuDetailScreenProps> = ({
   onBack,
 }) => {
   const theme = useTheme();
+  const { user } = useAuth();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [menuList, setMenuList] = useState<MenuList>(initialMenuList);
 
@@ -87,6 +89,8 @@ const MenuDetailScreen: React.FC<MenuDetailScreenProps> = ({
             key={recipe.id}
             listName={recipe.title}
             imageUrl={recipe.image}
+            ownerAvatar={user?.photoURL || undefined}
+            ownerInitials={user?.displayName?.charAt(0).toUpperCase() || "U"}
             showCheckbox={true}
             isChecked={getRecipeDone(recipe.id)}
             onCheckChange={() => handleToggleDone(recipe.id)}

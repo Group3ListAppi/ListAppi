@@ -113,8 +113,15 @@ const MenuScreen: React.FC<MenuScreenProps> = ({ activeScreen, onNavigate }) => 
                 key={list.id}
                 listName={list.name}
                 createdAt={list.createdAt}
+                ownerAvatar={user?.photoURL || undefined}
+                ownerInitials={user?.displayName?.charAt(0).toUpperCase() || "U"}
                 onPress={() => onNavigate('menu-detail', list)}
                 onDelete={() => handleDeleteMenuList(list.id)}
+                onEdit={() => onNavigate('menu-detail', list)}
+                onShare={() => {
+                  // TODO: jako toiminnallisuus
+                }}
+                customActionIds={['share', 'edit', 'remove']}
               />
             ))}
           </ScrollView>

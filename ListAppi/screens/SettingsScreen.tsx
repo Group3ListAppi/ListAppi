@@ -3,7 +3,6 @@ import { StyleSheet, ScrollView, View } from "react-native";
 import { Text, useTheme, List, Switch } from "react-native-paper";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ScreenOrientation from "expo-screen-orientation";
-import AppBar from "../components/AppBar";
 import ScreenLayout from "../components/ScreenLayout";
 
 type Props = {

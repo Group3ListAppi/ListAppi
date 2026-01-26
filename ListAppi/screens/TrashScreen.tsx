@@ -116,7 +116,7 @@
 
       return (
         <View key={title} style={styles.categoryContainer}>
-          <Text variant="titleMedium" style={[styles.categoryTitle, { color: theme.colors.primary }]}>
+          <Text variant="titleMedium" style={[styles.categoryTitle, { color: '#FFFFFF' }]}>
             {title}
           </Text>
           {items.map((item) => (
@@ -125,8 +125,10 @@
                 //listName={item.data.title}
                 listName={getItemName(item)}
                 imageUrl={item.data.image}
+                ownerAvatar={user?.photoURL || undefined}
+                ownerInitials={user?.displayName?.charAt(0).toUpperCase() || "U"}
                 customActionIds={['restore', 'deletePermanent']}
-                
+                restoreLabel={getRestoreLabel(item)}
                 onRestore={() => handleRestore(item)}
                 //onRestore={() => handleRestore(item.id, item.recipeId || item.data.id, item.data)}
                 onPermanentlyDelete={() => handlePermanentlyDelete(item.id, item.recipeId || item.data.id)}

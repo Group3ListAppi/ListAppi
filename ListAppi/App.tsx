@@ -242,7 +242,7 @@ export default function App() {
           ) : (
             renderScreen()
           )}
-          <StatusBar style={selectedTheme === 'light' ? 'dark' : 'light'} backgroundColor={themes[selectedTheme].colors.background} />
+          <StatusBar style={selectedTheme === 'light' || selectedTheme === 'lightBlue' || selectedTheme === 'lightPurple' ? 'dark' : 'light'} backgroundColor={themes[selectedTheme].colors.background} />
         </SafeAreaView>
       </PaperProvider>
     </SafeAreaProvider>

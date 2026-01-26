@@ -15,6 +15,8 @@ type Props = {
 export default function StyleScreen({ activeScreen, onBack, onNavigate, onThemeChange }: Props) {
   const theme = useTheme()
   const [selectedTheme, setSelectedTheme] = useState<ThemeKey>("dark")
+  const [themeMode, setThemeMode] = useState<"dark" | "light">("dark")
+  const [selectedColor, setSelectedColor] = useState<"green" | "blue" | "purple">("green")
 
   // Lataa tallennettu teema
   useEffect(() => {
@@ -23,6 +25,20 @@ export default function StyleScreen({ activeScreen, onBack, onNavigate, onThemeC
         const saved = await AsyncStorage.getItem("selectedTheme")
         if (saved) {
           setSelectedTheme(saved as ThemeKey)
+          // Määrittää moodin tallennetusta teemasta
+          if (saved === "light" || saved === "lightBlue" || saved === "lightPurple") {
+            setThemeMode("light")
+          } else {
+            setThemeMode("dark")
+          }
+          // Määrittää värin tallennetusta teemasta
+          if (saved === "blue" || saved === "lightBlue") {
+            setSelectedColor("blue")
+          } else if (saved === "purple" || saved === "lightPurple") {
+            setSelectedColor("purple")
+          } else {
+            setSelectedColor("green")
+          }
         }
       } catch (error) {
         console.log("Error loading theme:", error)
@@ -41,26 +57,49 @@ export default function StyleScreen({ activeScreen, onBack, onNavigate, onThemeC
     }
   }
 
-  const themeOptions: { key: ThemeKey; label: string; description: string; }[] = [
+  const handleColorChange = (color: "green" | "blue" | "purple") => {
+    setSelectedColor(color)
+    // Määrittää teeman avaimen värin ja nykyisen moodin perusteella
+    let newTheme: ThemeKey
+    if (color === "green") {
+      newTheme = themeMode === "dark" ? "dark" : "light"
+    } else if (color === "blue") {
+      newTheme = themeMode === "dark" ? "blue" : "lightBlue"
+    } else {
+      newTheme = themeMode === "dark" ? "purple" : "lightPurple"
+    }
+    handleThemeSelect(newTheme)
+  }
+
+  const handleModeChange = (mode: "dark" | "light") => {
+    setThemeMode(mode)
+    // Rakentaa teeman avaimen nykyisen värin ja valitun moodin perusteella
+    let newTheme: ThemeKey
+    if (selectedColor === "green") {
+      newTheme = mode === "dark" ? "dark" : "light"
+    } else if (selectedColor === "blue") {
+      newTheme = mode === "dark" ? "blue" : "lightBlue"
+    } else {
+      newTheme = mode === "dark" ? "purple" : "lightPurple"
+    }
+    handleThemeSelect(newTheme)
+  }
+
+  const colorOptions: { value: "green" | "blue" | "purple"; label: string; color: string; }[] = [
     {
-      key: "dark",
-      label: "Tumma",
-      description: "Tumma teema vihreillä aksenteilla",
+      value: "green",
+      label: "Vihreä",
+      color: "#4CAF50",
     },
     {
-      key: "light",
-      label: "Vaalea",
-      description: "Vaalea teema vihreillä aksenteilla",
-    },
-    {
-      key: "blue",
+      value: "blue",
       label: "Sininen",
-      description: "Tumma teema sinisillä aksenteilla",
+      color: "#2196F3",
     },
     {
-      key: "purple",
+      value: "purple",
       label: "Violetti",
-      description: "Tumma teema violeteilla aksenteilla",
+      color: "#9C27B0",
     },
   ]
 
@@ -74,61 +113,117 @@ export default function StyleScreen({ activeScreen, onBack, onNavigate, onThemeC
       customTitle="Tyyli"
     >
       <ScrollView style={styles.content}>
-        <Text variant="bodyMedium" style={[styles.description, { color: theme.colors.onSurfaceVariant }]}>
-          Valitse sovelluksen ulkoasu
-        </Text>
-
-        <View style={styles.optionsContainer}>
-          {themeOptions.map((option) => (
+        {/* Moodin valinta */}
+        <View style={styles.modeContainer}>
+          <Text variant="titleMedium" style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
+            Teeman tyyli
+          </Text>
+          <View style={styles.modeOptions}>
             <Pressable
-              key={option.key}
               style={[
-                styles.themeOption,
+                styles.modeOption,
                 { 
-                  backgroundColor: theme.colors.surface,
-                  borderColor: selectedTheme === option.key ? theme.colors.primary : theme.colors.outline,
-                  borderWidth: selectedTheme === option.key ? 2 : 1,
+                  backgroundColor: themeMode === "dark" ? theme.colors.primaryContainer : theme.colors.surface,
+                  borderColor: themeMode === "dark" ? theme.colors.primary : theme.colors.outline,
+                  borderWidth: 1,
                 }
               ]}
-              onPress={() => handleThemeSelect(option.key)}
+              onPress={() => handleModeChange("dark")}
             >
-              <View style={styles.themeInfo}>
-                <View style={styles.colorPreview}>
-                  <View 
-                    style={[
-                      styles.colorSwatch, 
-                      { backgroundColor: themes[option.key].colors.background }
-                    ]} 
-                  />
-                  <View 
-                    style={[
-                      styles.colorSwatch, 
-                      { backgroundColor: themes[option.key].colors.primary }
-                    ]} 
-                  />
-                  <View 
-                    style={[
-                      styles.colorSwatch, 
-                      { backgroundColor: themes[option.key].colors.primaryContainer }
-                    ]} 
-                  />
-                </View>
-                <View style={styles.themeText}>
-                  <Text variant="titleMedium" style={{ color: theme.colors.onSurface }}>
-                    {option.label}
-                  </Text>
-                  <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                    {option.description}
-                  </Text>
-                </View>
-              </View>
               <RadioButton
-                value={option.key}
-                status={selectedTheme === option.key ? "checked" : "unchecked"}
-                onPress={() => handleThemeSelect(option.key)}
+                value="dark"
+                status={themeMode === "dark" ? "checked" : "unchecked"}
+                onPress={() => handleModeChange("dark")}
               />
+              <Text variant="bodyLarge" style={{ color: theme.colors.onSurface }}>
+                Tumma
+              </Text>
             </Pressable>
-          ))}
+            <Pressable
+              style={[
+                styles.modeOption,
+                { 
+                  backgroundColor: themeMode === "light" ? theme.colors.primaryContainer : theme.colors.surface,
+                  borderColor: themeMode === "light" ? theme.colors.primary : theme.colors.outline,
+                  borderWidth: 1,
+                }
+              ]}
+              onPress={() => handleModeChange("light")}
+            >
+              <RadioButton
+                value="light"
+                status={themeMode === "light" ? "checked" : "unchecked"}
+                onPress={() => handleModeChange("light")}
+              />
+              <Text variant="bodyLarge" style={{ color: theme.colors.onSurface }}>
+                Vaalea
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+
+        {/* Väriteeman valinta */}
+        <View style={styles.colorContainer}>
+          <Text variant="titleMedium" style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
+            Väriteema
+          </Text>
+          <View style={styles.optionsContainer}>
+            {colorOptions.map((option) => {
+              const themeKey: ThemeKey = option.value === "green" 
+                ? (themeMode === "dark" ? "dark" : "light")
+                : option.value === "blue"
+                ? (themeMode === "dark" ? "blue" : "lightBlue")
+                : (themeMode === "dark" ? "purple" : "lightPurple")
+              
+              return (
+                <Pressable
+                  key={option.value}
+                  style={[
+                    styles.themeOption,
+                    { 
+                      backgroundColor: theme.colors.surface,
+                      borderColor: selectedColor === option.value ? theme.colors.primary : theme.colors.outline,
+                      borderWidth: selectedColor === option.value ? 2 : 1,
+                    }
+                  ]}
+                  onPress={() => handleColorChange(option.value)}
+                >
+                  <View style={styles.themeInfo}>
+                    <View style={styles.colorPreview}>
+                      <View 
+                        style={[
+                          styles.colorSwatch, 
+                          { backgroundColor: themes[themeKey].colors.background }
+                        ]} 
+                      />
+                      <View 
+                        style={[
+                          styles.colorSwatch, 
+                          { backgroundColor: themes[themeKey].colors.primary }
+                        ]} 
+                      />
+                      <View 
+                        style={[
+                          styles.colorSwatch, 
+                          { backgroundColor: themes[themeKey].colors.primaryContainer }
+                        ]} 
+                      />
+                    </View>
+                    <View style={styles.themeText}>
+                      <Text variant="titleMedium" style={{ color: theme.colors.onSurface }}>
+                        {option.label}
+                      </Text>
+                    </View>
+                  </View>
+                  <RadioButton
+                    value={option.value}
+                    status={selectedColor === option.value ? "checked" : "unchecked"}
+                    onPress={() => handleColorChange(option.value)}
+                  />
+                </Pressable>
+              )
+            })}
+          </View>
         </View>
       </ScrollView>
     </ScreenLayout>
@@ -141,6 +236,28 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   description: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    marginBottom: 12,
+  },
+  modeContainer: {
+    marginBottom: 32,
+  },
+  modeOptions: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  modeOption: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 12,
+    borderRadius: 12,
+    gap: 8,
+  },
+  colorContainer: {
     marginBottom: 24,
   },
   optionsContainer: {

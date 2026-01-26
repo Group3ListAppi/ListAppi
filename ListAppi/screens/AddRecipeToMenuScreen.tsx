@@ -8,6 +8,7 @@ import { SearchBar } from '../components/SearchBar'
 import { FilterModal, type FilterOptions } from '../components/FilterModal'
 import { getUserRecipes } from '../firebase/recipeUtils'
 import { addRecipeToMenuList } from '../firebase/menuUtils'
+import { useAuth } from '../auth/useAuth'
 import type { MenuList } from '../firebase/menuUtils'
 import type { Recipe } from '../firebase/recipeUtils'
 
@@ -25,6 +26,7 @@ const AddRecipeToMenuScreen: React.FC<AddRecipeToMenuScreenProps> = ({
   onBack,
 }) => {
   const theme = useTheme()
+  const { user } = useAuth()
 
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [selectedRecipeIds, setSelectedRecipeIds] = useState<string[]>([])
@@ -144,6 +146,8 @@ const AddRecipeToMenuScreen: React.FC<AddRecipeToMenuScreenProps> = ({
                 key={recipe.id}
                 listName={recipe.title}
                 imageUrl={recipe.image}
+                ownerAvatar={user?.photoURL || undefined}
+                ownerInitials={user?.displayName?.charAt(0).toUpperCase() || "U"}
                 showCheckbox={true}
                 isChecked={selectedRecipeIds.includes(recipe.id)}
                 onCheckChange={() => toggleSelect(recipe.id)}
