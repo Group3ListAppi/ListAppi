@@ -31,6 +31,7 @@ interface ActionModalProps {
   onPermanentlyDelete?: () => void
   shareLabel?: string
   removeLabel?: string
+  restoreLabel?: string
 }
 
 // Määeritellään toiminnot ja niiden ominaisuudet
@@ -135,6 +136,7 @@ export const ActionModal: React.FC<ActionModalProps> = ({
   onPermanentlyDelete,
   shareLabel = 'Jaa lista',
   removeLabel = 'Poista lista',
+  restoreLabel = 'Palauta resepti',
 }) => {
   const theme = useTheme()
 
@@ -161,7 +163,7 @@ export const ActionModal: React.FC<ActionModalProps> = ({
       const { onPressKey, ...rest } = definition
       return {
         ...rest,
-        label: id === 'share' ? shareLabel : (id === 'remove' ? removeLabel : rest.label),
+        label: id === 'share' ? shareLabel : (id === 'remove' ? removeLabel : (id === 'restore' ? restoreLabel : rest.label)),
         onPress: actionCallbacks[onPressKey] as () => void,
       }
     })

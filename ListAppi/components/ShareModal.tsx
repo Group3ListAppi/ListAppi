@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef  } from "react";
-import { View, StyleSheet, TextInput, ScrollView} from "react-native";
+import { View, StyleSheet, ScrollView} from "react-native";
 import { useTheme } from "react-native-paper";
 import { Text } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { ModalBase } from "./ModalBase";
 import { SubmitButton } from "./SubmitButton";
 import { TouchableOpacity } from "react-native";
+import { Input } from "./Input";
 
 export interface ActionButton {
   id: string
@@ -35,6 +36,13 @@ export const ShareModal: React.FC<ActionModalProps> = ({ visible, onClose, title
     setEmails(newEmails)
   }
 
+  const handleRemoveEmail = (index: number) => {
+    if (emails.length > 1) {
+      const newEmails = emails.filter((_, i) => i !== index)
+      setEmails(newEmails)
+    }
+  }
+
   useEffect(() => {
     if (!visible) {
       setEmails([""])
@@ -52,15 +60,30 @@ export const ShareModal: React.FC<ActionModalProps> = ({ visible, onClose, title
           indicatorStyle="white"
         >
           {emails.map((email, index) => (
-            <TextInput
-              key={index}
-              style={[styles.input, { marginBottom: index < emails.length - 1 ? 12 : 0 }]}
-              placeholder="ystava@esimerkki.com"
-              value={email}
-              onChangeText={(text) => handleEmailChange(index, text)}
-              autoCorrect={false}
-              keyboardType="email-address"
-            />
+            <View key={index} style={styles.emailRow}>
+              <View style={styles.inputWrapper}>
+                <Input
+                  label="ystava@esimerkki.com"
+                  placeholder=""
+                  value={email}
+                  onChangeText={(text) => handleEmailChange(index, text)}
+                  autoCorrect={false}
+                  keyboardType="email-address"
+                />
+              </View>
+              {emails.length > 1 && (
+                <TouchableOpacity 
+                  style={styles.deleteButton}
+                  onPress={() => handleRemoveEmail(index)}
+                >
+                  <MaterialCommunityIcons
+                    name="close-circle"
+                    size={24}
+                    color={theme.colors.error}
+                  />
+                </TouchableOpacity>
+              )}
+            </View>
           ))}
         </ScrollView>
       <View>
@@ -82,23 +105,25 @@ export const ShareModal: React.FC<ActionModalProps> = ({ visible, onClose, title
 
 const styles = StyleSheet.create({
   emailsContainer: {
-    maxHeight: 200,
+    maxHeight: 300,
     marginBottom: 16,
     paddingRight: 5,
   },
-  input: {
-    height: 40,
-    backgroundColor: 'white',
-    borderWidth: 2,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 0,
+  emailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  inputWrapper: {
+    flex: 1,
+  },
+  deleteButton: {
+    padding: 8,
+    marginBottom: 16,
   },
   addRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    marginTop: 16,
   },
   addText: {
     fontSize: 16,

@@ -145,6 +145,8 @@ const RecipeScreen: React.FC<RecipeScreenProps> = ({ activeScreen, onNavigate, r
                 key={recipe.id}
                 listName={recipe.title}
                 imageUrl={recipe.image}
+                ownerAvatar={user?.photoURL || undefined}
+                ownerInitials={user?.displayName?.charAt(0).toUpperCase() || "U"}
                 isRecipe={true}
                 onPress={() => onNavigate('recipe-detail', recipe)}
                 onEdit={() => onNavigate('add-recipe', { editRecipe: recipe })}

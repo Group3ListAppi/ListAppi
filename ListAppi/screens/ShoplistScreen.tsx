@@ -98,13 +98,16 @@ const ShoplistScreen: React.FC<ShoplistScreenProps> = ({ activeScreen, onNavigat
               key={list.id}
               listName={list.name}
               createdAt={list.createdAt}
+              ownerAvatar={user?.photoURL || undefined}
+              ownerInitials={user?.displayName?.charAt(0).toUpperCase() || "U"}
               isRecipe={false}
               onPress={() => onNavigate('shoplist-detail', list)}
               onDelete={() => handleDeleteShoplist(list.id)}
-              
+              onEdit={() => onNavigate('shoplist-detail', list)}
               onShare={() => {
                 // TODO: jako myöhemmin
               }}
+              customActionIds={['share', 'edit', 'remove']}
             />
           ))}
           <View style={{ height: 140 }} />
