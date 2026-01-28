@@ -1,4 +1,4 @@
-import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore"
+import { doc, getDoc, serverTimestamp, setDoc, documentId, query, where, getDocs, collection } from "firebase/firestore"
 import { auth, db } from "./config"
 import { updateProfile } from "firebase/auth"
 
@@ -6,6 +6,7 @@ export type UserProfile = {
   email: string
   emailLower: string
   displayName?: string
+  photoURL?: string
   createdAt?: any
 }
 
@@ -41,4 +42,30 @@ export async function saveMyDisplayName(displayName: string) {
 
   // 2) Auth-profiili
   await updateProfile(user, { displayName: name })
+}
+
+// Get multiple user profiles at once
+export async function getUserProfiles(userIds: string[]): Promise<Map<string, UserProfile>> {
+  const profileMap = new Map<string, UserProfile>()
+  
+  if (userIds.length === 0) return profileMap
+  
+  // Firestore 'in' query limit is 10, so batch if needed
+  const batches: string[][] = []
+  for (let i = 0; i < userIds.length; i += 10) {
+    batches.push(userIds.slice(i, i + 10))
+  }
+  
+  for (const batch of batches) {
+    const q = query(
+      collection(db, 'users'),
+      where(documentId(), 'in', batch)
+    )
+    const snapshot = await getDocs(q)
+    snapshot.forEach(doc => {
+      profileMap.set(doc.id, doc.data() as UserProfile)
+    })
+  }
+  
+  return profileMap
 }

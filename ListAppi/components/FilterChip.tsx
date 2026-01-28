@@ -31,7 +31,7 @@ export const FilterChip: React.FC<FilterChipProps> = ({
       textStyle={
         selected
           ? { color: "black" }
-          : { color: "#FFFFFF" }
+          : { color: theme.colors.onSurface }
       }
     >
       {label}

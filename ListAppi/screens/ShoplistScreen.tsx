@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { StyleSheet, View, ScrollView } from 'react-native'
+import { StyleSheet, View, ScrollView, Image } from 'react-native'
 import { Text, ActivityIndicator } from 'react-native-paper'
 import ScreenLayout from '../components/ScreenLayout'
 import ListModal, { type CreateListFormData } from '../components/ListModal'
@@ -10,8 +10,11 @@ import {
   getUserShoplists,
   saveShoplistToFirestore,
   moveShoplistToTrash,
+  updateShoplistName,
+  stopSharingShoplist,
   type Shoplist,
 } from '../firebase/shoplistUtils'
+import { getUserProfiles } from '../firebase/userProfileUtils'
 
 interface ShoplistScreenProps {
   activeScreen: string
@@ -23,6 +26,7 @@ const ShoplistScreen: React.FC<ShoplistScreenProps> = ({ activeScreen, onNavigat
 
   const [loading, setLoading] = useState(false)
   const [listModalVisible, setListModalVisible] = useState(false)
+  const [editingShoplist, setEditingShoplist] = useState<Shoplist | null>(null)
   const [shoplists, setShoplists] = useState<Shoplist[]>([])
 
   useEffect(() => {
@@ -36,7 +40,30 @@ const ShoplistScreen: React.FC<ShoplistScreenProps> = ({ activeScreen, onNavigat
     try {
       setLoading(true)
       const lists = await getUserShoplists(user.uid)
-      setShoplists(lists)
+      
+      // Fetch owner profiles for all shoplists
+      const ownerIds = [...new Set(lists.map(s => s.userId))]
+      const ownerProfiles = await getUserProfiles(ownerIds)
+      
+      // Fetch shared user profiles
+      const allSharedUserIds = new Set<string>()
+      lists.forEach(list => {
+        list.sharedWith?.forEach(id => allSharedUserIds.add(id))
+      })
+      const sharedUserProfiles = await getUserProfiles([...allSharedUserIds])
+      
+      // Enrich shoplists with owner info and shared users
+      const enrichedLists = lists.map(shoplist => ({
+        ...shoplist,
+        ownerName: ownerProfiles.get(shoplist.userId)?.displayName,
+        ownerAvatar: ownerProfiles.get(shoplist.userId)?.photoURL,
+        sharedUsers: shoplist.sharedWith?.map(uid => ({
+          displayName: sharedUserProfiles.get(uid)?.displayName,
+          photoURL: sharedUserProfiles.get(uid)?.photoURL,
+        })) || [],
+      }))
+      
+      setShoplists(enrichedLists)
     } catch (e) {
       console.error('Error loading shoplists:', e)
     } finally {
@@ -53,10 +80,26 @@ const ShoplistScreen: React.FC<ShoplistScreenProps> = ({ activeScreen, onNavigat
         id,
         userId: user.uid,
         createdAt: new Date(),
+        sharedWith: [],
+        sharedUsers: [],
+        ownerName: user.displayName || undefined,
+        ownerAvatar: user.photoURL || undefined,
       }
       setShoplists((prev) => [...prev, newList])
     } catch (e) {
       console.error('Error creating shoplist:', e)
+    }
+  }
+
+  const handleRenameShoplist = async (list: CreateListFormData) => {
+    if (!editingShoplist || !user?.uid) return
+    try {
+      await updateShoplistName(editingShoplist.id, list.name)
+      await loadShoplists()
+    } catch (e) {
+      console.error('Error renaming shoplist:', e)
+    } finally {
+      setEditingShoplist(null)
     }
   }
 
@@ -70,6 +113,24 @@ const ShoplistScreen: React.FC<ShoplistScreenProps> = ({ activeScreen, onNavigat
       setShoplists((prev) => prev.filter((l) => l.id !== id))
     } catch (e) {
       console.error('Error deleting shoplist:', e)
+    }
+  }
+
+  const handleStopSharingShoplist = async (id: string) => {
+    try {
+      const shoplist = shoplists.find(l => l.id === id)
+      if (shoplist && user?.uid) {
+        const isOwner = shoplist.userId === user.uid
+        await stopSharingShoplist(id, user.uid, isOwner)
+        
+        if (isOwner) {
+          await loadShoplists()
+        } else {
+          setShoplists(shoplists.filter(l => l.id !== id))
+        }
+      }
+    } catch (error) {
+      console.error('Error stopping shoplist sharing:', error)
     }
   }
 
@@ -89,7 +150,11 @@ const ShoplistScreen: React.FC<ShoplistScreenProps> = ({ activeScreen, onNavigat
         </View>
       ) : shoplists.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Text variant="bodyMedium">Ei vielä ostoslistoja.</Text>
+          <Image
+            source={require('../assets/PikkuKokki.png')}
+            style={styles.emptyImage}
+            resizeMode="contain"
+          />
         </View>
       ) : (
         <ScrollView style={styles.listContainer}>
@@ -98,16 +163,22 @@ const ShoplistScreen: React.FC<ShoplistScreenProps> = ({ activeScreen, onNavigat
               key={list.id}
               listName={list.name}
               createdAt={list.createdAt}
-              ownerAvatar={user?.photoURL || undefined}
-              ownerInitials={user?.displayName?.charAt(0).toUpperCase() || "U"}
+              ownerAvatar={list.ownerAvatar}
+              ownerInitials={list.ownerName?.charAt(0).toUpperCase() || "?"}
+              ownerName={list.ownerName}
+              sharedUserAvatars={list.sharedUsers}
+              isOwnedByUser={list.userId === user?.uid}
               isRecipe={false}
               onPress={() => onNavigate('shoplist-detail', list)}
               onDelete={() => handleDeleteShoplist(list.id)}
-              onEdit={() => onNavigate('shoplist-detail', list)}
+              onEdit={() => setEditingShoplist(list)}
               onShare={() => {
-                // TODO: jako myöhemmin
               }}
-              customActionIds={['share', 'edit', 'remove']}
+              onStopSharing={() => handleStopSharingShoplist(list.id)}
+              onShareComplete={() => loadShoplists()}
+              itemId={list.id}
+              itemType="shoplist"
+              editLabel="Muokkaa nimeä"
             />
           ))}
           <View style={{ height: 140 }} />
@@ -115,10 +186,15 @@ const ShoplistScreen: React.FC<ShoplistScreenProps> = ({ activeScreen, onNavigat
       )}
 
       <ListModal
-        visible={listModalVisible}
+        visible={listModalVisible || !!editingShoplist}
         type="shopping"
-        onClose={() => setListModalVisible(false)}
-        onSave={handleCreateShoplist}
+        onClose={() => {
+          setListModalVisible(false)
+          setEditingShoplist(null)
+        }}
+        onSave={editingShoplist ? handleRenameShoplist : handleCreateShoplist}
+        initialName={editingShoplist?.name}
+        title={editingShoplist ? "Muokkaa nimeä" : undefined}
       />
     </ScreenLayout>
   )
@@ -138,7 +214,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emptyContainer: {
-    marginTop: 12,
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyImage: {
+    width: 300,
+    height: 300,
   },
 })
 

@@ -29,9 +29,11 @@ interface ActionModalProps {
   onDeleteRecipe?: () => void
   onRestore?: () => void
   onPermanentlyDelete?: () => void
+  onStopSharing?: () => void
   shareLabel?: string
   removeLabel?: string
   restoreLabel?: string
+  editLabel?: string
 }
 
 // Määeritellään toiminnot ja niiden ominaisuudet
@@ -50,7 +52,7 @@ const ACTION_DEFINITIONS: Record<string, Omit<ActionButton, 'onPress'> & { onPre
     },
     share: {
         id: 'share',
-        label: 'Jaa lista',
+        label: 'Jaa kokoelma',
         icon: 'share-variant',
         onPressKey: 'onShare',
     },
@@ -114,6 +116,12 @@ const ACTION_DEFINITIONS: Record<string, Omit<ActionButton, 'onPress'> & { onPre
         icon: 'delete-forever',
         onPressKey: 'onPermanentlyDelete',
     },
+    stopSharing: {
+        id: 'stopSharing',
+        label: 'Lopeta jako',
+        icon: 'share-off',
+        onPressKey: 'onStopSharing',
+    },
 }
 
 export const ActionModal: React.FC<ActionModalProps> = ({
@@ -134,7 +142,9 @@ export const ActionModal: React.FC<ActionModalProps> = ({
   onDeleteRecipe,
   onRestore,
   onPermanentlyDelete,
+  onStopSharing,
   shareLabel = 'Jaa lista',
+  editLabel = 'Muokkaa',
   removeLabel = 'Poista lista',
   restoreLabel = 'Palauta resepti',
 }) => {
@@ -154,6 +164,7 @@ export const ActionModal: React.FC<ActionModalProps> = ({
     onDeleteRecipe: onDeleteRecipe || (() => {}),
     onRestore: onRestore || (() => {}),
     onPermanentlyDelete: onPermanentlyDelete || (() => {}),
+    onStopSharing: onStopSharing || (() => {}),
   }
 
   const actions: ActionButton[] = actionIds
@@ -163,7 +174,15 @@ export const ActionModal: React.FC<ActionModalProps> = ({
       const { onPressKey, ...rest } = definition
       return {
         ...rest,
-        label: id === 'share' ? shareLabel : (id === 'remove' ? removeLabel : (id === 'restore' ? restoreLabel : rest.label)),
+        label: id === 'share'
+          ? shareLabel
+          : (id === 'remove'
+            ? removeLabel
+            : (id === 'restore'
+              ? restoreLabel
+              : (id === 'edit'
+                ? editLabel
+                : rest.label))),
         onPress: actionCallbacks[onPressKey] as () => void,
       }
     })

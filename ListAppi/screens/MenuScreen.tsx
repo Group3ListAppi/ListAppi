@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, ScrollView } from 'react-native';
+import { StyleSheet, View, ScrollView, Image } from 'react-native';
 import { Text, Button, ActivityIndicator, Searchbar } from 'react-native-paper';
 import ScreenLayout from '../components/ScreenLayout';
 import ListModal from '../components/ListModal';
@@ -9,11 +9,13 @@ import { useAuth } from '../auth/useAuth';
 import {
   saveMenuListToFirestore,
   getUserMenuLists,
-  deleteMenuListFromFirestore,
+  moveMenuListToTrash,
+  updateMenuListName,
+  stopSharingMenuList,
   type MenuList,
 } from '../firebase/menuUtils';
+import { getUserProfiles } from '../firebase/userProfileUtils';
 import { type CreateListFormData } from '../components/ListModal';
-import { SearchBar } from '../components/SearchBar';
 
 interface MenuScreenProps {
   activeScreen: string
@@ -22,10 +24,10 @@ interface MenuScreenProps {
 
 const MenuScreen: React.FC<MenuScreenProps> = ({ activeScreen, onNavigate }) => {
   const [listModalVisible, setListModalVisible] = useState(false)
+  const [editingMenuList, setEditingMenuList] = useState<MenuList | null>(null)
   const { user } = useAuth()
   const [menuLists, setMenuLists] = useState<MenuList[]>([])
   const [loading, setLoading] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     if (user?.uid && activeScreen === 'menu') {
@@ -38,7 +40,30 @@ const MenuScreen: React.FC<MenuScreenProps> = ({ activeScreen, onNavigate }) => 
     try {
       setLoading(true);
       const userMenuLists = await getUserMenuLists(user.uid);
-      setMenuLists(userMenuLists);
+      
+      // Hae omistajien profiilit kaikille ruokalistoille
+      const ownerIds = [...new Set(userMenuLists.map(m => m.userId))];
+      const ownerProfiles = await getUserProfiles(ownerIds);
+      
+      // Hae jaettujen käyttäjien profiilit
+      const allSharedUserIds = new Set<string>();
+      userMenuLists.forEach(menu => {
+        menu.sharedWith?.forEach(id => allSharedUserIds.add(id));
+      });
+      const sharedUserProfiles = await getUserProfiles([...allSharedUserIds]);
+      
+      // Rikasta ruokalistat omistajatiedoilla ja jaetuilla käyttäjillä
+      const enrichedMenus = userMenuLists.map(menu => ({
+        ...menu,
+        ownerName: ownerProfiles.get(menu.userId)?.displayName,
+        ownerAvatar: ownerProfiles.get(menu.userId)?.photoURL,
+        sharedUsers: menu.sharedWith?.map(uid => ({
+          displayName: sharedUserProfiles.get(uid)?.displayName,
+          photoURL: sharedUserProfiles.get(uid)?.photoURL,
+        })) || [],
+      }));
+      
+      setMenuLists(enrichedMenus);
     } catch (error) {
       console.error('Error loading menu lists:', error);
     } finally {
@@ -57,6 +82,10 @@ const MenuScreen: React.FC<MenuScreenProps> = ({ activeScreen, onNavigate }) => 
         userId: user.uid,
         createdAt: new Date(),
         recipes: [],
+        sharedWith: [],
+        sharedUsers: [],
+        ownerName: user.displayName || undefined,
+        ownerAvatar: user.photoURL || undefined,
       };
       setMenuLists([...menuLists, newList]);
       setListModalVisible(false);
@@ -65,74 +94,108 @@ const MenuScreen: React.FC<MenuScreenProps> = ({ activeScreen, onNavigate }) => 
     }
   };
 
+  const handleRenameMenuList = async (list: CreateListFormData) => {
+    if (!editingMenuList || !user?.uid) return
+    try {
+      await updateMenuListName(editingMenuList.id, list.name)
+      await loadLists()
+    } catch (error) {
+      console.error('Error renaming menu list:', error)
+    } finally {
+      setEditingMenuList(null)
+    }
+  }
+
   const handleDeleteMenuList = async (id: string) => {
     try {
-      await deleteMenuListFromFirestore(id);
-      setMenuLists(menuLists.filter(list => list.id !== id));
+      const menuToDelete = menuLists.find(m => m.id === id)
+      if (menuToDelete && user?.uid) {
+        await moveMenuListToTrash(id, menuToDelete, user.uid)
+        setMenuLists(menuLists.filter(list => list.id !== id))
+      }
     } catch (error) {
       console.error('Error deleting menu list:', error);
     }
   };
 
-  const filteredLists = menuLists.filter(list =>
-    list.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const handleStopSharingMenuList = async (id: string) => {
+    try {
+      const menuList = menuLists.find(m => m.id === id)
+      if (menuList && user?.uid) {
+        const isOwner = menuList.userId === user.uid
+        await stopSharingMenuList(id, user.uid, isOwner)
+        
+        if (isOwner) {
+          await loadLists()
+        } else {
+          setMenuLists(menuLists.filter(m => m.id !== id))
+        }
+      }
+    } catch (error) {
+      console.error('Error stopping menu list sharing:', error);
+    }
+  };
+
+
+
 
   return (
-    <ScreenLayout activeScreen={activeScreen} onNavigate={onNavigate} fabLabel="Lisää uusi ruokalista" showFAB={true} onFABPress={() => setListModalVisible(true)}>
+    <ScreenLayout 
+      activeScreen={activeScreen} 
+      onNavigate={onNavigate} 
+      fabLabel="Lisää uusi ruokalista" 
+      showFAB={true} 
+      onFABPress={() => setListModalVisible(true)}
+    >
       {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator animating size="large" />
         </View>
       ) : menuLists.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Text variant="headlineMedium">Ruokalistat</Text>
-          <Text variant="bodyMedium" style={styles.description}>
-            Hallinnoi ruokalistojasi tässä.
-          </Text>
-          
-          <AddNewButton
-            onPress={() => setListModalVisible(true)}
-            label="Lisää uusi ruokalista"
-            animate={false}
+          <Image
+            source={require('../assets/PikkuKokki.png')}
+            style={styles.emptyImage}
+            resizeMode="contain"
           />
         </View>
       ) : (
-        <>
-          <View style={styles.searchContainer}>
-            <SearchBar
-              placeholder="Hae ruokalistaa..."
-              onChangeText={setSearchQuery}
-              value={searchQuery}
-            />
-          </View>
-          
-          <ScrollView style={styles.listContainer}>
-            {filteredLists.map((list) => (
+        <ScrollView style={styles.listContainer}>
+          {menuLists.map((list) => (
               <ListButton
                 key={list.id}
                 listName={list.name}
                 createdAt={list.createdAt}
-                ownerAvatar={user?.photoURL || undefined}
-                ownerInitials={user?.displayName?.charAt(0).toUpperCase() || "U"}
+                ownerAvatar={list.ownerAvatar}
+                ownerInitials={list.ownerName?.charAt(0).toUpperCase() || "?"}
+                ownerName={list.ownerName}
+                sharedUserAvatars={list.sharedUsers}
+                isOwnedByUser={list.userId === user?.uid}
                 onPress={() => onNavigate('menu-detail', list)}
                 onDelete={() => handleDeleteMenuList(list.id)}
-                onEdit={() => onNavigate('menu-detail', list)}
+                onEdit={() => setEditingMenuList(list)}
                 onShare={() => {
-                  // TODO: jako toiminnallisuus
                 }}
-                customActionIds={['share', 'edit', 'remove']}
+                onStopSharing={() => handleStopSharingMenuList(list.id)}
+                onShareComplete={() => loadLists()}
+                itemId={list.id}
+                itemType="menu"
+                editLabel="Muokkaa nimeä"
               />
             ))}
-          </ScrollView>
-        </>
+        </ScrollView>
       )}
 
       <ListModal
-        visible={listModalVisible}
+        visible={listModalVisible || !!editingMenuList}
         type="menu"
-        onClose={() => setListModalVisible(false)}
-        onSave={handleSaveMenuList}
+        onClose={() => {
+          setListModalVisible(false)
+          setEditingMenuList(null)
+        }}
+        onSave={editingMenuList ? handleRenameMenuList : handleSaveMenuList}
+        initialName={editingMenuList?.name}
+        title={editingMenuList ? "Muokkaa nimeä" : undefined}
       />
     </ScreenLayout>
   )
@@ -143,6 +206,10 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  emptyImage: {
+    width: 300,
+    height: 300,
   },
   description: {
     marginTop: 8,

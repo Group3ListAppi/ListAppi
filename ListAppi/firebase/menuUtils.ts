@@ -1,4 +1,4 @@
-import { addDoc, collection, deleteDoc, doc, getDocs, orderBy, query, serverTimestamp, where } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, getDocs, getDoc, orderBy, query, serverTimestamp, where } from "firebase/firestore";
 import { db } from "./config";
 import { updateDoc, arrayUnion, arrayRemove } from "firebase/firestore";
 import type { CreateListFormData } from "../components/ListModal";
@@ -15,6 +15,10 @@ export interface MenuList {
     userId: string;
     createdAt: Date;
     recipes: MenuListRecipe[];
+    ownerName?: string;
+    ownerAvatar?: string;
+    sharedWith?: string[];
+    sharedUsers?: Array<{ displayName?: string; photoURL?: string }>;
 }
 
 export const saveMenuListToFirestore = async (
@@ -27,30 +31,81 @@ export const saveMenuListToFirestore = async (
         userId,
         recipes: [],
         createdAt: serverTimestamp(),
+        sharedWith: [],
     });
     return docRef.id;
 }
 
+export const updateMenuListName = async (menuListId: string, newName: string): Promise<void> => {
+  try {
+    await updateDoc(doc(db, 'menulists', menuListId), {
+      name: newName.trim(),
+    })
+  } catch (error) {
+    console.error('Error updating menu list name:', error)
+    throw error
+  }
+}
+
 export const getUserMenuLists = async (userId: string): Promise<MenuList[]> => {
-  const q = query(
+  // Kysely valikkolistoista, joissa käyttäjä on omistaja TAI valikkolistat, jotka on jaettu käyttäjälle
+  const ownerQuery = query(
     collection(db, "menulists"),
     where("userId", "==", userId),
     orderBy("createdAt", "desc")
   );
+  const sharedQuery = query(
+    collection(db, "menulists"),
+    where("sharedWith", "array-contains", userId)
+  );
   
-  const querySnapshot = await getDocs(q);
+  const [ownerSnapshot, sharedSnapshot] = await Promise.all([
+    getDocs(ownerQuery),
+    getDocs(sharedQuery)
+  ]);
   
-  return querySnapshot.docs.map((d) => {
+  const menuLists: MenuList[] = [];
+  const menuIds = new Set<string>();
+  
+  // Prosessoi omistetut valikkolistat
+  ownerSnapshot.docs.forEach((d) => {
     const data = d.data() as any;
-    return {
-      id: d.id,
-      name: data.name,
-      type: "menu",
-      userId: data.userId,
-      createdAt: data.createdAt?.toDate?.() ?? new Date(),
-      recipes: (data.recipes || []) as MenuListRecipe[],
-    };
+    if (!data.deletedAt && !menuIds.has(d.id)) {
+      menuIds.add(d.id);
+      menuLists.push({
+        id: d.id,
+        name: data.name,
+        type: "menu",
+        userId: data.userId,
+        createdAt: data.createdAt?.toDate?.() ?? new Date(),
+        recipes: (data.recipes || []) as MenuListRecipe[],
+        sharedWith: data.sharedWith || [],
+      });
+    }
   });
+  
+  // Prosessoi jaetut valikkolistat
+  sharedSnapshot.docs.forEach((d) => {
+    const data = d.data() as any;
+    if (!data.deletedAt && !menuIds.has(d.id)) {
+      menuIds.add(d.id);
+      menuLists.push({
+        id: d.id,
+        name: data.name,
+        type: "menu",
+        userId: data.userId,
+        createdAt: data.createdAt?.toDate?.() ?? new Date(),
+        recipes: (data.recipes || []) as MenuListRecipe[],
+        sharedWith: data.sharedWith || [],
+      });
+    }
+  });
+  
+  // Järjestä createdAt:n mukaan laskevasti
+  menuLists.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  
+  console.log(`getUserMenuLists: Found ${menuLists.length} menus for user ${userId}`);
+  return menuLists;
 };
 
   export const addRecipeToMenuList = async (menuListId: string, recipeId: string) => {
@@ -82,6 +137,102 @@ export const getUserMenuLists = async (userId: string): Promise<MenuList[]> => {
   }
 
 
+export const moveMenuListToTrash = async (
+  menuListId: string,
+  menuList: MenuList,
+  userId: string
+): Promise<void> => {
+  try {
+    // puhdista valikkolistan data poistamalla rikastetut kentät, jotka saattavat sisältää undefined-arvoja
+    const { ownerName, ownerAvatar, sharedUsers, ...cleanMenuData } = menuList
+    
+    await addDoc(collection(db, 'trash'), {
+      type: 'menu',
+      menuListId,
+      data: cleanMenuData,
+      userId,
+      deletedAt: new Date(),
+    })
+
+    await updateDoc(doc(db, 'menulists', menuListId), {
+      deletedAt: new Date(),
+    })
+  } catch (error) {
+    console.error('Error moving menu to trash:', error)
+    throw error
+  }
+}
+
 export const deleteMenuListFromFirestore = async (id: string) => {
   await deleteDoc(doc(db, "menulists", id));
 };
+export const stopSharingMenuList = async (menuListId: string, userId: string, isOwner: boolean): Promise<void> => {
+  try {
+    const menuListRef = doc(db, 'menulists', menuListId)
+    const menuListDoc = await getDoc(menuListRef)
+    
+    if (!menuListDoc.exists()) {
+      throw new Error('Menu list not found')
+    }
+
+    const menuListData = menuListDoc.data()
+    const sharedWith = menuListData.sharedWith || []
+
+    if (isOwner) {
+      // Owner wants to stop sharing with everyone
+      await updateDoc(menuListRef, {
+        sharedWith: [],
+      })
+    } else {
+      // Shared user wants to leave
+      const updatedSharedWith = sharedWith.filter((id: string) => id !== userId)
+      await updateDoc(menuListRef, {
+        sharedWith: updatedSharedWith,
+      })
+    }
+  } catch (error) {
+    console.error('Error stopping menu list sharing:', error)
+    throw error
+  }
+}
+
+export const restoreMenuListFromTrash = async (menuListId: string, menuListData?: any): Promise<void> => {
+  try {
+    // Remove the deletedAt timestamp
+    await updateDoc(doc(db, 'menulists', menuListId), {
+      deletedAt: null,
+    })
+    
+    // Delete trash entry
+    const q = query(
+      collection(db, 'trash'),
+      where('menuListId', '==', menuListId)
+    )
+    const querySnapshot = await getDocs(q)
+    querySnapshot.forEach(async (docSnapshot) => {
+      await deleteDoc(docSnapshot.ref)
+    })
+  } catch (error) {
+    console.error('Error restoring menu list from trash:', error)
+    throw error
+  }
+}
+
+export const permanentlyDeleteMenuList = async (trashItemId: string, menuListId?: string, userId?: string): Promise<void> => {
+  try {
+    // Delete from trash
+    await deleteDoc(doc(db, 'trash', trashItemId))
+    
+    // Also delete from menulists collection if it exists
+    if (menuListId) {
+      try {
+        await deleteDoc(doc(db, 'menulists', menuListId))
+      } catch (e) {
+        // Item might already be deleted
+      }
+    }
+  } catch (error) {
+    console.error('Error permanently deleting menu list:', error)
+    throw error
+  }
+}
