@@ -70,7 +70,6 @@ const MenuDetailScreen: React.FC<MenuDetailScreenProps> = ({
     }
   };
 
-
   return (
     <ScreenLayout 
       activeScreen={activeScreen} 

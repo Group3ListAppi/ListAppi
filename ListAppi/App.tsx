@@ -10,6 +10,8 @@ import HomeScreen from './screens/HomeScreen';
 import MenuScreen from './screens/MenuScreen';
 import RecipeScreen from './screens/RecipeScreen';
 import AddRecipeScreen from './screens/AddRecipeScreen';
+import CollectionDetailScreen from './screens/CollectionDetailScreen';
+import MoveRecipesToCollectionScreen from './screens/MoveRecipesToCollectionScreen';
 import AddRecipeToMenuScreen from './screens/AddRecipeToMenuScreen';
 import RecipeDetailScreen from './screens/RecipeDetailScreen';
 import MenuDetailScreen from './screens/MenuDetailScreen';
@@ -26,6 +28,7 @@ import AccountSettingScreen from './screens/AccountSettingScreen';
 import { useAuth } from './auth/useAuth'
 import type { Recipe } from './firebase/recipeUtils'
 import type { MenuList } from './firebase/menuUtils';
+import type { RecipeCollection } from './firebase/recipeCollectionUtils';
 import type { CreateRecipeFormData } from './components/RecipeModal'
 import { saveRecipeToFirestore, updateRecipeInFirestore } from './firebase/recipeUtils'
 import ChooseNameScreen from "./screens/ChooseNameScreen"
@@ -37,9 +40,12 @@ export default function App() {
   const [history, setHistory] = useState<string[]>(["home"]);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [selectedMenuList, setSelectedMenuList] = useState<MenuList | null>(null);
+  const [selectedCollection, setSelectedCollection] = useState<RecipeCollection | null>(null);
   const [editRecipe, setEditRecipe] = useState<Recipe | null>(null);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [selectedShoplist, setSelectedShoplist] = useState<Shoplist | null>(null)
+  const [collectionId, setCollectionId] = useState<string | null>(null);
+  const [moveRecipesData, setMoveRecipesData] = useState<{ sourceCollectionId: string; recipeIds: string[] } | null>(null);
   const [needsName, setNeedsName] = useState(false)
   const [checkingProfile, setCheckingProfile] = useState(true)
   const [selectedTheme, setSelectedTheme] = useState<ThemeKey>('dark');
@@ -74,8 +80,10 @@ export default function App() {
       setHistory(["home"]);
       setSelectedRecipe(null);
       setSelectedMenuList(null);
+      setSelectedCollection(null);
       setSelectedShoplist(null);
       setEditRecipe(null);
+      setCollectionId(null);
       setRecipes([]); 
     }
   }, [user, initializing]);
@@ -117,11 +125,22 @@ export default function App() {
     }
     if (screen === 'add-recipe' && data?.editRecipe) {
       setEditRecipe(data.editRecipe);
+      setCollectionId(data.collectionId || null);
+    } else if (screen === 'add-recipe' && data?.collectionId) {
+      setEditRecipe(null);
+      setCollectionId(data.collectionId);
     } else if (screen === 'add-recipe' && !data?.editRecipe) {
       setEditRecipe(null);
+      setCollectionId(null);
     }
     if ((screen === 'menu-detail' || screen === 'add-recipe-to-menu') && data) {
       setSelectedMenuList(data);
+    }
+    if (screen === 'collection-detail' && data) {
+      setSelectedCollection(data);
+    }
+    if (screen === 'move-recipes-to-collection' && data) {
+      setMoveRecipesData(data);
     }
     if (screen === 'shoplist-detail' && data) {
       setSelectedShoplist(data)
@@ -143,7 +162,6 @@ export default function App() {
     if (!user?.uid) return
     try {
       if (editRecipe) {
-
         await updateRecipeInFirestore(editRecipe.id, recipe)
         const updatedRecipes = recipes.map(r => 
           r.id === editRecipe.id 
@@ -152,17 +170,57 @@ export default function App() {
         )
         setRecipes(updatedRecipes)
       } else {
-
         const recipeId = await saveRecipeToFirestore(recipe, user.uid)
+        
+        // If saving to a collection, add it to the collection
+        if (collectionId) {
+          const { addRecipeToCollection, getUserRecipeCollections } = await import('./firebase/recipeCollectionUtils');
+          await addRecipeToCollection(collectionId, recipeId);
+          
+          // Check if the collection is shared and share the recipe with all members
+          const collections = await getUserRecipeCollections(user.uid);
+          const targetCollection = collections.find(c => c.id === collectionId);
+          
+          if (targetCollection?.sharedWith && targetCollection.sharedWith.length > 0) {
+            // Import updateDoc and doc from firebase
+            const { updateDoc, doc, arrayUnion } = await import('firebase/firestore');
+            const { db } = await import('./firebase/config');
+            const recipeRef = doc(db, 'recipes', recipeId);
+            
+            // Add all collection members to the recipe's sharedWith array
+            await updateDoc(recipeRef, {
+              sharedWith: targetCollection.sharedWith
+            });
+          }
+        }
+        
         const newRecipe: Recipe = {
           ...recipe,
           id: recipeId,
+          userId: user.uid,
           createdAt: new Date(),
+          sharedWith: [],
         }
         setRecipes([...recipes, newRecipe])
       }
       setEditRecipe(null)
-      handleNavigate('recipes')
+      const wasInCollection = collectionId !== null;
+      const savedCollectionId = collectionId;
+      setCollectionId(null)
+      
+      // If we were adding to a collection, reload and go back to it
+      if (wasInCollection && savedCollectionId && selectedCollection) {
+        // Reload the collection to show the new recipe
+        const { getUserRecipeCollections } = await import('./firebase/recipeCollectionUtils');
+        const collections = await getUserRecipeCollections(user.uid);
+        const updatedCollection = collections.find(c => c.id === savedCollectionId);
+        if (updatedCollection) {
+          setSelectedCollection(updatedCollection);
+        }
+        handleBack();
+      } else {
+        handleNavigate('recipes');
+      }
     } catch (error) {
       console.error('Error saving recipe:', error)
     }
@@ -193,9 +251,28 @@ export default function App() {
           />
         ) : null;
       case 'recipes':
-        return <RecipeScreen activeScreen={activeScreen} onNavigate={handleNavigate} recipes={recipes} setRecipes={setRecipes} />;
+        return <RecipeScreen activeScreen={activeScreen} onNavigate={handleNavigate} />;
+      case 'collection-detail':
+        return selectedCollection ? (
+          <CollectionDetailScreen
+            collection={selectedCollection}
+            activeScreen={activeScreen}
+            onNavigate={handleNavigate}
+            onBack={handleBack}
+          />
+        ) : null;
+      case 'move-recipes-to-collection':
+        return moveRecipesData ? (
+          <MoveRecipesToCollectionScreen
+            sourceCollectionId={moveRecipesData.sourceCollectionId}
+            recipeIds={moveRecipesData.recipeIds}
+            activeScreen={activeScreen}
+            onNavigate={handleNavigate}
+            onBack={handleBack}
+          />
+        ) : null;
       case 'add-recipe':
-        return <AddRecipeScreen onSave={handleSaveRecipe} onBack={handleBack} editRecipe={editRecipe} />;
+        return <AddRecipeScreen activeScreen={activeScreen} onNavigate={handleNavigate} onSave={handleSaveRecipe} onBack={handleBack} editRecipe={editRecipe} collectionId={collectionId} />;
       case 'recipe-detail':
         return selectedRecipe ? (
           <RecipeDetailScreen

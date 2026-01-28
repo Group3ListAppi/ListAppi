@@ -40,9 +40,8 @@ export const Input: React.FC<InputProps> = ({
       keyboardType={keyboardType}
       style={[
         styles.input,
-        multiline && { backgroundColor: "white", color: "black", minHeight },
+        multiline && { minHeight },
       ]}
-      textColor={multiline ? "black" : undefined}
       outlineColor={theme.colors.primary}
       activeOutlineColor={theme.colors.primary}
     />

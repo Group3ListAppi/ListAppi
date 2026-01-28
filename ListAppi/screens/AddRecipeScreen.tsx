@@ -1,8 +1,8 @@
 import React, { useState } from "react";
- import { ScrollView, StyleSheet, View, Image, Pressable, Alert } from "react-native";
+import { ScrollView, StyleSheet, View, Image, Pressable, Alert } from "react-native";
 import { useTheme, Text } from "react-native-paper";
 import * as ImagePicker from 'expo-image-picker';
-import AppBar from "../components/AppBar";
+import ScreenLayout from "../components/ScreenLayout";
 import { SubmitButton } from "../components/SubmitButton";
 import { ActionModal } from "../components/ActionModal";
 import { Input } from "../components/Input";
@@ -20,8 +20,11 @@ import type { CreateRecipeFormData } from "../components/RecipeModal";
 import { convertImageToBase64 } from "../firebase/imageUtils";
 
 interface AddRecipeScreenProps {
+  activeScreen: string;
+  onNavigate: (screen: string, data?: any) => void;
   onSave?: (recipe: CreateRecipeFormData) => void;
   onBack: () => void;
+  collectionId?: string | null;
   editRecipe?: {
     id: string;
     title: string;
@@ -35,7 +38,7 @@ interface AddRecipeScreenProps {
   };
 }
 
-const AddRecipeScreen: React.FC<AddRecipeScreenProps> = ({ onSave, onBack, editRecipe }) => {
+const AddRecipeScreen: React.FC<AddRecipeScreenProps> = ({ activeScreen, onNavigate, onSave, onBack, editRecipe }) => {
     const theme = useTheme();
     const [title, setTitle] = useState(editRecipe?.title ?? "");
     const [link, setLink] = useState(editRecipe?.link ?? "");
@@ -156,11 +159,14 @@ const AddRecipeScreen: React.FC<AddRecipeScreenProps> = ({ onSave, onBack, editR
     };
 
     return (
-        <View style={[styles.root, { backgroundColor: theme.colors.background }]}>
-            <AppBar
-                title={isEditMode ? "Muokkaa reseptiä" : "Lisää uusi resepti"}
-                onBack={handleBack}
-            />
+        <ScreenLayout
+            activeScreen={activeScreen}
+            onNavigate={onNavigate}
+            customTitle={isEditMode ? "Muokkaa reseptiä" : "Lisää uusi resepti"}
+            showBack={true}
+            onBack={handleBack}
+            showNav={false}
+        >
             <ScrollView style={styles.container}>
             <Input
                 label="Reseptin nimi *"
@@ -254,16 +260,13 @@ const AddRecipeScreen: React.FC<AddRecipeScreenProps> = ({ onSave, onBack, editR
                 onCamera={takeWithCamera}
                 onGallery={pickFromGallery}
             />
-        </View>
+        </ScreenLayout>
     );
 };
 
 export default AddRecipeScreen;
 
 const styles = StyleSheet.create({
-    root: {
-        flex: 1,
-    },
     container: {
         flex: 1,
         paddingHorizontal: 16,

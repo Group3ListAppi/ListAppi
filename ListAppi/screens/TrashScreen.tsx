@@ -5,8 +5,8 @@
   import { ListButton } from "../components/ListButton";
   import { useAuth } from "../auth/useAuth";
   import { getTrashItems, permanentlyDeleteTrashItem, restoreRecipeFromTrash } from "../firebase/recipeUtils";
-  import { restoreShoplistFromTrash } from "../firebase/shoplistUtils";
-  import type { DeletedItem } from "../firebase/recipeUtils";
+  import { restoreShoplistFromTrash, permanentlyDeleteShoplist } from "../firebase/shoplistUtils";
+  import { restoreMenuListFromTrash, permanentlyDeleteMenuList } from "../firebase/menuUtils";import { restoreRecipeCollectionFromTrash, permanentlyDeleteRecipeCollection } from "../firebase/recipeCollectionUtils";  import type { DeletedItem } from "../firebase/recipeUtils";
   import ScreenLayout from "../components/ScreenLayout";
 
   type Props = {
@@ -55,12 +55,17 @@
       const targetId = getTargetId(item)
 
       if (item.type === 'recipe') {
-        await restoreRecipeFromTrash(targetId, item.data)
+        await restoreRecipeFromTrash(targetId, item.data, item.collectionId)
         onNavigate('recipes')
       } else if (item.type === 'shoplist') {
-        // tänne restoreShoplistFromTrash
         await restoreShoplistFromTrash(targetId, item.data)
         onNavigate('shoplist')
+      } else if (item.type === 'menu') {
+        await restoreMenuListFromTrash(targetId, item.data)
+        onNavigate('menu')
+      } else if (item.type === 'recipe-collection') {
+        await restoreRecipeCollectionFromTrash(targetId, item.data)
+        onNavigate('recipes')
       }
 
       setTrashItems(prev => prev.filter(x => x.id !== item.id))
@@ -71,7 +76,9 @@
 
     const getTargetId = (item: DeletedItem): string => {
       if (item.type === 'recipe') return item.recipeId || item.data?.id
-      if (item.type === 'shoplist') return (item as any).shoplistId || item.data?.id
+      if (item.type === 'shoplist') return item.shoplistId || item.data?.id
+      if (item.type === 'menu') return item.menuListId || item.data?.id
+      if (item.type === 'recipe-collection') return item.collectionId || item.data?.id
       return item.data?.id
     }
   /*  const handleRestore = async (trashId: string, recipeId: string, recipeData?: any) => {
@@ -84,10 +91,23 @@
       }
     };
   */
-    const handlePermanentlyDelete = async (trashId: string, recipeId: string) => {
+    const handlePermanentlyDelete = async (item: DeletedItem) => {
+      if (!user?.uid) return;
+      
       try {
-        await permanentlyDeleteTrashItem(trashId, recipeId);
-        setTrashItems(trashItems.filter(item => item.id !== trashId));
+        const targetId = getTargetId(item);
+        
+        if (item.type === 'recipe') {
+          await permanentlyDeleteTrashItem(item.id, targetId, user.uid);
+        } else if (item.type === 'shoplist') {
+          await permanentlyDeleteShoplist(item.id, targetId, user.uid);
+        } else if (item.type === 'menu') {
+          await permanentlyDeleteMenuList(item.id, targetId, user.uid);
+        } else if (item.type === 'recipe-collection') {
+          await permanentlyDeleteRecipeCollection(item.id, targetId, user.uid);
+        }
+        
+        setTrashItems(trashItems.filter(i => i.id !== item.id));
       } catch (error) {
         console.error("Error permanently deleting item:", error);
       }
@@ -96,6 +116,8 @@
     const getItemName = (item: DeletedItem): string => {
       if (item.type === 'recipe') return item.data?.title ?? '(Nimetön resepti)'
       if (item.type === 'shoplist') return item.data?.name ?? '(Nimetön ostoslista)'
+      if (item.type === 'menu') return item.data?.name ?? '(Nimetön valikko)'
+      if (item.type === 'recipe-collection') return item.data?.name ?? '(Nimetön kokoelma)'
       if (item.type === 'foodlist') return item.data?.name ?? item.data?.title ?? '(Nimetön)'
       return '(Nimetön)'
     }
@@ -103,12 +125,16 @@
     const getRestoreLabel = (item: DeletedItem) => {
       if (item.type === 'recipe') return 'Palauta resepti'
       if (item.type === 'shoplist') return 'Palauta ostoslista'
+      if (item.type === 'menu') return 'Palauta valikko'
+      if (item.type === 'recipe-collection') return 'Palauta kokoelma'
       if (item.type === 'foodlist') return 'Palauta ruokalista'
       return 'Palauta'
     }
 
     const recipeItems = trashItems.filter(item => item.type === "recipe");
     const shoplistItems = trashItems.filter(item => item.type === "shoplist");
+    const menuItems = trashItems.filter(item => item.type === "menu");
+    const collectionItems = trashItems.filter(item => item.type === "recipe-collection");
     const foodlistItems = trashItems.filter(item => item.type === "foodlist");
 
     const renderCategory = (title: string, items: DeletedItem[]) => {
@@ -131,7 +157,7 @@
                 restoreLabel={getRestoreLabel(item)}
                 onRestore={() => handleRestore(item)}
                 //onRestore={() => handleRestore(item.id, item.recipeId || item.data.id, item.data)}
-                onPermanentlyDelete={() => handlePermanentlyDelete(item.id, item.recipeId || item.data.id)}
+                onPermanentlyDelete={() => handlePermanentlyDelete(item)}
               />
               <Text style={[styles.retentionText, { color: theme.colors.outline }]}>
                 Poistetaan pysyvästi {getDaysUntilPermanentDelete(item.deletedAt)} päivän kuluttua
@@ -165,6 +191,8 @@
         ) : (
           <ScrollView style={styles.container}>
             {renderCategory("Reseptit", recipeItems)}
+            {renderCategory("Kokoelmat", collectionItems)}
+            {renderCategory("Ruokalistat", menuItems)}
             {renderCategory("Ostoslistat", shoplistItems)}
             {renderCategory("Ruokalistat", foodlistItems)}
             <View style={{ height: 100 }} />

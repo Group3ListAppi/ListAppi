@@ -152,6 +152,7 @@ const AddRecipeToMenuScreen: React.FC<AddRecipeToMenuScreenProps> = ({
                 isChecked={selectedRecipeIds.includes(recipe.id)}
                 onCheckChange={() => toggleSelect(recipe.id)}
                 onPress={() => onNavigate('recipe-detail', recipe)}
+                disableSwipe={true}
               />
             ))}
           </ScrollView>
@@ -215,6 +216,7 @@ const styles = StyleSheet.create({
   },
   bottomBar: {
     padding: 16,
+    paddingBottom: 32,
   },
   addButton: {
     paddingVertical: 12,
