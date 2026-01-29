@@ -20,6 +20,9 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
+  sendEmailVerification,
+  signOut,
+  reload,
 } from "firebase/auth";
 import { auth } from "../firebase/config";
 import { useGoogleSignIn } from "../auth/googleSignIn";
@@ -67,9 +70,18 @@ const AuthScreen: React.FC = () => {
     setLoading(true);
     try {
       if (mode === "register") {
-        await createUserWithEmailAndPassword(auth, emailTrimmed, password);
+        const cred = await createUserWithEmailAndPassword(auth, emailTrimmed, password);
+        await sendEmailVerification(cred.user);
+        await signOut(auth);
+        setMode("login");
+        setError("Vahvistuslinkki on lähetetty sähköpostiisi. Vahvista sähköposti ja kirjaudu sitten sisään.");
       } else {
-        await signInWithEmailAndPassword(auth, emailTrimmed, password);
+        const cred = await signInWithEmailAndPassword(auth, emailTrimmed, password);
+        await reload(cred.user);
+        if (!cred.user.emailVerified) {
+          await signOut(auth);
+          setError("Sähköpostia ei ole vahvistettu. Tarkista sähköpostisi ja vahvista tili.");
+        }
       }
     } catch (e: any) {
       const msg =
