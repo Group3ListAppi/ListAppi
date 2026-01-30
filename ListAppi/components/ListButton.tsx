@@ -402,12 +402,14 @@ const styles = StyleSheet.create({
     marginVertical: 4,
     marginHorizontal: 16,
     overflow: 'hidden',
+    borderRadius: 8,
     position: 'relative',
   },
   animatedRow: {
     flexDirection: 'row',
     alignItems: 'stretch',
     position: 'relative',
+    borderRadius: 8,
   },
   container: {
     flexDirection: "row",
@@ -427,6 +429,8 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'stretch',
     justifyContent: 'center',
+    borderRadius: 8,
+    overflow: 'hidden',
     zIndex: 0,
   },
   actionButton: {

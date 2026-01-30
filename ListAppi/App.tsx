@@ -21,6 +21,7 @@ import type { Shoplist } from './firebase/shoplistUtils'
 import AuthScreen from './screens/AuthScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import StyleScreen from './screens/StyleScreen';
+import DataProtectionScreen from './screens/DataProtectionScreen';
 import NotificationsScreen from './screens/NotificationsScreen';
 import TrashScreen from './screens/TrashScreen';
 import AccountSettingScreen from './screens/AccountSettingScreen';
@@ -297,6 +298,8 @@ export default function App() {
         return <SettingsScreen activeScreen={activeScreen} onBack={handleBack} onNavigate={handleNavigate} />;
       case "StyleScreen":
         return <StyleScreen activeScreen={activeScreen} onBack={handleBack} onNavigate={handleNavigate} onThemeChange={setSelectedTheme} />;
+      case "data-protection":
+        return <DataProtectionScreen activeScreen={activeScreen} onBack={handleBack} onNavigate={handleNavigate} />;
       case "notifications":
         return <NotificationsScreen activeScreen={activeScreen} onBack={handleBack} onNavigate={handleNavigate} />;
       case "trash":
