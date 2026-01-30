@@ -50,6 +50,8 @@ export default function SettingsScreen({ activeScreen, onBack, onNavigate }: Pro
   const handleNavigation = (section: string) => {
     if (section === "Tyyli") {
       onNavigate("StyleScreen");
+    } else if (section === "Tietosuoja") {
+      onNavigate("data-protection");
     } else {
       console.log("Navigating to:", section);
     }
