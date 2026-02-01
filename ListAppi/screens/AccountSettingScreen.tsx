@@ -6,6 +6,7 @@ import { useAuth } from '../auth/useAuth';
 import EditDisplayNameDialog from "../components/EditDisplayNameDialog"
 import { getUserProfile } from "../firebase/userProfileUtils"
 import ChangePasswordDialog from "../components/ChangePasswordDialog"
+import DeleteAccountDialog from "../components/DeleteAccountDialog"
 
 
 interface AccountSettingScreenProps {
@@ -20,6 +21,7 @@ const AccountSettingScreen: React.FC<AccountSettingScreenProps> = ({ activeScree
   const [displayName, setDisplayName] = useState("")
   const [editNameOpen, setEditNameOpen] = useState(false)
   const [changePwOpen, setChangePwOpen] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
 
 // Lataa näyttönimi Firestoresta kun screen aukeaa / user vaihtuu
   useEffect(() => {
@@ -59,6 +61,10 @@ const AccountSettingScreen: React.FC<AccountSettingScreenProps> = ({ activeScree
           console.log("Password updated")
         }}
       />
+      <DeleteAccountDialog
+        visible={deleteOpen}
+        onClose={() => setDeleteOpen(false)}
+      />
       <ScrollView>
         {/* Avatar ja sähköposti */}
         <View style={styles.userSection}>
@@ -95,8 +101,10 @@ const AccountSettingScreen: React.FC<AccountSettingScreenProps> = ({ activeScree
           <List.Item
             title="Poista tili"
             titleStyle={{ color: theme.colors.error }}
-            left={(props) => <List.Icon {...props} icon="delete-alert" color={theme.colors.error} />}
-            onPress={() => handleAccountAction("Poista tili")}
+            left={(props) => (
+              <List.Icon {...props} icon="delete-alert" color={theme.colors.error} />
+            )}
+            onPress={() => setDeleteOpen(true)}
           />
         </List.Section>
       </ScrollView>
