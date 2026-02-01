@@ -4,6 +4,7 @@ import { Text, useTheme, List, Switch } from "react-native-paper";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ScreenOrientation from "expo-screen-orientation";
 import ScreenLayout from "../components/ScreenLayout";
+import ReportIssueDialog from "../components/ReportIssueDialog"
 
 type Props = {
   activeScreen: string;
@@ -14,6 +15,9 @@ type Props = {
 export default function SettingsScreen({ activeScreen, onBack, onNavigate }: Props) {
   const theme = useTheme();
   const [keepScreenOn, setKeepScreenOn] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false)
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
+
 
   // Lataa asetukset AsyncStoragesta
   useEffect(() => {
@@ -67,6 +71,20 @@ export default function SettingsScreen({ activeScreen, onBack, onNavigate }: Pro
       customTitle="Asetukset"
     >
       <ScrollView style={styles.content}>
+        <ReportIssueDialog
+        visible={reportOpen}
+        onClose={() => setReportOpen(false)}
+        supportEmail="listappix@gmail.com"
+        mode="issue"
+      />
+
+      <ReportIssueDialog
+        visible={feedbackOpen}
+        onClose={() => setFeedbackOpen(false)}
+        supportEmail="listappix@gmail.com"
+        mode="feedback"
+      />
+
         {/* Yleiset */}
         <List.Section>
           <List.Subheader>Yleiset</List.Subheader>
@@ -103,12 +121,12 @@ export default function SettingsScreen({ activeScreen, onBack, onNavigate }: Pro
           <List.Item
             title="Ilmoita ongelmasta"
             left={(props) => <List.Icon {...props} icon="bug" />}
-            onPress={() => handleNavigation("Ilmoita ongelmasta")}
+            onPress={() => setReportOpen(true)}
           />
           <List.Item
             title="Yleinen palaute"
             left={(props) => <List.Icon {...props} icon="message-text" />}
-            onPress={() => handleNavigation("Yleinen palaute")}
+            onPress={() => setFeedbackOpen(true)}
           />
         </List.Section>
 
