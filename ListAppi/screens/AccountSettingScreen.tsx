@@ -5,6 +5,7 @@ import ScreenLayout from '../components/ScreenLayout';
 import { useAuth } from '../auth/useAuth';
 import EditDisplayNameDialog from "../components/EditDisplayNameDialog"
 import { getUserProfile } from "../firebase/userProfileUtils"
+import ChangePasswordDialog from "../components/ChangePasswordDialog"
 
 
 interface AccountSettingScreenProps {
@@ -18,6 +19,7 @@ const AccountSettingScreen: React.FC<AccountSettingScreenProps> = ({ activeScree
   const { user } = useAuth();
   const [displayName, setDisplayName] = useState("")
   const [editNameOpen, setEditNameOpen] = useState(false)
+  const [changePwOpen, setChangePwOpen] = useState(false)
 
 // Lataa näyttönimi Firestoresta kun screen aukeaa / user vaihtuu
   useEffect(() => {
@@ -48,6 +50,14 @@ const AccountSettingScreen: React.FC<AccountSettingScreenProps> = ({ activeScree
         initialName={displayName}
         onClose={() => setEditNameOpen(false)}
         onSaved={(newName) => setDisplayName(newName)}
+      />
+      <ChangePasswordDialog
+        visible={changePwOpen}
+        onClose={() => setChangePwOpen(false)}
+        onSaved={() => {
+          // optional: voit näyttää snackbarin tms jos teillä on
+          console.log("Password updated")
+        }}
       />
       <ScrollView>
         {/* Avatar ja sähköposti */}
@@ -80,7 +90,7 @@ const AccountSettingScreen: React.FC<AccountSettingScreenProps> = ({ activeScree
           <List.Item
             title="Vaihda salasana"
             left={(props) => <List.Icon {...props} icon="lock-reset" />}
-            onPress={() => handleAccountAction("Vaihda salasana")}
+            onPress={() => setChangePwOpen(true)}
           />
           <List.Item
             title="Poista tili"
