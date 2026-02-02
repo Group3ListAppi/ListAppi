@@ -3,6 +3,7 @@ import { StyleSheet, ScrollView, View, Image } from 'react-native';
 import { Text, ActivityIndicator, useTheme } from 'react-native-paper';
 import ScreenLayout from '../components/ScreenLayout';
 import { ListButton } from '../components/ListButton';
+import { RecipeButton } from '../components/RecipeButton';
 import { useAuth } from '../auth/useAuth';
 import { getUserShoplists, type Shoplist } from '../firebase/shoplistUtils';
 import { getUserRecipes, type Recipe } from '../firebase/recipeUtils';
@@ -191,18 +192,11 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ activeScreen, onNavigate }) => 
                 style={styles.horizontalScroll}
               >
                 {recipes.map((recipe) => (
-                  <View key={recipe.id} style={styles.itemContainer}>
-                    <ListButton
-                      listName={recipe.title}
+                  <View key={recipe.id} style={styles.recipeItemContainer}>
+                    <RecipeButton
+                      title={recipe.title}
                       imageUrl={recipe.image}
-                      createdAt={recipe.createdAt}
-                      ownerAvatar={recipe.ownerAvatar}
-                      ownerInitials={recipe.ownerName?.charAt(0).toUpperCase() || '?'}
-                      ownerName={recipe.ownerName}
-                      isOwnedByUser={recipe.userId === user?.uid}
-                      isRecipe={true}
                       onPress={() => onNavigate('recipe-detail', recipe)}
-                      disableSwipe={true}
                     />
                   </View>
                 ))}
@@ -258,6 +252,10 @@ const styles = StyleSheet.create({
   itemContainer: {
     marginRight: 12,
     width: 280,
+  },
+  recipeItemContainer: {
+    marginRight: 16,
+    width: 200,
   },
   emptyStateText: {
     fontSize: 14,
