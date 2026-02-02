@@ -7,6 +7,7 @@ import { ShareModal } from "./ShareModal";
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const ACTION_BUTTON_WIDTH = 60;
+const LIST_BUTTON_HEIGHT = 88;
 
 interface ListButtonProps {
   listName: string
@@ -168,7 +169,11 @@ export const ListButton: React.FC<ListButtonProps> = ({
           {...panResponder.panHandlers}
         >
           {/* Main ListButton */}
-          <View style={[styles.container, { backgroundColor: theme.colors.primaryContainer }]}>
+          <View style={[
+            styles.container,
+            imageUrl ? styles.containerWithImage : styles.containerNoImage,
+            { backgroundColor: theme.colors.primaryContainer }
+          ]}> 
             <TouchableOpacity 
               onPress={onPress} 
               onLongPress={onLongPress}
@@ -415,11 +420,19 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 16,
+    paddingRight: 16,
     paddingVertical: 12,
     borderRadius: 8,
     width: SCREEN_WIDTH - 32,
+    height: LIST_BUTTON_HEIGHT,
     zIndex: 1,
+  },
+  containerWithImage: {
+    paddingLeft: 0,
+    paddingVertical: 0,
+  },
+  containerNoImage: {
+    paddingLeft: 16,
   },
   actionsContainer: {
     position: 'absolute',
@@ -457,11 +470,17 @@ const styles = StyleSheet.create({
   },
   imageWrapper: {
     marginRight: 12,
+    alignSelf: "stretch",
+    width: 100,
+    height: "100%",
+    overflow: "hidden",
   },
   image: {
-    width: 70,
-    height: 70,
-    borderRadius: 8,
+    width: "100%",
+    height: "100%",
+    flex: 1,
+    borderTopLeftRadius: 8,
+    borderBottomLeftRadius: 8,
   },
   contentWrapper: {
     flex: 1,
