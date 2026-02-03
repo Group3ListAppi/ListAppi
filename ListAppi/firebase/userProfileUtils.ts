@@ -44,6 +44,21 @@ export async function saveMyDisplayName(displayName: string) {
   await updateProfile(user, { displayName: name })
 }
 
+// Päivitä oma sähköposti Firestore-profiiliin
+export async function updateMyEmail(email: string) {
+  const user = auth.currentUser
+  if (!user) throw new Error("No signed-in user")
+
+  const trimmed = email.trim()
+  if (!trimmed) throw new Error("Sähköposti ei voi olla tyhjä.")
+
+  await setDoc(
+    doc(db, "users", user.uid),
+    { email: trimmed, emailLower: trimmed.toLowerCase() },
+    { merge: true }
+  )
+}
+
 // Get multiple user profiles at once
 export async function getUserProfiles(userIds: string[]): Promise<Map<string, UserProfile>> {
   const profileMap = new Map<string, UserProfile>()

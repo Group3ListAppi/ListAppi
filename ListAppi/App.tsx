@@ -34,8 +34,20 @@ import type { CreateRecipeFormData } from './components/RecipeModal'
 import { saveRecipeToFirestore, updateRecipeInFirestore } from './firebase/recipeUtils'
 import ChooseNameScreen from "./screens/ChooseNameScreen"
 import { ensureUserProfile, getUserProfile } from "./firebase/userProfileUtils"
+import { registerForPushNotificationsAsync } from "./utils/notifications"
+import { savePushToken } from "./firebase/notificationUtils"
+import * as Notifications from "expo-notifications"
 
 export default function App() {
+  useEffect(() => {
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+      }),
+    })
+  }, [])
   const { user, initializing } = useAuth();
   const [activeScreen, setActiveScreen] = useState('home')
   const [history, setHistory] = useState<string[]>(["home"]);
@@ -119,6 +131,23 @@ export default function App() {
 
     run()
   }, [user, initializing])
+
+  // Push-tokenin rekisteröinti kirjautuneelle käyttäjälle
+  useEffect(() => {
+    const register = async () => {
+      if (!user?.uid) return
+      try {
+        const token = await registerForPushNotificationsAsync()
+        if (token) {
+          await savePushToken(token)
+        }
+      } catch (e) {
+        console.log("Push token registration failed:", e)
+      }
+    }
+
+    register()
+  }, [user?.uid])
 
   const handleNavigate = (screen: string, data?: any) => {
     if (screen === 'recipe-detail' && data) {

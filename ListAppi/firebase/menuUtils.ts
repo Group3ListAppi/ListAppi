@@ -104,7 +104,6 @@ export const getUserMenuLists = async (userId: string): Promise<MenuList[]> => {
   // Järjestä createdAt:n mukaan laskevasti
   menuLists.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   
-  console.log(`getUserMenuLists: Found ${menuLists.length} menus for user ${userId}`);
   return menuLists;
 };
 

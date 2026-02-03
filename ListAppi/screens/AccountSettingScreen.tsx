@@ -7,6 +7,7 @@ import EditDisplayNameDialog from "../components/EditDisplayNameDialog"
 import { getUserProfile } from "../firebase/userProfileUtils"
 import ChangePasswordDialog from "../components/ChangePasswordDialog"
 import DeleteAccountDialog from "../components/DeleteAccountDialog"
+import ChangeEmailDialog from "../components/ChangeEmailDialog"
 
 
 interface AccountSettingScreenProps {
@@ -20,6 +21,7 @@ const AccountSettingScreen: React.FC<AccountSettingScreenProps> = ({ activeScree
   const { user } = useAuth();
   const [displayName, setDisplayName] = useState("")
   const [editNameOpen, setEditNameOpen] = useState(false)
+  const [changeEmailOpen, setChangeEmailOpen] = useState(false)
   const [changePwOpen, setChangePwOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
 
@@ -41,10 +43,6 @@ const AccountSettingScreen: React.FC<AccountSettingScreenProps> = ({ activeScree
   const avatarLetter = (displayName?.charAt(0) || user?.displayName?.charAt(0) || "U").toUpperCase()
 
 
-  const handleAccountAction = (action: string) => {
-    console.log("Account action:", action);
-  };
-
   return (
     <ScreenLayout activeScreen={activeScreen} onNavigate={onNavigate}>
        <EditDisplayNameDialog
@@ -59,6 +57,13 @@ const AccountSettingScreen: React.FC<AccountSettingScreenProps> = ({ activeScree
         onSaved={() => {
           // optional: voit näyttää snackbarin tms jos teillä on
           console.log("Password updated")
+        }}
+      />
+      <ChangeEmailDialog
+        visible={changeEmailOpen}
+        onClose={() => setChangeEmailOpen(false)}
+        onSaved={() => {
+          console.log("Email updated")
         }}
       />
       <DeleteAccountDialog
@@ -91,7 +96,7 @@ const AccountSettingScreen: React.FC<AccountSettingScreenProps> = ({ activeScree
           <List.Item
             title="Vaihda sähköposti"
             left={(props) => <List.Icon {...props} icon="email-edit" />}
-            onPress={() => handleAccountAction("Vaihda sähköposti")}
+            onPress={() => setChangeEmailOpen(true)}
           />
           <List.Item
             title="Vaihda salasana"
