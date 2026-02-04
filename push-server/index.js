@@ -25,6 +25,12 @@ let collectionInitialized = false;
 let shoplistItemsInitialized = false;
 let invitesInitialized = false;
 
+const defaultNotificationSettings = {
+  pushEnabled: true,
+  pushInvites: true,
+  pushUpdates: true,
+};
+
 function withListenerRetry(name, startFn, delayMs = 5000) {
   const start = () => {
     try {
@@ -47,21 +53,40 @@ function withListenerRetry(name, startFn, delayMs = 5000) {
   };
 }
 
-async function getTokensForUserIds(userIds) {
-  const uniqueUserIds = Array.from(new Set(userIds)).filter(Boolean);
-  const tokenDocs = await Promise.all(
-    uniqueUserIds.map((uid) =>
-      db.collection("users").doc(uid).collection("notificationTokens").get()
-    )
-  );
+async function getUserNotificationSettings(userId) {
+  const snap = await db
+    .collection("users")
+    .doc(userId)
+    .collection("notificationSettings")
+    .doc("preferences")
+    .get();
 
-  const tokens = [];
-  tokenDocs.forEach((snap) => {
-    snap.docs.forEach((doc) => {
-      const token = doc.data().token;
-      if (token) tokens.push(token);
-    });
-  });
+  return {
+    ...defaultNotificationSettings,
+    ...(snap.exists ? snap.data() : {}),
+  };
+}
+
+async function shouldSendPush(userId, type) {
+  const settings = await getUserNotificationSettings(userId);
+  if (!settings.pushEnabled) return false;
+  if (type === "invite") return settings.pushInvites !== false;
+  if (type === "update") return settings.pushUpdates !== false;
+  return true;
+}
+
+async function getTokensForUserId(userId) {
+  const snap = await db
+    .collection("users")
+    .doc(userId)
+    .collection("notificationTokens")
+    .get();
+
+  if (snap.empty) return [];
+
+  const tokens = snap.docs
+    .map((doc) => doc.data().token)
+    .filter(Boolean);
 
   return Array.from(new Set(tokens));
 }
@@ -140,20 +165,13 @@ async function sendInviteNotification(invitation, invitationId) {
   const toUserId = invitation?.toUserId;
   if (!toUserId) return;
 
-  const tokensSnap = await db
-    .collection("users")
-    .doc(toUserId)
-    .collection("notificationTokens")
-    .get();
-
-  if (tokensSnap.empty) {
-    console.log("[invites] no tokens found", { invitationId, toUserId });
+  const allowed = await shouldSendPush(toUserId, "invite");
+  if (!allowed) {
+    console.log("[invites] disabled by settings", { invitationId, toUserId });
     return;
   }
 
-  const tokens = tokensSnap.docs
-    .map((doc) => doc.data().token)
-    .filter(Boolean);
+  const tokens = await getTokensForUserId(toUserId);
 
   if (!tokens.length) {
     console.log("[invites] no valid tokens", { invitationId, toUserId });
@@ -292,7 +310,6 @@ function listenForMenuUpdates() {
           Promise.resolve()
             .then(async () => {
               const recipients = [ownerId, ...sharedWith];
-              const tokens = await getTokensForUserIds(recipients);
 
               for (const recipeId of addedRecipeIds) {
                 let recipeTitle = "a recipe";
@@ -305,20 +322,32 @@ function listenForMenuUpdates() {
                   // ignore
                 }
 
-                await sendPush(tokens, {
-                  title: "Menu updated",
-                  body: `${data.name ?? "Menu"}: added ${recipeTitle}`,
-                  data: {
-                    type: "menu",
-                    menuListId: doc.id,
-                    recipeId,
-                  },
-                });
+                for (const recipientId of recipients) {
+                  const allowed = await shouldSendPush(recipientId, "update");
+                  if (!allowed) continue;
+
+                  if (data.updatedBy && data.updatedBy === recipientId) {
+                    continue;
+                  }
+
+                  const tokens = await getTokensForUserId(recipientId);
+                  if (!tokens.length) continue;
+
+                  await sendPush(tokens, {
+                    title: "Menu updated",
+                    body: `${data.name ?? "Menu"}: added ${recipeTitle}`,
+                    data: {
+                      type: "menu",
+                      menuListId: doc.id,
+                      recipeId,
+                    },
+                  });
+                }
+
                 console.log("[menus] push sent", {
                   menuId: doc.id,
                   recipeId,
                   recipients: recipients.length,
-                  tokens: tokens.length,
                 });
               }
             })
@@ -379,7 +408,6 @@ function listenForCollectionUpdates() {
           Promise.resolve()
             .then(async () => {
               const recipients = [ownerId, ...sharedWith];
-              const tokens = await getTokensForUserIds(recipients);
 
               for (const recipeId of addedRecipeIds) {
                 let recipeTitle = "a recipe";
@@ -392,20 +420,32 @@ function listenForCollectionUpdates() {
                   // ignore
                 }
 
-                await sendPush(tokens, {
-                  title: "Collection updated",
-                  body: `${data.name ?? "Collection"}: added ${recipeTitle}`,
-                  data: {
-                    type: "recipeCollection",
-                    collectionId: doc.id,
-                    recipeId,
-                  },
-                });
+                for (const recipientId of recipients) {
+                  const allowed = await shouldSendPush(recipientId, "update");
+                  if (!allowed) continue;
+
+                  if (data.updatedBy && data.updatedBy === recipientId) {
+                    continue;
+                  }
+
+                  const tokens = await getTokensForUserId(recipientId);
+                  if (!tokens.length) continue;
+
+                  await sendPush(tokens, {
+                    title: "Collection updated",
+                    body: `${data.name ?? "Collection"}: added ${recipeTitle}`,
+                    data: {
+                      type: "recipeCollection",
+                      collectionId: doc.id,
+                      recipeId,
+                    },
+                  });
+                }
+
                 console.log("[collections] push sent", {
                   collectionId: doc.id,
                   recipeId,
                   recipients: recipients.length,
-                  tokens: tokens.length,
                 });
               }
             })
@@ -462,23 +502,34 @@ function listenForShoplistItemAdds() {
               }
 
               const recipients = [ownerId, ...sharedWith];
-              const tokens = await getTokensForUserIds(recipients);
-
               const itemText = doc.data()?.text || "an item";
-              await sendPush(tokens, {
-                title: "Shoplist updated",
-                body: `${shoplist.name ?? "Shoplist"}: added ${itemText}`,
-                data: {
-                  type: "shoplist",
-                  shoplistId: shoplistRef.id,
-                  itemId: doc.id,
-                },
-              });
+
+              for (const recipientId of recipients) {
+                const allowed = await shouldSendPush(recipientId, "update");
+                if (!allowed) continue;
+
+                if (doc.data()?.createdBy && doc.data().createdBy === recipientId) {
+                  continue;
+                }
+
+                const tokens = await getTokensForUserId(recipientId);
+                if (!tokens.length) continue;
+
+                await sendPush(tokens, {
+                  title: "Shoplist updated",
+                  body: `${shoplist.name ?? "Shoplist"}: added ${itemText}`,
+                  data: {
+                    type: "shoplist",
+                    shoplistId: shoplistRef.id,
+                    itemId: doc.id,
+                  },
+                });
+              }
+
               console.log("[shoplist-items] push sent", {
                 shoplistId: shoplistRef.id,
                 itemId: doc.id,
                 recipients: recipients.length,
-                tokens: tokens.length,
               });
             })
             .catch((error) => {

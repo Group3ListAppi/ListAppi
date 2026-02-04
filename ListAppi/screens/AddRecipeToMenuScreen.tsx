@@ -93,7 +93,7 @@ const AddRecipeToMenuScreen: React.FC<AddRecipeToMenuScreenProps> = ({
     if (selectedRecipeIds.length === 0) return
     try {
       setSaving(true)
-      await Promise.all(selectedRecipeIds.map((id) => addRecipeToMenuList(menuList.id, id)))
+      await Promise.all(selectedRecipeIds.map((id) => addRecipeToMenuList(menuList.id, id, user?.uid ?? null)))
       onBack()
     } catch (e) {
       console.error('Error adding recipes to menu:', e)
@@ -109,6 +109,7 @@ const AddRecipeToMenuScreen: React.FC<AddRecipeToMenuScreenProps> = ({
       showNav={false}
       showBack={true}
       onBack={onBack}
+      hideActions={true}
       customTitle={`Lisää reseptejä: ${menuList.name}`}
     >
       {loading ? (

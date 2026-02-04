@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { StyleSheet, View, ScrollView, TouchableOpacity } from 'react-native'
 import { Text, TextInput, ActivityIndicator, useTheme } from 'react-native-paper'
 import ScreenLayout from '../components/ScreenLayout'
+import { useAuth } from '../auth/useAuth'
 import { ListItem } from '../components/ListItem'
 import type { Shoplist } from '../firebase/shoplistUtils'
 import {
@@ -21,6 +22,7 @@ type Props = {
 
 const ShoplistDetailScreen: React.FC<Props> = ({ activeScreen, onNavigate, onBack, shoplist }) => {
   const theme = useTheme()
+  const { user } = useAuth()
 
   const [loading, setLoading] = useState(false)
   const [items, setItems] = useState<ShoplistItem[]>([])
@@ -52,7 +54,7 @@ const ShoplistDetailScreen: React.FC<Props> = ({ activeScreen, onNavigate, onBac
     setText('')
 
     try {
-      const id = await addShoplistItem(shoplist.id, value)
+      const id = await addShoplistItem(shoplist.id, value, user?.uid ?? null)
 
       // Optimistinen lisäys UI:hin (UI päivitetään heti ennen kuin Firestore on vastannut)
       setItems(prev => [
@@ -99,6 +101,7 @@ const ShoplistDetailScreen: React.FC<Props> = ({ activeScreen, onNavigate, onBac
       showNav={false}
       showBack={true}
       onBack={onBack}
+      hideActions={true}
       customTitle={shoplist.name}
     >
       <Text variant="bodyMedium" style={styles.subtitle}>

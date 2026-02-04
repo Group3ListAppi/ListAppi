@@ -42,11 +42,12 @@ export const getShoplistItems = async (shoplistId: string): Promise<ShoplistItem
   })
 }
 
-export const addShoplistItem = async (shoplistId: string, text: string) => {
+export const addShoplistItem = async (shoplistId: string, text: string, createdBy?: string | null) => {
   const docRef = await addDoc(itemsCol(shoplistId), {
     text,
     checked: false,
     createdAt: serverTimestamp(),
+    createdBy: createdBy ?? null,
   })
   return docRef.id
 }

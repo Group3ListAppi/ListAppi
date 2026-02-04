@@ -33,6 +33,7 @@ const RecipeDetailScreen: React.FC<RecipeDetailScreenProps> = ({
       showNav={false}
       showBack={true}
       onBack={onBack}
+      hideActions={true}
       customTitle={recipe.title}
     >
       <ScrollView style={styles.container}>

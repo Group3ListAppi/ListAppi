@@ -75,6 +75,7 @@ export default function NotificationsScreen({ activeScreen, onBack, onNavigate }
       showNav={false}
       showBack={true}
       onBack={onBack}
+      hideActions={true}
       customTitle="Ilmoitukset"
     >
       <ScrollView style={styles.container}>

@@ -110,6 +110,7 @@ export default function StyleScreen({ activeScreen, onBack, onNavigate, onThemeC
       showNav={false}
       showBack={true}
       onBack={onBack}
+      hideActions={true}
       customTitle="Tyyli"
     >
       <ScrollView style={styles.content}>

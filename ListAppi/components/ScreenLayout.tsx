@@ -17,9 +17,11 @@ interface ScreenLayoutProps {
   showBack?: boolean
   onBack?: () => void
   customTitle?: string
+  rightElement?: React.ReactNode
+  hideActions?: boolean
 }
 
-const ScreenLayout: React.FC<ScreenLayoutProps> = ({ activeScreen, onNavigate, children, showFAB = false, onFABPress, fabLabel = '', showNav = true, showBack = false, onBack, customTitle }) => {
+const ScreenLayout: React.FC<ScreenLayoutProps> = ({ activeScreen, onNavigate, children, showFAB = false, onFABPress, fabLabel = '', showNav = true, showBack = false, onBack, customTitle, rightElement, hideActions }) => {
   const theme = useTheme()
 
   const handleLogout = async () => {
@@ -61,6 +63,8 @@ const ScreenLayout: React.FC<ScreenLayoutProps> = ({ activeScreen, onNavigate, c
           title={customTitle || getTitle()}
           onBack={onBack}
           onLogout={handleLogout}
+          rightElement={rightElement}
+          hideActions={hideActions}
         />
       ) : (
         <AppBar
@@ -69,6 +73,8 @@ const ScreenLayout: React.FC<ScreenLayoutProps> = ({ activeScreen, onNavigate, c
           onNotifications={() => onNavigate("notifications")}
           onTrash={() => onNavigate("trash")}
           onLogout={handleLogout}
+          rightElement={rightElement}
+          hideActions={hideActions}
         />
       )}
       <View style={styles.content}>

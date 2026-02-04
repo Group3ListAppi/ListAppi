@@ -62,11 +62,11 @@ const MoveRecipesToCollectionScreen: React.FC<MoveRecipesToCollectionScreenProps
       setMoving(true);
       if (sourceCollectionId) {
         // Moving from a collection
-        await moveRecipesToCollection(sourceCollectionId, selectedCollectionId, recipeIds);
+        await moveRecipesToCollection(sourceCollectionId, selectedCollectionId, recipeIds, user?.uid ?? null);
       } else {
         // Adding to a collection (no source collection)
         for (const recipeId of recipeIds) {
-          await addRecipeToCollection(selectedCollectionId, recipeId);
+          await addRecipeToCollection(selectedCollectionId, recipeId, user?.uid ?? null);
         }
       }
       onBack();

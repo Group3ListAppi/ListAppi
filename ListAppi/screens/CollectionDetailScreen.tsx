@@ -199,6 +199,7 @@ const CollectionDetailScreen: React.FC<CollectionDetailScreenProps> = ({
       customTitle={collection.name}
       showFAB={!selectionMode}
       onFABPress={() => onNavigate("add-recipe", { collectionId: collection.id })}
+      hideActions={true}
       fabLabel="Luo uusi resepti"
     >
       {loading ? (

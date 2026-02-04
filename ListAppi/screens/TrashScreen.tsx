@@ -175,6 +175,7 @@
         showNav={false}
         showBack={true}
         onBack={onBack}
+        hideActions={true}
         customTitle="Roskakori"
       >
         {loading ? (

@@ -80,6 +80,7 @@ const MenuDetailScreen: React.FC<MenuDetailScreenProps> = ({
       customTitle={menuList.name}
       showFAB={true}
       onFABPress={() => onNavigate("add-recipe-to-menu", menuList)}
+      hideActions={true}
       fabLabel="Lisää resepti"
     >
       <ScrollView style={styles.container}>
