@@ -144,7 +144,6 @@ export const getUserRecipes = async (userId: string): Promise<Recipe[]> => {
       })
     }
     
-    console.log(`getUserRecipes: Found ${recipes.length} recipes for user ${userId}`)
     return recipes
   } catch (error) {
     console.error('Error fetching recipes from Firestore:', error)

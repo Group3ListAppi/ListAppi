@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "636992449128",
+    "project_id": "lisappi",
+    "storage_bucket": "lisappi.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:636992449128:android:6f16982abc863f390f69dd",
+        "android_client_info": {
+          "package_name": "com.ListAppi"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "636992449128-ncho3153gthrp116jait48m4f5i7dqd5.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ListAppi",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "636992449128-btf93sies6f6htl36inf8q881enni555.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyARhbFyltHcha1VKt5J7Bxezfleq5TY-9Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "636992449128-btf93sies6f6htl36inf8q881enni555.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "636992449128-5l5rqlgkdihu1mhdj0cqmadk42t1uhho.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.ListAppi.IOS"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
