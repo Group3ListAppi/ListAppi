@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
 import ScreenLayout from '../components/ScreenLayout';
 
@@ -19,6 +19,7 @@ const DataProtectionScreen: React.FC<DataProtectionScreenProps> = ({ activeScree
       showNav={false}
       showBack={true}
       onBack={onBack}
+      hideActions={true}
       customTitle="Tietosuoja"
     >
       <ScrollView style={styles.container}>
@@ -74,9 +75,7 @@ const DataProtectionScreen: React.FC<DataProtectionScreenProps> = ({ activeScree
           Sinulla on oikeus tarkastella, korjata tai poistaa tietojasi. Voit ottaa yhteyttä sovelluksen kehittäjiin tai poistaa tilisi asetuksista.
         </Text>
 
-        <Text variant="bodySmall" style={[styles.spacing, { color: theme.colors.onSurfaceVariant }]}>
-          
-        </Text>
+        <View style={styles.spacing} />
       </ScrollView>
     </ScreenLayout>
   );

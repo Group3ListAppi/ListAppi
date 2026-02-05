@@ -20,9 +20,13 @@ type TopAppBarProps = {
   avatarUrl?: string;
   //notifications
   onNotifications?: () => void;
+  //custom right content
+  rightElement?: React.ReactNode;
+  //hide default actions
+  hideActions?: boolean;
 };
 
-const TopAppBar = ({ title, onBack, onSettings, onTrash, onLogout, avatarUrl, onNotifications }: TopAppBarProps) => {
+const TopAppBar = ({ title, onBack, onSettings, onTrash, onLogout, avatarUrl, onNotifications, rightElement, hideActions }: TopAppBarProps) => {
   const [actionModalVisible, setActionModalVisible] = useState(false);
   const [invitationCount, setInvitationCount] = useState(0);
   const { user } = useAuth();
@@ -70,21 +74,28 @@ const TopAppBar = ({ title, onBack, onSettings, onTrash, onLogout, avatarUrl, on
 
       <Appbar.Content title={title} style={{ alignItems: "center" }} />
 
-      {/* Oikea puoli: bell ja dots */}
-      
-      <View style={styles.bellContainer}>
-        <Appbar.Action 
-          icon="bell" 
-          onPress={onNotifications} 
-        />
-        {invitationCount > 0 && (
-          <Badge style={styles.badge} size={18}>
-            {invitationCount}
-          </Badge>
-        )}
-      </View>
+      {/* Oikea puoli: custom element or default actions */}
+      {rightElement ? (
+        <View style={styles.rightElement}>{rightElement}</View>
+      ) : hideActions ? (
+        <View style={styles.spacer} />
+      ) : (
+        <>
+          <View style={styles.bellContainer}>
+            <Appbar.Action 
+              icon="bell" 
+              onPress={onNotifications} 
+            />
+            {invitationCount > 0 && (
+              <Badge style={styles.badge} size={18}>
+                {invitationCount}
+              </Badge>
+            )}
+          </View>
 
-      <Appbar.Action icon="dots-vertical" onPress={handleOpenActionModal} />
+          <Appbar.Action icon="dots-vertical" onPress={handleOpenActionModal} />
+        </>
+      )}
 
       <ActionModal
         visible={actionModalVisible}
@@ -110,6 +121,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 8,
     right: 8,
+  },
+  rightElement: {
+    marginRight: 8,
   },
 });
 

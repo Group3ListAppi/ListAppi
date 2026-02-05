@@ -107,10 +107,12 @@ export const getUserMenuLists = async (userId: string): Promise<MenuList[]> => {
   return menuLists;
 };
 
-  export const addRecipeToMenuList = async (menuListId: string, recipeId: string) => {
+  export const addRecipeToMenuList = async (menuListId: string, recipeId: string, updatedBy?: string | null) => {
     const ref = doc(db, "menulists", menuListId);
     await updateDoc(ref, {
       recipes: arrayUnion({ recipeId, done: false }),
+      updatedBy: updatedBy ?? null,
+      updatedAt: serverTimestamp(),
     });
   }
 

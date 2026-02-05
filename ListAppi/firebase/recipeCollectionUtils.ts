@@ -101,7 +101,7 @@ export const deleteRecipeCollection = async (collectionId: string): Promise<void
   }
 };
 
-export const addRecipeToCollection = async (collectionId: string, recipeId: string): Promise<void> => {
+export const addRecipeToCollection = async (collectionId: string, recipeId: string, updatedBy?: string | null): Promise<void> => {
   try {
     // Get the collection to check who it's shared with
     const collectionDoc = await getDoc(doc(db, "recipeCollections", collectionId));
@@ -115,7 +115,9 @@ export const addRecipeToCollection = async (collectionId: string, recipeId: stri
     
     // Add recipe to collection
     await updateDoc(doc(db, "recipeCollections", collectionId), {
-      recipeIds: arrayUnion(recipeId)
+      recipeIds: arrayUnion(recipeId),
+      updatedBy: updatedBy ?? null,
+      updatedAt: serverTimestamp(),
     });
     
     // If collection is shared, share the recipe with all collection members (owner + shared users)
@@ -157,11 +159,11 @@ export const removeRecipeFromCollection = async (collectionId: string, recipeId:
   }
 };
 
-export const moveRecipesToCollection = async (sourceCollectionId: string, targetCollectionId: string, recipeIds: string[]): Promise<void> => {
+export const moveRecipesToCollection = async (sourceCollectionId: string, targetCollectionId: string, recipeIds: string[], updatedBy?: string | null): Promise<void> => {
   try {
     // Add recipes to target collection
     for (const recipeId of recipeIds) {
-      await addRecipeToCollection(targetCollectionId, recipeId);
+      await addRecipeToCollection(targetCollectionId, recipeId, updatedBy);
     }
     
     // Remove recipes from source collection
@@ -306,7 +308,7 @@ export const stopSharingRecipeCollection = async (collectionId: string, userId: 
       
       // Remove user's owned recipes from the shared collection
       // and stop sharing them with all collection members
-      const allCollectionMembers = [collection.userId, ...sharedWith];
+      const allCollectionMembers = [collectionData.userId, ...sharedWith];
       
       for (const recipeId of userOwnedRecipeIds) {
         await removeRecipeFromCollection(collectionId, recipeId);

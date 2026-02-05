@@ -238,7 +238,7 @@ export const restoreRecipeFromTrash = async (recipeId: string, recipeData?: Reci
         const collectionDoc = await getDoc(doc(db, 'recipeCollections', collectionId));
         if (collectionDoc.exists()) {
           // Add recipe back to the original collection
-          await addRecipeToCollection(collectionId, recipeId);
+          await addRecipeToCollection(collectionId, recipeId, userId);
         }
         // If collection doesn't exist, recipe will exist without being in a collection
         // User can see it in the "Reseptit" view and add it to a collection if desired

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, AppState } from 'react-native';
 import { PaperProvider } from 'react-native-paper';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
@@ -23,6 +23,11 @@ import SettingsScreen from './screens/SettingsScreen';
 import StyleScreen from './screens/StyleScreen';
 import DataProtectionScreen from './screens/DataProtectionScreen';
 import NotificationsScreen from './screens/NotificationsScreen';
+import NotificationSettingsScreen from './screens/NotificationSettingsScreen';
+import NotificationPushEditScreen from './screens/NotificationPushEditScreen';
+/* Email settings screen (re-enable later)
+import NotificationEmailEditScreen from './screens/NotificationEmailEditScreen';
+*/
 import TrashScreen from './screens/TrashScreen';
 import AccountSettingScreen from './screens/AccountSettingScreen';
 
@@ -41,11 +46,29 @@ import * as Notifications from "expo-notifications"
 export default function App() {
   useEffect(() => {
     Notifications.setNotificationHandler({
-      handleNotification: async () => ({
-        shouldShowAlert: true,
-        shouldPlaySound: true,
-        shouldSetBadge: false,
-      }),
+      handleNotification: async (notification) => {
+        const data = notification.request.content.data as { type?: string };
+        const isActive = AppState.currentState === "active";
+        const isUpdate = data?.type === "menu" || data?.type === "shoplist" || data?.type === "recipeCollection";
+
+        if (isActive && isUpdate) {
+          return {
+            shouldShowAlert: false,
+            shouldShowBanner: false,
+            shouldShowList: false,
+            shouldPlaySound: false,
+            shouldSetBadge: false,
+          };
+        }
+
+        return {
+          shouldShowAlert: true,
+          shouldShowBanner: true,
+          shouldShowList: true,
+          shouldPlaySound: true,
+          shouldSetBadge: false,
+        };
+      },
     })
   }, [])
   const { user, initializing } = useAuth();
@@ -202,22 +225,22 @@ export default function App() {
       } else {
         const recipeId = await saveRecipeToFirestore(recipe, user.uid)
         
-        // If saving to a collection, add it to the collection
+        // Jos lisätään resepti kokoelmaan, lisätään se myös sinne
         if (collectionId) {
           const { addRecipeToCollection, getUserRecipeCollections } = await import('./firebase/recipeCollectionUtils');
-          await addRecipeToCollection(collectionId, recipeId);
+          await addRecipeToCollection(collectionId, recipeId, user.uid);
           
-          // Check if the collection is shared and share the recipe with all members
+          // Tarkista onko kokoelma jaettu, ja jos on, jaa resepti myös kokoelman jäsenten kanssa
           const collections = await getUserRecipeCollections(user.uid);
           const targetCollection = collections.find(c => c.id === collectionId);
           
           if (targetCollection?.sharedWith && targetCollection.sharedWith.length > 0) {
-            // Import updateDoc and doc from firebase
+            // Tuo tarvittavat funktiot dynaamisesti
             const { updateDoc, doc, arrayUnion } = await import('firebase/firestore');
             const { db } = await import('./firebase/config');
             const recipeRef = doc(db, 'recipes', recipeId);
             
-            // Add all collection members to the recipe's sharedWith array
+            // Lisää kaikki kokoelman jäsenet reseptin sharedWith-taulukkoon
             await updateDoc(recipeRef, {
               sharedWith: targetCollection.sharedWith
             });
@@ -238,9 +261,9 @@ export default function App() {
       const savedCollectionId = collectionId;
       setCollectionId(null)
       
-      // If we were adding to a collection, reload and go back to it
+      // Jos lisätään resepti kokoelmaan, ladataan kokoelma uudelleen ja palataan siihen
       if (wasInCollection && savedCollectionId && selectedCollection) {
-        // Reload the collection to show the new recipe
+        // Lataa kokoelma uudelleen näyttääksesi uuden reseptin
         const { getUserRecipeCollections } = await import('./firebase/recipeCollectionUtils');
         const collections = await getUserRecipeCollections(user.uid);
         const updatedCollection = collections.find(c => c.id === savedCollectionId);
@@ -331,6 +354,14 @@ export default function App() {
         return <DataProtectionScreen activeScreen={activeScreen} onBack={handleBack} onNavigate={handleNavigate} />;
       case "notifications":
         return <NotificationsScreen activeScreen={activeScreen} onBack={handleBack} onNavigate={handleNavigate} />;
+      case "notification-settings":
+        return <NotificationSettingsScreen activeScreen={activeScreen} onBack={handleBack} onNavigate={handleNavigate} />;
+      case "notification-settings-push":
+        return <NotificationPushEditScreen activeScreen={activeScreen} onBack={handleBack} onNavigate={handleNavigate} />;
+      /*
+      case "notification-settings-email":
+        return <NotificationEmailEditScreen activeScreen={activeScreen} onBack={handleBack} onNavigate={handleNavigate} />;
+      */
       case "trash":
         return <TrashScreen activeScreen={activeScreen} onBack={handleBack} onNavigate={handleNavigate} />;
       case "account-settings":
