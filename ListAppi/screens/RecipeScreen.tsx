@@ -24,11 +24,12 @@ import { getRecipesByIds, moveRecipeToTrash, getUserRecipes, stopSharingRecipe, 
 import { getUserProfiles } from '../firebase/userProfileUtils'
 
 interface RecipeScreenProps {
-  activeScreen: string
-  onNavigate: (screen: string, data?: any) => void
+  activeScreen: string;
+  onNavigate: (screen: string, data?: any) => void;
+  isPremium?: boolean;
 }
 
-const RecipeScreen: React.FC<RecipeScreenProps> = ({ activeScreen, onNavigate }) => {
+const RecipeScreen: React.FC<RecipeScreenProps> = ({ activeScreen, onNavigate, isPremium }) => {
   const { user } = useAuth()
   const theme = useTheme()
   const [loading, setLoading] = useState(false)
@@ -304,7 +305,7 @@ const RecipeScreen: React.FC<RecipeScreenProps> = ({ activeScreen, onNavigate })
       onFABPress={() => viewMode === 'collections' ? setListModalVisible(true) : onNavigate("add-recipe")}
     >
       <>
-        <AdBanner />
+        <AdBanner onPress={() => onNavigate('premium')} isPremium={isPremium}/>
         {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator animating={true} size="large" />

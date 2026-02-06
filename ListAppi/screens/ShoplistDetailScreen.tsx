@@ -14,14 +14,15 @@ import {
   type ShoplistItem,
 } from '../firebase/shoplistItemUtils'
 
-type Props = {
+interface ShoplistDetailScreenProps {
+  shoplist: Shoplist
   activeScreen: string
   onNavigate: (screen: string, data?: any) => void
   onBack: () => void
-  shoplist: Shoplist
+  isPremium?: boolean;
 }
 
-const ShoplistDetailScreen: React.FC<Props> = ({ activeScreen, onNavigate, onBack, shoplist }) => {
+const ShoplistDetailScreen: React.FC<ShoplistDetailScreenProps> = ({ activeScreen, onNavigate, onBack, shoplist, isPremium }) => {
   const theme = useTheme()
   const { user } = useAuth()
 
@@ -149,7 +150,7 @@ const ShoplistDetailScreen: React.FC<Props> = ({ activeScreen, onNavigate, onBac
               <View style={{ height: 180 }} />
           </ScrollView>
           <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}>
-            <AdBanner />
+            <AdBanner onPress={() => onNavigate('premium')} isPremium={isPremium}/>
           </View>
         </>
       )}

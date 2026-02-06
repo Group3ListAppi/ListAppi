@@ -15,6 +15,7 @@ interface MenuDetailScreenProps {
   activeScreen: string;
   onNavigate: (screen: string, data?: any) => void;
   onBack: () => void;
+  isPremium?: boolean;
 }
 
 const MenuDetailScreen: React.FC<MenuDetailScreenProps> = ({
@@ -22,6 +23,7 @@ const MenuDetailScreen: React.FC<MenuDetailScreenProps> = ({
   activeScreen,
   onNavigate,
   onBack,
+  isPremium,
 }) => {
   const theme = useTheme();
   const { user } = useAuth();
@@ -105,7 +107,7 @@ const MenuDetailScreen: React.FC<MenuDetailScreenProps> = ({
           <View style={{ height: 180 }} />
         </ScrollView>
         <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}>
-          <AdBanner />
+          <AdBanner onPress={() => onNavigate('premium')} isPremium={isPremium} />
         </View>
       </>
     </ScreenLayout>

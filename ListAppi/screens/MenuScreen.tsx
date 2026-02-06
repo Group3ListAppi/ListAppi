@@ -19,11 +19,12 @@ import { getUserProfiles } from '../firebase/userProfileUtils';
 import { type CreateListFormData } from '../components/ListModal';
 
 interface MenuScreenProps {
-  activeScreen: string
-  onNavigate: (screen: string, data?: any) => void
+  activeScreen: string;
+  onNavigate: (screen: string, data?: any) => void;
+  isPremium?: boolean;
 }
 
-const MenuScreen: React.FC<MenuScreenProps> = ({ activeScreen, onNavigate }) => {
+const MenuScreen: React.FC<MenuScreenProps> = ({ activeScreen, onNavigate, isPremium }) => {
   const [listModalVisible, setListModalVisible] = useState(false)
   const [editingMenuList, setEditingMenuList] = useState<MenuList | null>(null)
   const { user } = useAuth()
@@ -148,7 +149,7 @@ const MenuScreen: React.FC<MenuScreenProps> = ({ activeScreen, onNavigate }) => 
       showFAB={true} 
       onFABPress={() => setListModalVisible(true)}
     >
-      <AdBanner />
+      <AdBanner onPress={() => onNavigate('premium')} isPremium={isPremium}/>
       {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator animating size="large" />

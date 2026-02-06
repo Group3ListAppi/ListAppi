@@ -20,6 +20,7 @@ interface CollectionDetailScreenProps {
   activeScreen: string;
   onNavigate: (screen: string, data?: any) => void;
   onBack: () => void;
+  isPremium?: boolean;
 }
 
 const CollectionDetailScreen: React.FC<CollectionDetailScreenProps> = ({
@@ -27,6 +28,7 @@ const CollectionDetailScreen: React.FC<CollectionDetailScreenProps> = ({
   activeScreen,
   onNavigate,
   onBack,
+  isPremium,
 }) => {
   const theme = useTheme();
   const { user } = useAuth();
@@ -286,7 +288,7 @@ const CollectionDetailScreen: React.FC<CollectionDetailScreenProps> = ({
         </View>
       )}
       <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}>
-        <AdBanner />
+        <AdBanner onPress={() => onNavigate('premium')} isPremium={isPremium} />
       </View>
       <ShareModal
         visible={shareModalVisible}

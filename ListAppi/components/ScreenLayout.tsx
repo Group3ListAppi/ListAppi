@@ -62,6 +62,9 @@ const ScreenLayout: React.FC<ScreenLayoutProps> = ({ activeScreen, onNavigate, c
         <AppBar
           title={customTitle || getTitle()}
           onBack={onBack}
+          onSettings={() => onNavigate("settings")}
+          onNotifications={() => onNavigate("notifications")}
+          onTrash={() => onNavigate("trash")}
           onLogout={handleLogout}
           rightElement={rightElement}
           hideActions={hideActions}

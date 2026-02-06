@@ -15,9 +15,10 @@ interface AccountSettingScreenProps {
   activeScreen: string
   onBack: () => void
   onNavigate: (screen: string) => void
+  isPremium?: boolean;
 }
 
-const AccountSettingScreen: React.FC<AccountSettingScreenProps> = ({ activeScreen, onBack, onNavigate }) => {
+const AccountSettingScreen: React.FC<AccountSettingScreenProps> = ({ activeScreen, onBack, onNavigate, isPremium }) => {
   const theme = useTheme();
   const { user } = useAuth();
   const [displayName, setDisplayName] = useState("")
@@ -46,7 +47,7 @@ const AccountSettingScreen: React.FC<AccountSettingScreenProps> = ({ activeScree
 
   return (
     <ScreenLayout activeScreen={activeScreen} onNavigate={onNavigate}>
-      <AdBanner />
+      <AdBanner isPremium={isPremium} />
        <EditDisplayNameDialog
         visible={editNameOpen}
         initialName={displayName}

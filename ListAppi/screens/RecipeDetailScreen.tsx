@@ -23,6 +23,7 @@ const RecipeDetailScreen: React.FC<RecipeDetailScreenProps> = ({
   activeScreen,
   onNavigate,
   onBack,
+  isPremium,
 }) => {
   const theme = useTheme()
   const [imageError, setImageError] = useState(false)
@@ -136,7 +137,7 @@ const RecipeDetailScreen: React.FC<RecipeDetailScreenProps> = ({
         <View style={{ height: 200 }} />
       </ScrollView>
       <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}>
-        <AdBanner />
+        <AdBanner onPress={() => onNavigate('premium')} isPremium={isPremium}/>
       </View>
       </>
     </ScreenLayout>
