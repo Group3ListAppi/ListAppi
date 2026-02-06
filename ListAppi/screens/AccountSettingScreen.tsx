@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, ScrollView, View } from 'react-native';
 import { Text, useTheme, List, Avatar } from 'react-native-paper';
 import ScreenLayout from '../components/ScreenLayout';
+import { AdBanner } from '../components/AdBanner';
 import { useAuth } from '../auth/useAuth';
 import EditDisplayNameDialog from "../components/EditDisplayNameDialog"
 import { getUserProfile } from "../firebase/userProfileUtils"
@@ -45,6 +46,7 @@ const AccountSettingScreen: React.FC<AccountSettingScreenProps> = ({ activeScree
 
   return (
     <ScreenLayout activeScreen={activeScreen} onNavigate={onNavigate}>
+      <AdBanner />
        <EditDisplayNameDialog
         visible={editNameOpen}
         initialName={displayName}

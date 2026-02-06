@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { StyleSheet, View, ScrollView, Image } from 'react-native'
 import { Text, ActivityIndicator } from 'react-native-paper'
 import ScreenLayout from '../components/ScreenLayout'
+import { AdBanner } from '../components/AdBanner'
 import ListModal, { type CreateListFormData } from '../components/ListModal'
 import { ListButton } from '../components/ListButton'
 import { useAuth } from '../auth/useAuth'
@@ -142,7 +143,7 @@ const ShoplistScreen: React.FC<ShoplistScreenProps> = ({ activeScreen, onNavigat
       fabLabel="Lisää uusi ostoslista"
       onFABPress={() => setListModalVisible(true)}
     >
-      
+      <AdBanner />
 
       {loading ? (
         <View style={styles.loadingContainer}>

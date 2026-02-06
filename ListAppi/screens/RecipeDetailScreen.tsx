@@ -4,6 +4,7 @@ import { Text, Divider, useTheme, Chip, Button } from 'react-native-paper'
 import AppBar from '../components/AppBar'
 import type { CreateRecipeFormData } from '../components/RecipeModal'
 import ScreenLayout from '../components/ScreenLayout'
+import { AdBanner } from '../components/AdBanner'
 
 interface Recipe extends CreateRecipeFormData {
   id: string
@@ -36,7 +37,8 @@ const RecipeDetailScreen: React.FC<RecipeDetailScreenProps> = ({
       hideActions={true}
       customTitle={recipe.title}
     >
-      <ScrollView style={styles.container}>
+      <>
+        <ScrollView style={styles.container}>
         {recipe.link && (
           <>
             <Button
@@ -131,8 +133,12 @@ const RecipeDetailScreen: React.FC<RecipeDetailScreenProps> = ({
             </Chip>
           ))}
         </View>
-        <View style={{ height: 60 }} />
+        <View style={{ height: 200 }} />
       </ScrollView>
+      <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}>
+        <AdBanner />
+      </View>
+      </>
     </ScreenLayout>
   )
 }

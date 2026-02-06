@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingTop: 16,
+    paddingTop: 0,
   },
   fabWrapper: {
     position: 'absolute',

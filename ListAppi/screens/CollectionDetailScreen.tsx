@@ -3,6 +3,7 @@ import { StyleSheet, ScrollView, View, TouchableOpacity, Image } from "react-nat
 import { Text, ActivityIndicator, useTheme } from "react-native-paper";
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ListButton } from "../components/ListButton";
+import { AdBanner } from "../components/AdBanner";
 import { SearchBar } from '../components/SearchBar';
 import { FilterModal, type FilterOptions } from '../components/FilterModal';
 import { ToolBar } from '../components/ToolBar';
@@ -280,9 +281,13 @@ const CollectionDetailScreen: React.FC<CollectionDetailScreenProps> = ({
                 />
               );
             })}
+            <View style={{ height: 180 }} />
           </ScrollView>
         </View>
       )}
+      <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}>
+        <AdBanner />
+      </View>
       <ShareModal
         visible={shareModalVisible}
         itemIds={Array.from(selectedRecipes)}

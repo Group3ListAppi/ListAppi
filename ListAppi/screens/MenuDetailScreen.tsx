@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { StyleSheet, ScrollView } from "react-native";
+import { StyleSheet, ScrollView, View } from "react-native";
 import { useTheme } from "react-native-paper";
 import { ListButton } from "../components/ListButton";
+import { AdBanner } from "../components/AdBanner";
 import { getUserRecipes } from "../firebase/recipeUtils";
 import { removeRecipeFromMenuList, toggleRecipeDoneInMenuList, getUserMenuLists } from "../firebase/menuUtils";
 import type { MenuList } from "../firebase/menuUtils";
@@ -83,24 +84,30 @@ const MenuDetailScreen: React.FC<MenuDetailScreenProps> = ({
       hideActions={true}
       fabLabel="Lisää resepti"
     >
-      <ScrollView style={styles.container}>
-        {recipes.map((recipe) => (
-          <ListButton
-            key={recipe.id}
-            listName={recipe.title}
-            imageUrl={recipe.image}
-            ownerAvatar={user?.photoURL || undefined}
-            ownerInitials={user?.displayName?.charAt(0).toUpperCase() || "U"}
-            showCheckbox={true}
-            isChecked={getRecipeDone(recipe.id)}
-            onCheckChange={() => handleToggleDone(recipe.id)}
-            onPress={() => onNavigate("recipe-detail", recipe)}
-            customActionIds={['remove']}
-            onDelete={() => handleRemoveRecipe(recipe.id)}
-            removeLabel="Poista listalta"
-          />
-        ))}
-      </ScrollView>
+      <>
+        <ScrollView style={styles.container}>
+          {recipes.map((recipe) => (
+            <ListButton
+              key={recipe.id}
+              listName={recipe.title}
+              imageUrl={recipe.image}
+              ownerAvatar={user?.photoURL || undefined}
+              ownerInitials={user?.displayName?.charAt(0).toUpperCase() || "U"}
+              showCheckbox={true}
+              isChecked={getRecipeDone(recipe.id)}
+              onCheckChange={() => handleToggleDone(recipe.id)}
+              onPress={() => onNavigate("recipe-detail", recipe)}
+              customActionIds={['remove']}
+              onDelete={() => handleRemoveRecipe(recipe.id)}
+              removeLabel="Poista listalta"
+            />
+          ))}
+          <View style={{ height: 180 }} />
+        </ScrollView>
+        <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}>
+          <AdBanner />
+        </View>
+      </>
     </ScreenLayout>
   );
 };

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, ScrollView, Image } from 'react-native';
 import { Text, Button, ActivityIndicator, Searchbar } from 'react-native-paper';
 import ScreenLayout from '../components/ScreenLayout';
+import { AdBanner } from '../components/AdBanner';
 import ListModal from '../components/ListModal';
 import { AddNewButton } from '../components/AddNewButton';
 import { ListButton } from '../components/ListButton';
@@ -147,6 +148,7 @@ const MenuScreen: React.FC<MenuScreenProps> = ({ activeScreen, onNavigate }) => 
       showFAB={true} 
       onFABPress={() => setListModalVisible(true)}
     >
+      <AdBanner />
       {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator animating size="large" />

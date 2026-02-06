@@ -4,6 +4,7 @@ import { Text, ActivityIndicator, useTheme } from 'react-native-paper';
 import ScreenLayout from '../components/ScreenLayout';
 import { ListButton } from '../components/ListButton';
 import { RecipeButton } from '../components/RecipeButton';
+import { AdBanner } from '../components/AdBanner';
 import { useAuth } from '../auth/useAuth';
 import { getUserShoplists, type Shoplist } from '../firebase/shoplistUtils';
 import { getUserRecipes, type Recipe } from '../firebase/recipeUtils';
@@ -91,6 +92,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ activeScreen, onNavigate }) => 
 
   return (
     <ScreenLayout activeScreen={activeScreen} onNavigate={onNavigate}>
+      <AdBanner />
       {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator animating size="large" color={theme.colors.primary} />

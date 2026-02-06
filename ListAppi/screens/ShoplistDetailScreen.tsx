@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { StyleSheet, View, ScrollView, TouchableOpacity } from 'react-native'
 import { Text, TextInput, ActivityIndicator, useTheme } from 'react-native-paper'
 import ScreenLayout from '../components/ScreenLayout'
+import { AdBanner } from '../components/AdBanner'
 import { useAuth } from '../auth/useAuth'
 import { ListItem } from '../components/ListItem'
 import type { Shoplist } from '../firebase/shoplistUtils'
@@ -132,20 +133,25 @@ const ShoplistDetailScreen: React.FC<Props> = ({ activeScreen, onNavigate, onBac
           <ActivityIndicator animating size="large" />
         </View>
       ) : (
-        <ScrollView style={styles.list}>
-            {items.map((item) => (
-                <ListItem
-                    key={item.id}
-                    title={item.text}
-                    isChecked={item.checked}
-                    //onPress={() => toggleChecked(item.id, !item.checked)}
-                    onCheckChange={(next) => toggleChecked(item.id, next)}
-                    onLongPress={() => removeItem(item.id)}
-                    delayLongPress={700}
-                />
-            ))}
-            <View style={{ height: 40 }} />
-            </ScrollView>
+        <>
+          <ScrollView style={styles.list}>
+              {items.map((item) => (
+                  <ListItem
+                      key={item.id}
+                      title={item.text}
+                      isChecked={item.checked}
+                      //onPress={() => toggleChecked(item.id, !item.checked)}
+                      onCheckChange={(next) => toggleChecked(item.id, next)}
+                      onLongPress={() => removeItem(item.id)}
+                      delayLongPress={700}
+                  />
+              ))}
+              <View style={{ height: 180 }} />
+          </ScrollView>
+          <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}>
+            <AdBanner />
+          </View>
+        </>
       )}
     </ScreenLayout>
   )
