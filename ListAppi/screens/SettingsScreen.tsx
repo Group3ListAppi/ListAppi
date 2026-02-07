@@ -58,6 +58,8 @@ export default function SettingsScreen({ activeScreen, onBack, onNavigate }: Pro
       onNavigate("notification-settings");
     } else if (section === "Tietosuoja") {
       onNavigate("data-protection");
+    } else if (section === "Poista mainokset") {
+      onNavigate("premium");
     } else {
       console.log("Navigating to:", section);
     }

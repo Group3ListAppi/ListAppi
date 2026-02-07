@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, ScrollView, View } from 'react-native';
 import { Text, useTheme, List, Avatar } from 'react-native-paper';
 import ScreenLayout from '../components/ScreenLayout';
+import { AdBanner } from '../components/AdBanner';
 import { useAuth } from '../auth/useAuth';
 import EditDisplayNameDialog from "../components/EditDisplayNameDialog"
 import { getUserProfile } from "../firebase/userProfileUtils"
@@ -14,9 +15,10 @@ interface AccountSettingScreenProps {
   activeScreen: string
   onBack: () => void
   onNavigate: (screen: string) => void
+  isPremium?: boolean;
 }
 
-const AccountSettingScreen: React.FC<AccountSettingScreenProps> = ({ activeScreen, onBack, onNavigate }) => {
+const AccountSettingScreen: React.FC<AccountSettingScreenProps> = ({ activeScreen, onBack, onNavigate, isPremium }) => {
   const theme = useTheme();
   const { user } = useAuth();
   const [displayName, setDisplayName] = useState("")
@@ -45,6 +47,7 @@ const AccountSettingScreen: React.FC<AccountSettingScreenProps> = ({ activeScree
 
   return (
     <ScreenLayout activeScreen={activeScreen} onNavigate={onNavigate}>
+      <AdBanner isPremium={isPremium} />
        <EditDisplayNameDialog
         visible={editNameOpen}
         initialName={displayName}

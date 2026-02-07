@@ -62,6 +62,9 @@ const ScreenLayout: React.FC<ScreenLayoutProps> = ({ activeScreen, onNavigate, c
         <AppBar
           title={customTitle || getTitle()}
           onBack={onBack}
+          onSettings={() => onNavigate("settings")}
+          onNotifications={() => onNavigate("notifications")}
+          onTrash={() => onNavigate("trash")}
           onLogout={handleLogout}
           rightElement={rightElement}
           hideActions={hideActions}
@@ -98,7 +101,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingTop: 16,
+    paddingTop: 0,
   },
   fabWrapper: {
     position: 'absolute',

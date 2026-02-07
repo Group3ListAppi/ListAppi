@@ -30,6 +30,7 @@ import NotificationEmailEditScreen from './screens/NotificationEmailEditScreen';
 */
 import TrashScreen from './screens/TrashScreen';
 import AccountSettingScreen from './screens/AccountSettingScreen';
+import PremiumScreen from './screens/PremiumScreen';
 
 import { useAuth } from './auth/useAuth'
 import type { Recipe } from './firebase/recipeUtils'
@@ -38,7 +39,7 @@ import type { RecipeCollection } from './firebase/recipeCollectionUtils';
 import type { CreateRecipeFormData } from './components/RecipeModal'
 import { saveRecipeToFirestore, updateRecipeInFirestore } from './firebase/recipeUtils'
 import ChooseNameScreen from "./screens/ChooseNameScreen"
-import { ensureUserProfile, getUserProfile } from "./firebase/userProfileUtils"
+import { ensureUserProfile, getUserProfile, activatePremium, cancelPremium } from "./firebase/userProfileUtils"
 import { registerForPushNotificationsAsync } from "./utils/notifications"
 import { savePushToken } from "./firebase/notificationUtils"
 import * as Notifications from "expo-notifications"
@@ -85,6 +86,7 @@ export default function App() {
   const [needsName, setNeedsName] = useState(false)
   const [checkingProfile, setCheckingProfile] = useState(true)
   const [selectedTheme, setSelectedTheme] = useState<ThemeKey>('dark');
+  const [isPremium, setIsPremium] = useState(false);
 
   useEffect(() => {
   const loadTheme = async () => {
@@ -143,6 +145,7 @@ export default function App() {
         const hasName = !!profile?.displayName && profile.displayName.trim().length >= 2
 
         setNeedsName(!hasName)
+        setIsPremium(profile?.isPremium ?? false)
       } catch (e) {
         console.log("Profile check failed:", e)
         // turvallinen fallback: pakota nimen valinta jos epävarma
@@ -209,6 +212,26 @@ export default function App() {
       setActiveScreen(next[next.length - 1]);
       return next;
     });
+  };
+
+  const handleActivatePremium = async () => {
+    try {
+      await activatePremium();
+      setIsPremium(true);
+    } catch (error) {
+      console.error('Error activating premium:', error);
+      throw error;
+    }
+  };
+
+  const handleCancelPremium = async () => {
+    try {
+      await cancelPremium();
+      setIsPremium(false);
+    } catch (error) {
+      console.error('Error canceling premium:', error);
+      throw error;
+    }
   };
 
   const handleSaveRecipe = async (recipe: CreateRecipeFormData) => {
@@ -282,9 +305,9 @@ export default function App() {
   const renderScreen = () => {
     switch (activeScreen) {
       case 'home':
-        return <HomeScreen activeScreen={activeScreen} onNavigate={handleNavigate} />;
+        return <HomeScreen activeScreen={activeScreen} onNavigate={handleNavigate} isPremium={isPremium} />;
       case 'menu':
-        return <MenuScreen activeScreen={activeScreen} onNavigate={handleNavigate} />;
+        return <MenuScreen activeScreen={activeScreen} onNavigate={handleNavigate} isPremium={isPremium} />;
       case 'menu-detail':
         return selectedMenuList ? (
           <MenuDetailScreen
@@ -292,6 +315,7 @@ export default function App() {
             activeScreen={activeScreen}
             onNavigate={handleNavigate}
             onBack={handleBack}
+            isPremium={isPremium}
           />
         ) : null;
         case 'add-recipe-to-menu':
@@ -304,7 +328,7 @@ export default function App() {
           />
         ) : null;
       case 'recipes':
-        return <RecipeScreen activeScreen={activeScreen} onNavigate={handleNavigate} />;
+        return <RecipeScreen activeScreen={activeScreen} onNavigate={handleNavigate} isPremium={isPremium} />;
       case 'collection-detail':
         return selectedCollection ? (
           <CollectionDetailScreen
@@ -312,6 +336,7 @@ export default function App() {
             activeScreen={activeScreen}
             onNavigate={handleNavigate}
             onBack={handleBack}
+            isPremium={isPremium}
           />
         ) : null;
       case 'move-recipes-to-collection':
@@ -333,10 +358,11 @@ export default function App() {
             activeScreen={activeScreen}
             onNavigate={handleNavigate}
             onBack={handleBack}
+            isPremium={isPremium}
           />
         ) : null;
       case 'shoplist':
-        return <ShoplistScreen activeScreen={activeScreen} onNavigate={handleNavigate} />;
+        return <ShoplistScreen activeScreen={activeScreen} onNavigate={handleNavigate} isPremium={isPremium} />;
       case 'shoplist-detail':
         return selectedShoplist ? (
           <ShoplistDetailScreen
@@ -344,6 +370,7 @@ export default function App() {
             activeScreen={activeScreen}
             onNavigate={handleNavigate}
             onBack={handleBack}
+            isPremium={isPremium}
           />
         ) : null
       case "settings":
@@ -365,9 +392,11 @@ export default function App() {
       case "trash":
         return <TrashScreen activeScreen={activeScreen} onBack={handleBack} onNavigate={handleNavigate} />;
       case "account-settings":
-        return <AccountSettingScreen activeScreen={activeScreen} onBack={handleBack} onNavigate={handleNavigate} />;
+        return <AccountSettingScreen activeScreen={activeScreen} onBack={handleBack} onNavigate={handleNavigate} isPremium={isPremium} />;
+      case "premium":
+        return <PremiumScreen activeScreen={activeScreen} onBack={handleBack} onNavigate={handleNavigate} isPremium={isPremium} onActivatePremium={handleActivatePremium} onCancelPremium={handleCancelPremium} />;
       default:
-        return <HomeScreen activeScreen={activeScreen} onNavigate={handleNavigate} />;
+        return <HomeScreen activeScreen={activeScreen} onNavigate={handleNavigate} isPremium={isPremium} />;
     }
   }
 

@@ -3,6 +3,7 @@ import { StyleSheet, View, ScrollView, Image, TouchableOpacity } from 'react-nat
 import { Text, ActivityIndicator, useTheme, SegmentedButtons } from 'react-native-paper'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import ScreenLayout from '../components/ScreenLayout'
+import { AdBanner } from '../components/AdBanner'
 import { ListButton } from '../components/ListButton'
 import { SearchBar } from '../components/SearchBar'
 import { FilterModal, type FilterOptions } from '../components/FilterModal'
@@ -23,11 +24,12 @@ import { getRecipesByIds, moveRecipeToTrash, getUserRecipes, stopSharingRecipe, 
 import { getUserProfiles } from '../firebase/userProfileUtils'
 
 interface RecipeScreenProps {
-  activeScreen: string
-  onNavigate: (screen: string, data?: any) => void
+  activeScreen: string;
+  onNavigate: (screen: string, data?: any) => void;
+  isPremium?: boolean;
 }
 
-const RecipeScreen: React.FC<RecipeScreenProps> = ({ activeScreen, onNavigate }) => {
+const RecipeScreen: React.FC<RecipeScreenProps> = ({ activeScreen, onNavigate, isPremium }) => {
   const { user } = useAuth()
   const theme = useTheme()
   const [loading, setLoading] = useState(false)
@@ -302,7 +304,9 @@ const RecipeScreen: React.FC<RecipeScreenProps> = ({ activeScreen, onNavigate })
       showFAB={!selectionMode} 
       onFABPress={() => viewMode === 'collections' ? setListModalVisible(true) : onNavigate("add-recipe")}
     >
-      {loading ? (
+      <>
+        <AdBanner onPress={() => onNavigate('premium')} isPremium={isPremium}/>
+        {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator animating={true} size="large" />
         </View>
@@ -444,6 +448,7 @@ const RecipeScreen: React.FC<RecipeScreenProps> = ({ activeScreen, onNavigate })
           )}
         </>
       )}
+      </>
       <ListModal
         visible={listModalVisible || !!editingCollection}
         type="recipe-collection"

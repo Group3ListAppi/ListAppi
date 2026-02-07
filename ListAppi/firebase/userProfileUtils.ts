@@ -8,6 +8,7 @@ export type UserProfile = {
   displayName?: string
   photoURL?: string
   createdAt?: any
+  isPremium?: boolean
 }
 
 // Varmistaa että users/{uid} olemassa (email + createdAt)
@@ -42,6 +43,22 @@ export async function saveMyDisplayName(displayName: string) {
 
   // 2) Auth-profiili
   await updateProfile(user, { displayName: name })
+}
+
+// Aktivoi premium-tilaus
+export async function activatePremium() {
+  const user = auth.currentUser
+  if (!user) throw new Error("No signed-in user")
+
+  await setDoc(doc(db, "users", user.uid), { isPremium: true }, { merge: true })
+}
+
+// Peruuta premium-tilaus
+export async function cancelPremium() {
+  const user = auth.currentUser
+  if (!user) throw new Error("No signed-in user")
+
+  await setDoc(doc(db, "users", user.uid), { isPremium: false }, { merge: true })
 }
 
 // Päivitä oma sähköposti Firestore-profiiliin

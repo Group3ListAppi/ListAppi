@@ -4,6 +4,7 @@ import { Text, ActivityIndicator, useTheme } from 'react-native-paper';
 import ScreenLayout from '../components/ScreenLayout';
 import { ListButton } from '../components/ListButton';
 import { RecipeButton } from '../components/RecipeButton';
+import { AdBanner } from '../components/AdBanner';
 import { useAuth } from '../auth/useAuth';
 import { getUserShoplists, type Shoplist } from '../firebase/shoplistUtils';
 import { getUserRecipes, type Recipe } from '../firebase/recipeUtils';
@@ -13,9 +14,10 @@ import { getUserProfiles } from '../firebase/userProfileUtils';
 interface HomeScreenProps {
   activeScreen: string;
   onNavigate: (screen: string, data?: any) => void;
+  isPremium?: boolean;
 }
 
-const HomeScreen: React.FC<HomeScreenProps> = ({ activeScreen, onNavigate }) => {
+const HomeScreen: React.FC<HomeScreenProps> = ({ activeScreen, onNavigate, isPremium }) => {
   const theme = useTheme();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -91,6 +93,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ activeScreen, onNavigate }) => 
 
   return (
     <ScreenLayout activeScreen={activeScreen} onNavigate={onNavigate}>
+      <AdBanner onPress={() => onNavigate('premium')} isPremium={isPremium} />
       {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator animating size="large" color={theme.colors.primary} />
