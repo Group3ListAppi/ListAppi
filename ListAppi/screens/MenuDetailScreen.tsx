@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { StyleSheet, ScrollView, View } from "react-native";
 import { useTheme } from "react-native-paper";
-import { ListButton } from "../components/ListButton";
+import { ListItem } from "../components/ListItem";
 import { AdBanner } from "../components/AdBanner";
 import { getUserRecipes } from "../firebase/recipeUtils";
 import { removeRecipeFromMenuList, toggleRecipeDoneInMenuList, getUserMenuLists } from "../firebase/menuUtils";
@@ -89,19 +89,14 @@ const MenuDetailScreen: React.FC<MenuDetailScreenProps> = ({
       <>
         <ScrollView style={styles.container}>
           {recipes.map((recipe) => (
-            <ListButton
+            <ListItem
               key={recipe.id}
-              listName={recipe.title}
+              title={recipe.title}
               imageUrl={recipe.image}
-              ownerAvatar={user?.photoURL || undefined}
-              ownerInitials={user?.displayName?.charAt(0).toUpperCase() || "U"}
-              showCheckbox={true}
               isChecked={getRecipeDone(recipe.id)}
-              onCheckChange={() => handleToggleDone(recipe.id)}
-              onPress={() => onNavigate("recipe-detail", recipe)}
-              customActionIds={['remove']}
-              onDelete={() => handleRemoveRecipe(recipe.id)}
-              removeLabel="Poista listalta"
+              onCheckChange={(next) => handleToggleDone(recipe.id)}
+              onLongPress={() => handleRemoveRecipe(recipe.id)}
+              delayLongPress={700}
             />
           ))}
           <View style={{ height: 180 }} />
