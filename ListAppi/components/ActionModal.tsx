@@ -24,6 +24,7 @@ interface ActionModalProps {
   onSettings?: () => void
   onCamera?: () => void
   onGallery?: () => void
+  onRemoveAvatar?: () => void
   onShareRecipe?: () => void
   onEditRecipe?: () => void
   onDeleteRecipe?: () => void
@@ -86,6 +87,12 @@ const ACTION_DEFINITIONS: Record<string, Omit<ActionButton, 'onPress'> & { onPre
         icon: 'image',
         onPressKey: 'onGallery',
     },
+    removeAvatar: {
+      id: 'removeAvatar',
+      label: 'Poista profiilikuva',
+      icon: 'account-remove',
+      onPressKey: 'onRemoveAvatar',
+    },
     shareRecipe: {
         id: 'shareRecipe',
         label: 'Jaa resepti',
@@ -137,6 +144,7 @@ export const ActionModal: React.FC<ActionModalProps> = ({
   onLogout,
   onCamera,
   onGallery,
+  onRemoveAvatar,
   onShareRecipe,
   onEditRecipe,
   onDeleteRecipe,
@@ -159,6 +167,7 @@ export const ActionModal: React.FC<ActionModalProps> = ({
     onLogout: onLogout || (() => {}),
     onCamera: onCamera || (() => {}),
     onGallery: onGallery || (() => {}),
+    onRemoveAvatar: onRemoveAvatar || (() => {}),
     onShareRecipe: onShareRecipe || (() => {}),
     onEditRecipe: onEditRecipe || (() => {}),
     onDeleteRecipe: onDeleteRecipe || (() => {}),
