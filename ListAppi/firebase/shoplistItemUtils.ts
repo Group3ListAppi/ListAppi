@@ -10,6 +10,8 @@ import {
   updateDoc,
   serverTimestamp,
   Timestamp,
+  writeBatch,
+  where,
 } from 'firebase/firestore'
 
 export interface ShoplistItem {
@@ -64,4 +66,18 @@ export const setShoplistItemChecked = async (
 
 export const deleteShoplistItem = async (shoplistId: string, itemId: string) => {
   await deleteDoc(doc(db, 'shoplists', shoplistId, 'items', itemId))
+}
+
+export const deleteCheckedShoplistItems = async (shoplistId: string) => {
+  // Haetaan vain checked == true itemit
+  const q = query(itemsCol(shoplistId), where("checked", "==", true))
+  const snap = await getDocs(q)
+
+  if (snap.empty) return 0
+
+  const batch = writeBatch(db)
+  snap.docs.forEach((d) => batch.delete(d.ref))
+
+  await batch.commit()
+  return snap.size // palautetaan montako poistettiin
 }
