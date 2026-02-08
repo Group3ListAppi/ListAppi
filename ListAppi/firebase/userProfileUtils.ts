@@ -101,3 +101,37 @@ export async function getUserProfiles(userIds: string[]): Promise<Map<string, Us
   
   return profileMap
 }
+
+export async function updateMyAvatar(photoBase64: string) {
+  const user = auth.currentUser
+  if (!user) throw new Error("No signed-in user")
+
+  await setDoc(
+    doc(db, "users", user.uid),
+    { photoURL: photoBase64 },
+    { merge: true }
+  )
+
+  try {
+    await updateProfile(user, { photoURL: photoBase64 })
+  } catch (error) {
+    console.warn("Failed to update auth photoURL, Firestore updated.", error)
+  }
+}
+
+export async function removeMyAvatar() {
+  const user = auth.currentUser
+  if (!user) throw new Error("No signed-in user")
+
+  await setDoc(
+    doc(db, "users", user.uid),
+    { photoURL: "" },
+    { merge: true }
+  )
+
+  try {
+    await updateProfile(user, { photoURL: "" })
+  } catch (error) {
+    console.warn("Failed to clear auth photoURL, Firestore updated.", error)
+  }
+}
