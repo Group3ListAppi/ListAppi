@@ -10,6 +10,14 @@ import { getUserShoplists, type Shoplist } from '../firebase/shoplistUtils';
 import { getUserRecipes, type Recipe } from '../firebase/recipeUtils';
 import { getUserMenuLists, type MenuList } from '../firebase/menuUtils';
 import { getUserProfiles } from '../firebase/userProfileUtils';
+import { fetchRandomMeals, type MealDbMeal } from "../api/themealdb";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { IconButton } from "react-native-paper";
+
+const MEALDB_CACHE_KEY = "themealdb:suggestions:v1";
+const MEALDB_CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 tuntia
+
+
 
 interface HomeScreenProps {
   activeScreen: string;
@@ -24,12 +32,63 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ activeScreen, onNavigate, isPre
   const [shoplists, setShoplists] = useState<Shoplist[]>([]);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [menus, setMenus] = useState<MenuList[]>([]);
+  const [suggestedMeals, setSuggestedMeals] = useState<MealDbMeal[]>([]);
+  const [suggestLoading, setSuggestLoading] = useState(false);
+  const [suggestError, setSuggestError] = useState<string | null>(null);
 
   useEffect(() => {
     if (user?.uid && activeScreen === 'home') {
       loadData();
     }
   }, [user?.uid, activeScreen]);
+
+  
+  const loadMealDb = async (force = false) => {
+    setSuggestError(null);
+
+    try {
+      // force = true -> ohita cache
+      if (!force) {
+        // jos state jo sisältää ehdotukset, älä tee mitään
+        if (suggestedMeals.length > 0) return;
+
+        const cached = await AsyncStorage.getItem(MEALDB_CACHE_KEY);
+        if (cached) {
+          const parsed = JSON.parse(cached) as { ts: number; meals: MealDbMeal[] };
+          const fresh = Date.now() - parsed.ts < MEALDB_CACHE_TTL_MS;
+
+          if (fresh && Array.isArray(parsed.meals) && parsed.meals.length > 0) {
+            setSuggestedMeals(parsed.meals);
+            return;
+          }
+        }
+      }
+
+      setSuggestLoading(true);
+
+      const meals = await fetchRandomMeals(6);
+      setSuggestedMeals(meals);
+
+      await AsyncStorage.setItem(
+        MEALDB_CACHE_KEY,
+        JSON.stringify({ ts: Date.now(), meals })
+      );
+    } catch (e) {
+      console.error("TheMealDB load error:", e);
+      setSuggestError("Reseptiehdotusten haku epäonnistui.");
+    } finally {
+      setSuggestLoading(false);
+    }
+  };
+
+  const refreshMealDb = async () => {
+    // estä tuplaklikkaus
+    if (suggestLoading) return;
+
+    await AsyncStorage.removeItem(MEALDB_CACHE_KEY);
+    setSuggestedMeals([]);
+    await loadMealDb(true); // force refresh
+  };
 
   const loadData = async () => {
     if (!user?.uid) return;
@@ -84,12 +143,80 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ activeScreen, onNavigate, isPre
       setShoplists(enrichedShoplists);
       setRecipes(enrichedRecipes);
       setMenus(enrichedMenus);
+
+      // TheMealDB: käytä cachea, ettei vaihdu joka navilla
+    if (suggestedMeals.length === 0) {
+      setSuggestLoading(true);
+      setSuggestError(null);
+
+      try {
+        await loadMealDb(false);
+      } finally {
+        setSuggestLoading(false);
+      }
+    }
+
     } catch (error) {
       console.error('Error loading home screen data:', error);
     } finally {
       setLoading(false);
     }
+    
   };
+
+  const isEmptyHome = shoplists.length === 0 && menus.length === 0 && recipes.length === 0;
+
+  const renderMealDbSection = () => (
+    <View style={styles.section}>
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+        <Text
+          variant="titleLarge"
+          style={[styles.sectionTitle, { color: theme.colors.onSurface, marginBottom: 0 }]}
+        >
+          Kokeile näitä (TheMealDB)
+        </Text>
+
+        <IconButton
+          icon={suggestLoading ? "loading" : "refresh"}
+          onPress={refreshMealDb}
+          disabled={suggestLoading}
+          iconColor={theme.colors.primary}
+          size={22}
+        />
+      </View>
+
+      {suggestLoading ? (
+        <View style={{ marginTop: 12 }}>
+          <ActivityIndicator animating />
+        </View>
+      ) : suggestError ? (
+        <Text style={[styles.emptyStateText, { color: theme.colors.onSurfaceVariant }]}>
+          {suggestError}
+        </Text>
+      ) : suggestedMeals.length > 0 ? (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.horizontalScroll}
+        >
+          {suggestedMeals.map((m) => (
+            <View key={m.idMeal} style={styles.recipeItemContainer}>
+              <RecipeButton
+                title={m.strMeal}
+                imageUrl={m.strMealThumb}
+                onPress={() =>
+                  onNavigate("recipe-suggestion-detail", {
+                    source: "themealdb",
+                    idMeal: m.idMeal,
+                  })
+                }
+              />
+            </View>
+          ))}
+        </ScrollView>
+      ) : null}
+    </View>
+  );
 
   return (
     <ScreenLayout activeScreen={activeScreen} onNavigate={onNavigate}>
@@ -111,105 +238,107 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ activeScreen, onNavigate, isPre
             </Text>
           </View>
 
-          <View style={styles.section}>
-            <Text
-              variant="titleLarge"
-              style={[styles.sectionTitle, { color: theme.colors.onSurface }]}
-            >
-              Viimeaikaiset ostoslistat
-            </Text>
-            {shoplists.length > 0 ? (
-              <ScrollView 
-                horizontal 
-                showsHorizontalScrollIndicator={false}
-                style={styles.horizontalScroll}
-              >
-                {shoplists.map((list) => (
-                  <View key={list.id} style={styles.itemContainer}>
-                    <ListButton
-                      listName={list.name}
-                      createdAt={list.createdAt}
-                      ownerAvatar={list.ownerAvatar}
-                      ownerInitials={list.ownerName?.charAt(0).toUpperCase() || '?'}
-                      ownerName={list.ownerName}
-                      isOwnedByUser={list.userId === user?.uid}
-                      onPress={() => onNavigate('shoplist-detail', list)}
-                      disableSwipe={true}
-                    />
-                  </View>
-                ))}
-              </ScrollView>
-            ) : (
-              <Text style={[styles.emptyStateText, { color: theme.colors.onSurfaceVariant }]}>
-                Et ole vielä lisännyt ostoslistoja
-              </Text>
-            )}
-          </View>
+          {isEmptyHome ? (
+            <>
+              {/* tyhjä home: näytä VAIN TheMealDB */}
+              {renderMealDbSection()}
+            </>
+          ) : (
+            <>
+              {/* ei-tyhjä home: näytä vain ne osiot missä on dataa */}
 
-          <View style={styles.section}>
-            <Text
-              variant="titleLarge"
-              style={[styles.sectionTitle, { color: theme.colors.onSurface }]}
-            >
-              Viimeaikaiset ruokalistat
-            </Text>
-            {menus.length > 0 ? (
-              <ScrollView 
-                horizontal 
-                showsHorizontalScrollIndicator={false}
-                style={styles.horizontalScroll}
-              >
-                {menus.map((menu) => (
-                  <View key={menu.id} style={styles.itemContainer}>
-                    <ListButton
-                      listName={menu.name}
-                      createdAt={menu.createdAt}
-                      ownerAvatar={menu.ownerAvatar}
-                      ownerInitials={menu.ownerName?.charAt(0).toUpperCase() || '?'}
-                      ownerName={menu.ownerName}
-                      isOwnedByUser={menu.userId === user?.uid}
-                      onPress={() => onNavigate('menu-detail', menu)}
-                      disableSwipe={true}
-                    />
-                  </View>
-                ))}
-              </ScrollView>
-            ) : (
-              <Text style={[styles.emptyStateText, { color: theme.colors.onSurfaceVariant }]}>
-                Et ole vielä lisännyt ruokalistoja
-              </Text>
-            )}
-          </View>
+              {shoplists.length > 0 ? (
+                <View style={styles.section}>
+                  <Text
+                    variant="titleLarge"
+                    style={[styles.sectionTitle, { color: theme.colors.onSurface }]}
+                  >
+                    Viimeaikaiset ostoslistat
+                  </Text>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.horizontalScroll}
+                  >
+                    {shoplists.map((list) => (
+                      <View key={list.id} style={styles.itemContainer}>
+                        <ListButton
+                          listName={list.name}
+                          createdAt={list.createdAt}
+                          ownerAvatar={list.ownerAvatar}
+                          ownerInitials={list.ownerName?.charAt(0).toUpperCase() || '?'}
+                          ownerName={list.ownerName}
+                          isOwnedByUser={list.userId === user?.uid}
+                          onPress={() => onNavigate('shoplist-detail', list)}
+                          disableSwipe={true}
+                        />
+                      </View>
+                    ))}
+                  </ScrollView>
+                </View>
+              ) : null}
 
-          <View style={styles.section}>
-            <Text
-              variant="titleLarge"
-              style={[styles.sectionTitle, { color: theme.colors.onSurface }]}
-            >
-              Uusimmat reseptit
-            </Text>
-            {recipes.length > 0 ? (
-              <ScrollView 
-                horizontal 
-                showsHorizontalScrollIndicator={false}
-                style={styles.horizontalScroll}
-              >
-                {recipes.map((recipe) => (
-                  <View key={recipe.id} style={styles.recipeItemContainer}>
-                    <RecipeButton
-                      title={recipe.title}
-                      imageUrl={recipe.image}
-                      onPress={() => onNavigate('recipe-detail', recipe)}
-                    />
-                  </View>
-                ))}
-              </ScrollView>
-            ) : (
-              <Text style={[styles.emptyStateText, { color: theme.colors.onSurfaceVariant }]}>
-                Et ole vielä lisännyt reseptejä
-              </Text>
-            )}
-          </View>
+              {menus.length > 0 ? (
+                <View style={styles.section}>
+                  <Text
+                    variant="titleLarge"
+                    style={[styles.sectionTitle, { color: theme.colors.onSurface }]}
+                  >
+                    Viimeaikaiset ruokalistat
+                  </Text>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.horizontalScroll}
+                  >
+                    {menus.map((menu) => (
+                      <View key={menu.id} style={styles.itemContainer}>
+                        <ListButton
+                          listName={menu.name}
+                          createdAt={menu.createdAt}
+                          ownerAvatar={menu.ownerAvatar}
+                          ownerInitials={menu.ownerName?.charAt(0).toUpperCase() || '?'}
+                          ownerName={menu.ownerName}
+                          isOwnedByUser={menu.userId === user?.uid}
+                          onPress={() => onNavigate('menu-detail', menu)}
+                          disableSwipe={true}
+                        />
+                      </View>
+                    ))}
+                  </ScrollView>
+                </View>
+              ) : null}
+
+              {recipes.length > 0 ? (
+                <View style={styles.section}>
+                  <Text
+                    variant="titleLarge"
+                    style={[styles.sectionTitle, { color: theme.colors.onSurface }]}
+                  >
+                    Uusimmat reseptit
+                  </Text>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.horizontalScroll}
+                  >
+                    {recipes.map((recipe) => (
+                      <View key={recipe.id} style={styles.recipeItemContainer}>
+                        <RecipeButton
+                          title={recipe.title}
+                          imageUrl={recipe.image}
+                          onPress={() => onNavigate('recipe-detail', recipe)}
+                        />
+                      </View>
+                    ))}
+                  </ScrollView>
+                </View>
+              ) : null}
+
+              {/* TheMealDB näkyy AINA myös tässä */}
+              {renderMealDbSection()}
+            </>
+          )}
 
           <View style={{ height: 100 }} />
         </ScrollView>

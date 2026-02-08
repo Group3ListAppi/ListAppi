@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -46,6 +46,7 @@ const AuthScreen: React.FC = () => {
   const [resetOpen, setResetOpen] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
   const [resetMessage, setResetMessage] = useState<string | null>(null);
+  const [resetCooldown, setResetCooldown] = useState(0);
 
   const { signInWithGoogle, disabled: googleDisabled } = useGoogleSignIn();
 
@@ -58,6 +59,16 @@ const AuthScreen: React.FC = () => {
   const passwordValid = useMemo(() => {
     return password.length === 0 || password.length >= 6;
   }, [password]);
+
+  useEffect(() => {
+    if (resetCooldown <= 0) return;
+
+    const timer = setInterval(() => {
+      setResetCooldown((s) => s - 1);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [resetCooldown]);
 
   const canSubmit =
     emailTrimmed.length > 0 &&
@@ -132,7 +143,9 @@ const AuthScreen: React.FC = () => {
     setResetLoading(true);
     try {
       await sendPasswordResetEmail(auth, emailTrimmed);
-      setResetMessage("Palautuslinkki on lähetetty sähköpostiisi.");
+      setResetMessage("Jos sähköposti on rekisteröity, saat pian palautuslinkin.");
+      // 60 sekunnin cooldown
+      setResetCooldown(60);
     } catch (e: any) {
       const msg =
         e?.code === "auth/user-not-found"
@@ -213,12 +226,16 @@ const AuthScreen: React.FC = () => {
               outlineStyle={styles.inputOutline}
             />
 
+            {/* Email-validointi */}
+            <HelperText type="error" visible={!!emailTrimmed && !emailValid}>
+              Syötä kelvollinen sähköpostiosoite.
+            </HelperText>
+
+            {/* Reset-viesti (näytetään aina kun se on asetettu) */}
             {resetMessage ? (
-              <View>
-                <HelperText type="error" visible={!emailValid}>
-                  {resetMessage}
-                </HelperText>
-              </View>
+              <HelperText type="info" visible={true}>
+                {resetMessage}
+              </HelperText>
             ) : null}
           </Dialog.Content>
 
@@ -230,9 +247,11 @@ const AuthScreen: React.FC = () => {
               mode="contained"
               onPress={sendResetLink}
               loading={resetLoading}
-              disabled={resetLoading}
+              disabled={resetLoading || resetCooldown > 0}
             >
-              Lähetä linkki
+              {resetCooldown > 0
+                ? `Yritä uudelleen ${resetCooldown}s`
+                : "Lähetä linkki"}
             </Button>
           </Dialog.Actions>
         </Dialog>

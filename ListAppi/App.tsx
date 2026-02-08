@@ -25,6 +25,7 @@ import DataProtectionScreen from './screens/DataProtectionScreen';
 import NotificationsScreen from './screens/NotificationsScreen';
 import NotificationSettingsScreen from './screens/NotificationSettingsScreen';
 import NotificationPushEditScreen from './screens/NotificationPushEditScreen';
+import RecipeSuggestionDetailScreen from './screens/RecipeSuggestionDetailScreen';
 /* Email settings screen (re-enable later)
 import NotificationEmailEditScreen from './screens/NotificationEmailEditScreen';
 */
@@ -87,6 +88,8 @@ export default function App() {
   const [checkingProfile, setCheckingProfile] = useState(true)
   const [selectedTheme, setSelectedTheme] = useState<ThemeKey>('dark');
   const [isPremium, setIsPremium] = useState(false);
+  const [selectedMealDbId, setSelectedMealDbId] = useState<string | null>(null);
+  const [prefillRecipe, setPrefillRecipe] = useState<any>(null);
 
   useEffect(() => {
   const loadTheme = async () => {
@@ -122,7 +125,8 @@ export default function App() {
       setSelectedShoplist(null);
       setEditRecipe(null);
       setCollectionId(null);
-      setRecipes([]); 
+      setRecipes([]);
+      setSelectedMealDbId(null); 
     }
   }, [user, initializing]);
 
@@ -179,16 +183,25 @@ export default function App() {
     if (screen === 'recipe-detail' && data) {
       setSelectedRecipe(data);
     }
-    if (screen === 'add-recipe' && data?.editRecipe) {
-      setEditRecipe(data.editRecipe);
-      setCollectionId(data.collectionId || null);
-    } else if (screen === 'add-recipe' && data?.collectionId) {
-      setEditRecipe(null);
-      setCollectionId(data.collectionId);
-    } else if (screen === 'add-recipe' && !data?.editRecipe) {
-      setEditRecipe(null);
-      setCollectionId(null);
+    if (screen === "add-recipe") {
+      // edit-mode
+      if (data?.editRecipe) {
+        setEditRecipe(data.editRecipe);
+        setCollectionId(data.collectionId || null);
+        setPrefillRecipe(null);
+      } else {
+        // create-mode (uusi resepti)
+        setEditRecipe(null);
+        setCollectionId(data?.collectionId ?? null);
+
+        // prefill (TheMealDB import)
+        setPrefillRecipe(data?.prefillRecipe ?? null);
+      }
+    } else {
+      // poistuttaessa add-recipe:stä nollaa prefill
+      setPrefillRecipe(null);
     }
+    
     if ((screen === 'menu-detail' || screen === 'add-recipe-to-menu') && data) {
       setSelectedMenuList(data);
     }
@@ -200,6 +213,9 @@ export default function App() {
     }
     if (screen === 'shoplist-detail' && data) {
       setSelectedShoplist(data)
+    }
+    if (screen === "recipe-suggestion-detail" && data?.idMeal) {
+      setSelectedMealDbId(data.idMeal);
     }
     setActiveScreen(screen);
     setHistory((prev) => [...prev, screen]);
@@ -350,7 +366,15 @@ export default function App() {
           />
         ) : null;
       case 'add-recipe':
-        return <AddRecipeScreen activeScreen={activeScreen} onNavigate={handleNavigate} onSave={handleSaveRecipe} onBack={handleBack} editRecipe={editRecipe} collectionId={collectionId} />;
+        return <AddRecipeScreen 
+          activeScreen={activeScreen} 
+          onNavigate={handleNavigate} 
+          onSave={handleSaveRecipe} 
+          onBack={handleBack} 
+          editRecipe={editRecipe} 
+          collectionId={collectionId}
+          prefillRecipe={prefillRecipe} 
+        />;
       case 'recipe-detail':
         return selectedRecipe ? (
           <RecipeDetailScreen
@@ -373,6 +397,16 @@ export default function App() {
             isPremium={isPremium}
           />
         ) : null
+      case "recipe-suggestion-detail":
+        return selectedMealDbId ? (
+          <RecipeSuggestionDetailScreen
+            idMeal={selectedMealDbId}
+            activeScreen={activeScreen}
+            onNavigate={handleNavigate}
+            onBack={handleBack}
+            isPremium={isPremium}
+          />
+        ) : null;
       case "settings":
         return <SettingsScreen activeScreen={activeScreen} onBack={handleBack} onNavigate={handleNavigate} />;
       case "StyleScreen":
