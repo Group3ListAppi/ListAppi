@@ -36,18 +36,25 @@ interface AddRecipeScreenProps {
     dietType: DietType[];
     image?: string;
   };
+  prefillRecipe?: {
+    title: string;
+    link?: string;
+    ingredients: string;
+    instructions: string;
+    image?: string; // voi olla URL tai local uri
+  };
 }
 
-const AddRecipeScreen: React.FC<AddRecipeScreenProps> = ({ activeScreen, onNavigate, onSave, onBack, editRecipe }) => {
+const AddRecipeScreen: React.FC<AddRecipeScreenProps> = ({ activeScreen, onNavigate, onSave, onBack, editRecipe, prefillRecipe }) => {
     const theme = useTheme();
-    const [title, setTitle] = useState(editRecipe?.title ?? "");
-    const [link, setLink] = useState(editRecipe?.link ?? "");
-    const [ingredients, setIngredients] = useState(editRecipe?.ingredients ?? "");
-    const [instructions, setInstructions] = useState(editRecipe?.instructions ?? "");
+    const [title, setTitle] = useState(prefillRecipe?.title ?? editRecipe?.title ?? "");
+    const [link, setLink] = useState(prefillRecipe?.link ?? editRecipe?.link ?? "");
+    const [ingredients, setIngredients] = useState(prefillRecipe?.ingredients ?? editRecipe?.ingredients ?? "");
+    const [instructions, setInstructions] = useState(prefillRecipe?.instructions ?? editRecipe?.instructions ?? "");
     const [mealType, setMealType] = useState<MealType | null>(editRecipe?.mealType ?? null);
     const [mainIngredient, setMainIngredient] = useState<MainIngredient | null>(editRecipe?.mainIngredient ?? null);
     const [dietType, setDietType] = useState<DietType[]>(editRecipe?.dietType ?? []);
-    const [recipeImage, setRecipeImage] = useState<string | null>(editRecipe?.image ?? null);
+    const [recipeImage, setRecipeImage] = useState<string | null>(prefillRecipe?.image ?? editRecipe?.image ?? null);
     const [showImagePicker, setShowImagePicker] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
@@ -141,16 +148,19 @@ const AddRecipeScreen: React.FC<AddRecipeScreenProps> = ({ activeScreen, onNavig
 
             if (recipeImage) {
                 try {
-                    // Käännä kuva base64-muotoon ennen tallennusta
+                    if (recipeImage.startsWith("http")) {
+                    // TheMealDB url → tallenna sellaisenaan
+                    formData.image = recipeImage;
+                    } else {
+                    // local uri → base64
                     formData.image = await convertImageToBase64(recipeImage);
-                    console.log('Image converted successfully');
+                    }
                 } catch (error) {
                     Alert.alert('Virhe', 'Kuvan käsittelyssä tapahtui virhe');
-                    console.error('Error converting image:', error);
                     setIsSaving(false);
                     return;
                 }
-            }
+                }
             
             await onSave?.(formData);
         } finally {
