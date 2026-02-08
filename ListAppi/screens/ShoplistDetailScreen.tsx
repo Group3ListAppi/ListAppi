@@ -1,14 +1,16 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { StyleSheet, View, ScrollView, TouchableOpacity } from 'react-native'
+import { StyleSheet, View, ScrollView, TouchableOpacity, Alert } from 'react-native'
 import { Text, TextInput, ActivityIndicator, useTheme } from 'react-native-paper'
 import ScreenLayout from '../components/ScreenLayout'
 import { AdBanner } from '../components/AdBanner'
 import { useAuth } from '../auth/useAuth'
 import { ListItem } from '../components/ListItem'
 import type { Shoplist } from '../firebase/shoplistUtils'
+import { MaterialCommunityIcons } from "@expo/vector-icons"
 import {
   addShoplistItem,
   deleteShoplistItem,
+  deleteCheckedShoplistItems,
   getShoplistItems,
   setShoplistItemChecked,
   type ShoplistItem,
@@ -29,6 +31,7 @@ const ShoplistDetailScreen: React.FC<ShoplistDetailScreenProps> = ({ activeScree
   const [loading, setLoading] = useState(false)
   const [items, setItems] = useState<ShoplistItem[]>([])
   const [text, setText] = useState('')
+  const [doneCollapsed, setDoneCollapsed] = useState(true)
 
   useEffect(() => {
     loadItems()
@@ -47,7 +50,9 @@ const ShoplistDetailScreen: React.FC<ShoplistDetailScreenProps> = ({ activeScree
     }
   }
 
-  const itemsDone = useMemo(() => items.filter(i => i.checked).length, [items])
+  const activeItems = useMemo(() => items.filter(i => !i.checked), [items])
+  const doneItems = useMemo(() => items.filter(i => i.checked), [items])
+  const itemsDone = doneItems.length
   const itemsTotal = items.length
 
   const handleAdd = async () => {
@@ -96,6 +101,39 @@ const ShoplistDetailScreen: React.FC<ShoplistDetailScreenProps> = ({ activeScree
     }
   }
 
+  const removeCheckedItems = () => {
+  if (doneItems.length === 0) return
+
+  Alert.alert(
+    "Poistetaanko ostetut tuotteet?",
+    `Olet poistamassa ${doneItems.length} tuotetta pysyvästi tältä listalta.`,
+    [
+      {
+        text: "Peruuta",
+        style: "cancel",
+      },
+      {
+        text: "Poista",
+        style: "destructive",
+        onPress: async () => {
+          const backup = items
+
+          // Optimistinen UI
+          setItems(prev => prev.filter(i => !i.checked))
+
+          try {
+            await deleteCheckedShoplistItems(shoplist.id)
+          } catch (e) {
+            console.error("Error removing checked items:", e)
+            setItems(backup) // rollback jos epäonnistuu
+          }
+        },
+      },
+    ],
+    { cancelable: true }
+  )
+}
+
   return (
     <ScreenLayout
       activeScreen={activeScreen}
@@ -136,18 +174,60 @@ const ShoplistDetailScreen: React.FC<ShoplistDetailScreenProps> = ({ activeScree
       ) : (
         <>
           <ScrollView style={styles.list}>
-              {items.map((item) => (
-                  <ListItem
-                      key={item.id}
-                      title={item.text}
-                      isChecked={item.checked}
-                      //onPress={() => toggleChecked(item.id, !item.checked)}
-                      onCheckChange={(next) => toggleChecked(item.id, next)}
-                      onLongPress={() => removeItem(item.id)}
-                      delayLongPress={700}
-                  />
-              ))}
-              <View style={{ height: 180 }} />
+            {activeItems.map((item) => (
+              <ListItem
+                key={item.id}
+                title={item.text}
+                isChecked={item.checked}
+                onCheckChange={(next) => toggleChecked(item.id, next)}
+                onLongPress={() => removeItem(item.id)}
+                delayLongPress={700}
+              />
+            ))}
+
+            {itemsDone > 0 && (
+              <TouchableOpacity
+                onPress={() => setDoneCollapsed(v => !v)}
+                style={[styles.doneHeader, { borderColor: theme.colors.outlineVariant }]}
+                activeOpacity={0.8}
+              >
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                  <Text style={{ color: theme.colors.onSurfaceVariant, fontWeight: "700" }}>
+                    Tehdyt ({itemsDone})
+                  </Text>
+
+                  {/* pikatoiminto: poista kaikki ostetut */}
+                  <TouchableOpacity
+                    onPress={removeCheckedItems}
+                    activeOpacity={0.7}
+                    style={[styles.clearDoneBtn, { borderColor: theme.colors.outlineVariant }]}
+                  >
+                    <Text style={{ color: theme.colors.onSurfaceVariant, fontWeight: "700" }}>
+                      Poista
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+                <MaterialCommunityIcons
+                  name={doneCollapsed ? "chevron-down" : "chevron-up"}
+                  size={24}
+                  color={theme.colors.onSurfaceVariant}
+                />
+              </TouchableOpacity>
+            )}
+
+            {!doneCollapsed && doneItems.map((item) => (
+              <ListItem
+                key={item.id}
+                title={item.text}
+                isChecked={item.checked}
+                onCheckChange={(next) => toggleChecked(item.id, next)}
+                onLongPress={() => removeItem(item.id)}
+                delayLongPress={700}
+              />
+            ))}
+
+            <View style={{ height: 180 }} />
           </ScrollView>
           <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}>
             <AdBanner onPress={() => onNavigate('premium')} isPremium={isPremium}/>
@@ -184,6 +264,23 @@ const styles = StyleSheet.create({
   },
   list: {
     flex: 1,
+  },
+  doneHeader: {
+  marginTop: 8,
+  marginHorizontal: 16,
+  paddingVertical: 10,
+  paddingHorizontal: 12,
+  borderRadius: 8,
+  borderWidth: 1,
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "space-between",
+  },
+  clearDoneBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
   },
 })
 
