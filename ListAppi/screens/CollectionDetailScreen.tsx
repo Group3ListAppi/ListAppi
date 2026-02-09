@@ -3,6 +3,7 @@ import { StyleSheet, ScrollView, View, TouchableOpacity, Image } from "react-nat
 import { Text, ActivityIndicator, useTheme } from "react-native-paper";
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ListButton } from "../components/ListButton";
+import { ActionModal } from "../components/ActionModal";
 import { AdBanner } from "../components/AdBanner";
 import { SearchBar } from '../components/SearchBar';
 import { FilterModal, type FilterOptions } from '../components/FilterModal';
@@ -45,6 +46,7 @@ const CollectionDetailScreen: React.FC<CollectionDetailScreenProps> = ({
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedRecipes, setSelectedRecipes] = useState<Set<string>>(new Set());
   const [shareModalVisible, setShareModalVisible] = useState(false);
+  const [actionModalVisible, setActionModalVisible] = useState(false);
 
   useEffect(() => {
     if (activeScreen === "collection-detail" && user?.uid) {
@@ -143,6 +145,13 @@ const CollectionDetailScreen: React.FC<CollectionDetailScreenProps> = ({
     handleCancelSelection();
   };
 
+  const handleMoveSingleRecipe = (recipeId: string) => {
+    onNavigate('move-recipes-to-collection', {
+      sourceCollectionId: collection.id,
+      recipeIds: [recipeId],
+    });
+  };
+
   const handleShareRecipes = () => {
     if (selectedRecipes.size > 0) {
       setShareModalVisible(true);
@@ -152,12 +161,6 @@ const CollectionDetailScreen: React.FC<CollectionDetailScreenProps> = ({
   const handleShareComplete = () => {
     setShareModalVisible(false);
     handleCancelSelection();
-  };
-
-  const canModifySelected = () => {
-    // Tarkistetaan, että kaikki valitut reseptit ovat käyttäjän omia
-    const selectedRecipeObjects = recipes.filter(r => selectedRecipes.has(r.id));
-    return selectedRecipeObjects.every(recipe => recipe.userId === user?.uid);
   };
 
   const handleDeleteSelected = async () => {
@@ -201,7 +204,7 @@ const CollectionDetailScreen: React.FC<CollectionDetailScreenProps> = ({
       onBack={onBack}
       customTitle={collection.name}
       showFAB={!selectionMode}
-      onFABPress={() => onNavigate("add-recipe", { collectionId: collection.id })}
+      onFABPress={() => setActionModalVisible(true)}
       hideActions={true}
       fabLabel="Luo uusi resepti"
     >
@@ -242,9 +245,9 @@ const CollectionDetailScreen: React.FC<CollectionDetailScreenProps> = ({
           {selectionMode && (
             <ToolBar
               selectedCount={selectedRecipes.size}
-              onMove={canModifySelected() ? handleMoveRecipes : undefined}
+              onMove={handleMoveRecipes}
               onShare={handleShareRecipes}
-              onDelete={canModifySelected() ? handleDeleteSelected : undefined}
+              onDelete={handleDeleteSelected}
               onCancel={handleCancelSelection}
             />
           )}
@@ -255,7 +258,7 @@ const CollectionDetailScreen: React.FC<CollectionDetailScreenProps> = ({
               
               // Everyone in the collection can edit recipes
               // Remove stop sharing option from collection recipes
-              const actionIds: string[] = ['shareRecipe', 'editRecipe', 'remove'];
+              const actionIds: string[] = ['shareRecipe', 'moveRecipe', 'editRecipe', 'remove'];
               
               return (
                 <ListButton
@@ -271,6 +274,7 @@ const CollectionDetailScreen: React.FC<CollectionDetailScreenProps> = ({
                   onLongPress={() => handleLongPress(recipe.id)}
                   customActionIds={actionIds}
                   onEdit={() => onNavigate('add-recipe', { editRecipe: recipe, collectionId: collection.id })}
+                  onMoveRecipe={() => handleMoveSingleRecipe(recipe.id)}
                   onDelete={() => handleRemoveRecipe(recipe.id)}
                   onStopSharing={() => handleStopSharingRecipe(recipe.id)}
                   removeLabel="Poista kokoelmasta"
@@ -297,6 +301,14 @@ const CollectionDetailScreen: React.FC<CollectionDetailScreenProps> = ({
         onClose={() => setShareModalVisible(false)}
         onShareComplete={handleShareComplete}
         title="Jaa reseptit"
+      />
+      <ActionModal
+        visible={actionModalVisible}
+        onClose={() => setActionModalVisible(false)}
+        title={collection.name}
+        actionIds={['createRecipe', 'moveRecipes']}
+        onCreateRecipe={() => onNavigate("add-recipe", { collectionId: collection.id })}
+        onMoveRecipes={() => onNavigate("recipes", { pickForCollectionId: collection.id, pickForCollection: collection })}
       />
       <FilterModal
         visible={filterModalVisible}

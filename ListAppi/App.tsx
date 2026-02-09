@@ -84,6 +84,8 @@ export default function App() {
   const [selectedShoplist, setSelectedShoplist] = useState<Shoplist | null>(null)
   const [collectionId, setCollectionId] = useState<string | null>(null);
   const [moveRecipesData, setMoveRecipesData] = useState<{ sourceCollectionId: string; recipeIds: string[] } | null>(null);
+  const [pickForCollectionId, setPickForCollectionId] = useState<string | null>(null);
+  const [pickForCollection, setPickForCollection] = useState<RecipeCollection | null>(null);
   const [needsName, setNeedsName] = useState(false)
   const [checkingProfile, setCheckingProfile] = useState(true)
   const [selectedTheme, setSelectedTheme] = useState<ThemeKey>('dark');
@@ -127,6 +129,8 @@ export default function App() {
       setCollectionId(null);
       setRecipes([]);
       setSelectedMealDbId(null); 
+      setPickForCollectionId(null);
+      setPickForCollection(null);
     }
   }, [user, initializing]);
 
@@ -210,6 +214,16 @@ export default function App() {
     }
     if (screen === 'move-recipes-to-collection' && data) {
       setMoveRecipesData(data);
+    }
+    if (screen === 'recipes' && data?.pickForCollectionId) {
+      setPickForCollectionId(data.pickForCollectionId);
+      setPickForCollection(data.pickForCollection ?? null);
+    } else if (screen === 'recipes') {
+      setPickForCollectionId(null);
+      setPickForCollection(null);
+    } else {
+      setPickForCollectionId(null);
+      setPickForCollection(null);
     }
     if (screen === 'shoplist-detail' && data) {
       setSelectedShoplist(data)
@@ -344,7 +358,15 @@ export default function App() {
           />
         ) : null;
       case 'recipes':
-        return <RecipeScreen activeScreen={activeScreen} onNavigate={handleNavigate} isPremium={isPremium} />;
+        return (
+          <RecipeScreen
+            activeScreen={activeScreen}
+            onNavigate={handleNavigate}
+            isPremium={isPremium}
+            pickForCollectionId={pickForCollectionId}
+            pickForCollection={pickForCollection}
+          />
+        );
       case 'collection-detail':
         return selectedCollection ? (
           <CollectionDetailScreen

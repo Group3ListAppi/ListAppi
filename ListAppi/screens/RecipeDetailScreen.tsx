@@ -16,6 +16,7 @@ interface RecipeDetailScreenProps {
   activeScreen: string
   onNavigate: (screen: string) => void
   onBack: () => void
+  isPremium: boolean
 }
 
 const RecipeDetailScreen: React.FC<RecipeDetailScreenProps> = ({
