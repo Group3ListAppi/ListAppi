@@ -18,10 +18,14 @@ export const RecipeButton: React.FC<RecipeButtonProps> = ({
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
       <View style={[styles.container, { backgroundColor: theme.colors.primaryContainer }]}> 
-        {imageUrl && (
-          <Image
-            source={{ uri: imageUrl }}
-            style={styles.image}
+        {imageUrl ? (
+          <Image source={{ uri: imageUrl }} style={styles.image} />
+        ) : (
+          <View
+            style={[
+              styles.imagePlaceholder,
+              { backgroundColor: theme.colors.surfaceVariant },
+            ]}
           />
         )}
         <Text
@@ -42,6 +46,10 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   image: {
+    width: "100%",
+    height: 120,
+  },
+  imagePlaceholder: {
     width: "100%",
     height: 120,
   },

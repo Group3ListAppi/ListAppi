@@ -27,6 +27,7 @@ interface ListButtonProps {
   onEdit?: () => void
   onStopSharing?: () => void
   onShareComplete?: () => void
+  onMoveRecipe?: () => void
   isRecipe?: boolean
   customActionIds?: string[]
   onRestore?: () => void
@@ -63,6 +64,7 @@ export const ListButton: React.FC<ListButtonProps> = ({
   onEdit,
   onStopSharing,
   onShareComplete,
+  onMoveRecipe,
   isRecipe = false,
   customActionIds,
   onRestore,
@@ -381,6 +383,7 @@ export const ListButton: React.FC<ListButtonProps> = ({
         onShareRecipe={() => setShareModalVisible(true)}
         onEditRecipe={onEdit}
         onDeleteRecipe={onDelete}
+        onMoveRecipe={onMoveRecipe}
         onRestore={onRestore}
         onPermanentlyDelete={onPermanentlyDelete}
         onStopSharing={onStopSharing}

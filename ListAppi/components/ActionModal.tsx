@@ -28,6 +28,9 @@ interface ActionModalProps {
   onShareRecipe?: () => void
   onEditRecipe?: () => void
   onDeleteRecipe?: () => void
+  onMoveRecipe?: () => void
+  onCreateRecipe?: () => void
+  onMoveRecipes?: () => void
   onRestore?: () => void
   onPermanentlyDelete?: () => void
   onStopSharing?: () => void
@@ -111,6 +114,24 @@ const ACTION_DEFINITIONS: Record<string, Omit<ActionButton, 'onPress'> & { onPre
         icon: 'trash-can-outline',
         onPressKey: 'onDeleteRecipe',
     },
+    moveRecipe: {
+      id: 'moveRecipe',
+      label: 'Siirrä',
+      icon: 'folder-move',
+      onPressKey: 'onMoveRecipe',
+    },
+    createRecipe: {
+      id: 'createRecipe',
+      label: 'Luo uusi resepti',
+      icon: 'plus',
+      onPressKey: 'onCreateRecipe',
+    },
+    moveRecipes: {
+      id: 'moveRecipes',
+      label: 'Tuo valmiita reseptejä',
+      icon: 'folder-move',
+      onPressKey: 'onMoveRecipes',
+    },
     restore: {
         id: 'restore',
         label: 'Palauta resepti',
@@ -148,6 +169,9 @@ export const ActionModal: React.FC<ActionModalProps> = ({
   onShareRecipe,
   onEditRecipe,
   onDeleteRecipe,
+  onMoveRecipe,
+  onCreateRecipe,
+  onMoveRecipes,
   onRestore,
   onPermanentlyDelete,
   onStopSharing,
@@ -171,6 +195,9 @@ export const ActionModal: React.FC<ActionModalProps> = ({
     onShareRecipe: onShareRecipe || (() => {}),
     onEditRecipe: onEditRecipe || (() => {}),
     onDeleteRecipe: onDeleteRecipe || (() => {}),
+    onMoveRecipe: onMoveRecipe || (() => {}),
+    onCreateRecipe: onCreateRecipe || (() => {}),
+    onMoveRecipes: onMoveRecipes || (() => {}),
     onRestore: onRestore || (() => {}),
     onPermanentlyDelete: onPermanentlyDelete || (() => {}),
     onStopSharing: onStopSharing || (() => {}),

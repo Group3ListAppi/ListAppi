@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { StyleSheet, ScrollView, View, Image } from "react-native";
-import { ActivityIndicator, useTheme } from "react-native-paper";
+import { StyleSheet, ScrollView, View, Image, TouchableOpacity } from "react-native";
+import { ActivityIndicator, Text, useTheme } from "react-native-paper";
 import { ListButton } from "../components/ListButton";
 import ScreenLayout from "../components/ScreenLayout";
+import ListModal, { type CreateListFormData } from "../components/ListModal";
 import { useAuth } from "../auth/useAuth";
-import { getUserRecipeCollections, moveRecipesToCollection, addRecipeToCollection } from "../firebase/recipeCollectionUtils";
+import { getUserRecipeCollections, moveRecipesToCollection, addRecipeToCollection, saveRecipeCollectionToFirestore } from "../firebase/recipeCollectionUtils";
 import type { RecipeCollection } from "../firebase/recipeCollectionUtils";
 
 interface MoveRecipesToCollectionScreenProps {
@@ -28,6 +29,7 @@ const MoveRecipesToCollectionScreen: React.FC<MoveRecipesToCollectionScreenProps
   const [loading, setLoading] = useState(false);
   const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(null);
   const [moving, setMoving] = useState(false);
+  const [listModalVisible, setListModalVisible] = useState(false);
 
   useEffect(() => {
     if (activeScreen === "move-recipes-to-collection" && user?.uid) {
@@ -77,6 +79,18 @@ const MoveRecipesToCollectionScreen: React.FC<MoveRecipesToCollectionScreenProps
     }
   };
 
+  const handleSaveCollection = async (collectionData: CreateListFormData) => {
+    if (!user?.uid) return;
+    try {
+      const newCollectionId = await saveRecipeCollectionToFirestore(collectionData, user.uid);
+      await loadCollections();
+      setSelectedCollectionId(newCollectionId);
+      setListModalVisible(false);
+    } catch (error) {
+      console.error('Error saving recipe collection:', error);
+    }
+  };
+
   return (
     <ScreenLayout
       activeScreen={activeScreen}
@@ -85,9 +99,9 @@ const MoveRecipesToCollectionScreen: React.FC<MoveRecipesToCollectionScreenProps
       showBack={true}
       onBack={onBack}
       customTitle={sourceCollectionId ? "Siirrä reseptit" : "Lisää kokoelmaan"}
-      showFAB={selectedCollectionId !== null}
-      onFABPress={handleMoveRecipes}
-      fabLabel={moving ? (sourceCollectionId ? "Siirretään..." : "Lisätään...") : (sourceCollectionId ? "Siirrä" : "Lisää")}
+      showFAB={true}
+      onFABPress={() => setListModalVisible(true)}
+      fabLabel="Luo uusi kokoelma"
     >
       {loading ? (
         <View style={styles.loadingContainer}>
@@ -102,23 +116,51 @@ const MoveRecipesToCollectionScreen: React.FC<MoveRecipesToCollectionScreenProps
           />
         </View>
       ) : (
-        <ScrollView style={styles.container}>
-          {collections.map((collection) => (
-            <ListButton
-              key={collection.id}
-              listName={collection.name}
-              ownerAvatar={user?.photoURL || undefined}
-              ownerInitials={user?.displayName?.charAt(0).toUpperCase() || "?"}
-              ownerName={user?.displayName}
-              isOwnedByUser={true}
-              onPress={() => handleSelectCollection(collection.id)}
-              showRadioButton={true}
-              isRadioSelected={selectedCollectionId === collection.id}
-              disableSwipe={true}
-            />
-          ))}
-        </ScrollView>
+        <>
+          <ScrollView style={styles.container}>
+            {collections.map((collection) => (
+              <ListButton
+                key={collection.id}
+                listName={collection.name}
+                ownerAvatar={user?.photoURL || undefined}
+                ownerInitials={user?.displayName?.charAt(0).toUpperCase() || "?"}
+                ownerName={user?.displayName}
+                isOwnedByUser={true}
+                onPress={() => handleSelectCollection(collection.id)}
+                showRadioButton={true}
+                isRadioSelected={selectedCollectionId === collection.id}
+                disableSwipe={true}
+              />
+            ))}
+          </ScrollView>
+          {selectedCollectionId && (
+            <View style={styles.bottomBar}>
+              <TouchableOpacity
+                style={[
+                  styles.addButton,
+                  { backgroundColor: theme.colors.primary, opacity: moving ? 0.6 : 1 },
+                ]}
+                onPress={handleMoveRecipes}
+                disabled={moving}
+              >
+                <Text style={[styles.addButtonText, { color: theme.colors.onPrimary }]}
+                >
+                  {moving
+                    ? (sourceCollectionId ? "Siirretään..." : "Lisätään...")
+                    : (sourceCollectionId ? "Siirrä" : "Lisää")}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </>
       )}
+      <ListModal
+        visible={listModalVisible}
+        type="recipe-collection"
+        onClose={() => setListModalVisible(false)}
+        onSave={handleSaveCollection}
+        title="Luo uusi kokoelma"
+      />
     </ScreenLayout>
   );
 };
@@ -140,6 +182,19 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
+  },
+  bottomBar: {
+    padding: 16,
+    paddingBottom: 32,
+  },
+  addButton: {
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  addButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
   },
 });
 

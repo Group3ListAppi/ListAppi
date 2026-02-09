@@ -13,6 +13,7 @@ import ListModal, { type CreateListFormData } from '../components/ListModal'
 import { useAuth } from '../auth/useAuth'
 import { 
   getUserRecipeCollections, 
+  addRecipeToCollection,
   saveRecipeCollectionToFirestore,
   moveRecipeCollectionToTrash,
   stopSharingRecipeCollection,
@@ -27,9 +28,11 @@ interface RecipeScreenProps {
   activeScreen: string;
   onNavigate: (screen: string, data?: any) => void;
   isPremium?: boolean;
+  pickForCollectionId?: string | null;
+  pickForCollection?: RecipeCollection | null;
 }
 
-const RecipeScreen: React.FC<RecipeScreenProps> = ({ activeScreen, onNavigate, isPremium }) => {
+const RecipeScreen: React.FC<RecipeScreenProps> = ({ activeScreen, onNavigate, isPremium, pickForCollectionId, pickForCollection }) => {
   const { user } = useAuth()
   const theme = useTheme()
   const [loading, setLoading] = useState(false)
@@ -48,6 +51,9 @@ const RecipeScreen: React.FC<RecipeScreenProps> = ({ activeScreen, onNavigate, i
   const [selectionMode, setSelectionMode] = useState(false)
   const [selectedRecipes, setSelectedRecipes] = useState<Set<string>>(new Set())
   const [shareModalVisible, setShareModalVisible] = useState(false)
+  const [pickSaving, setPickSaving] = useState(false)
+
+  const isPickMode = !!pickForCollectionId
 
   useEffect(() => {
     if (user?.uid && activeScreen === 'recipes') {
@@ -55,6 +61,14 @@ const RecipeScreen: React.FC<RecipeScreenProps> = ({ activeScreen, onNavigate, i
       loadAllRecipes()
     }
   }, [user?.uid, activeScreen])
+
+  useEffect(() => {
+    if (activeScreen === 'recipes' && pickForCollectionId) {
+      setViewMode('recipes')
+      setSelectionMode(true)
+      setSelectedRecipes(new Set())
+    }
+  }, [activeScreen, pickForCollectionId])
 
   const loadAllRecipes = async () => {
     if (!user?.uid) return
@@ -253,6 +267,10 @@ const RecipeScreen: React.FC<RecipeScreenProps> = ({ activeScreen, onNavigate, i
   }
 
   const handleCancelSelection = () => {
+    if (pickForCollectionId && pickForCollection) {
+      onNavigate('collection-detail', pickForCollection)
+      return
+    }
     setSelectionMode(false)
     setSelectedRecipes(new Set())
   }
@@ -269,10 +287,39 @@ const RecipeScreen: React.FC<RecipeScreenProps> = ({ activeScreen, onNavigate, i
   }
 
   const handleMoveRecipes = () => {
+    if (pickForCollectionId) {
+      if (selectedRecipes.size === 0) return
+      const recipeIds = Array.from(selectedRecipes)
+      setPickSaving(true)
+      Promise.all(
+        recipeIds.map((recipeId) => addRecipeToCollection(pickForCollectionId, recipeId, user?.uid ?? null))
+      )
+        .then(() => {
+          if (pickForCollection) {
+            onNavigate('collection-detail', pickForCollection)
+          } else {
+            handleCancelSelection()
+          }
+        })
+        .catch((error) => {
+          console.error('Error adding recipes to collection:', error)
+        })
+        .finally(() => {
+          setPickSaving(false)
+        })
+      return
+    }
+
     onNavigate('move-recipes-to-collection', {
       recipeIds: Array.from(selectedRecipes),
     })
     handleCancelSelection()
+  }
+
+  const handleMoveSingleRecipe = (recipeId: string) => {
+    onNavigate('move-recipes-to-collection', {
+      recipeIds: [recipeId],
+    })
   }
 
   const handleDeleteSelected = async () => {
@@ -301,7 +348,7 @@ const RecipeScreen: React.FC<RecipeScreenProps> = ({ activeScreen, onNavigate, i
       activeScreen={activeScreen} 
       onNavigate={onNavigate} 
       fabLabel={viewMode === 'collections' ? "Lisää uusi kokoelma" : "Luo uusi resepti"}
-      showFAB={!selectionMode} 
+      showFAB={!selectionMode && !isPickMode} 
       onFABPress={() => viewMode === 'collections' ? setListModalVisible(true) : onNavigate("add-recipe")}
     >
       <>
@@ -313,30 +360,32 @@ const RecipeScreen: React.FC<RecipeScreenProps> = ({ activeScreen, onNavigate, i
       ) : (
         <>
           <View style={styles.topContainer}>
-            <SegmentedButtons
-              value={viewMode}
-              onValueChange={(value) => setViewMode(value as 'collections' | 'recipes')}
-              buttons={[
-                { value: 'collections', label: 'Kokoelmat' },
-                { value: 'recipes', label: 'Reseptit' },
-              ]}
-              style={[
-                styles.segmentedButtons, 
-                { 
-                  borderColor: theme.colors.primary,
-                  backgroundColor: theme.colors.surface,
-                  borderRadius: 20,
-                }
-              ]}
-              theme={{
-                colors: {
-                  secondaryContainer: theme.colors.primary,
-                  onSecondaryContainer: theme.colors.onPrimary,
-                  onSurface: theme.colors.onSurface,
-                  outline: theme.colors.primary,
-                }
-              }}
-            />
+            {!isPickMode && (
+              <SegmentedButtons
+                value={viewMode}
+                onValueChange={(value) => setViewMode(value as 'collections' | 'recipes')}
+                buttons={[
+                  { value: 'collections', label: 'Kokoelmat' },
+                  { value: 'recipes', label: 'Reseptit' },
+                ]}
+                style={[
+                  styles.segmentedButtons, 
+                  { 
+                    borderColor: theme.colors.primary,
+                    backgroundColor: theme.colors.surface,
+                    borderRadius: 20,
+                  }
+                ]}
+                theme={{
+                  colors: {
+                    secondaryContainer: theme.colors.primary,
+                    onSecondaryContainer: theme.colors.onPrimary,
+                    onSurface: theme.colors.onSurface,
+                    outline: theme.colors.primary,
+                  }
+                }}
+              />
+            )}
             <View style={styles.searchFilterContainer}>
               <SearchBar
                 placeholder={viewMode === 'collections' ? "Hae kokoelmaa..." : "Hae reseptiä..."}
@@ -361,7 +410,7 @@ const RecipeScreen: React.FC<RecipeScreenProps> = ({ activeScreen, onNavigate, i
             </View>
           </View>
 
-          {viewMode === 'collections' ? (
+          {viewMode === 'collections' && !isPickMode ? (
             collections.length === 0 ? (
               <View style={styles.emptyContainer}>
                 <Image
@@ -408,12 +457,12 @@ const RecipeScreen: React.FC<RecipeScreenProps> = ({ activeScreen, onNavigate, i
               </View>
             ) : (
               <View style={styles.scrollContainer}>
-                {selectionMode && (
+                {selectionMode && !isPickMode && (
                   <ToolBar
                     selectedCount={selectedRecipes.size}
                     onMove={handleMoveRecipes}
-                    onShare={handleShareRecipes}
-                    onDelete={handleDeleteSelected}
+                    onShare={pickForCollectionId ? undefined : handleShareRecipes}
+                    onDelete={pickForCollectionId ? undefined : handleDeleteSelected}
                     onCancel={handleCancelSelection}
                   />
                 )}
@@ -428,21 +477,42 @@ const RecipeScreen: React.FC<RecipeScreenProps> = ({ activeScreen, onNavigate, i
                       ownerName={recipe.ownerName}
                       isOwnedByUser={recipe.userId === user?.uid}
                       isRecipe={true}
-                      onPress={() => !selectionMode && onNavigate("recipe-detail", recipe)}
-                      onLongPress={() => handleLongPress(recipe.id)}
-                      customActionIds={['shareRecipe', 'editRecipe', 'deleteRecipe']}
+                      onPress={() => (isPickMode ? onNavigate("recipe-detail", recipe) : !selectionMode && onNavigate("recipe-detail", recipe))}
+                      onLongPress={isPickMode ? undefined : () => handleLongPress(recipe.id)}
+                      customActionIds={['shareRecipe', 'moveRecipe', 'editRecipe', 'deleteRecipe']}
                       onEdit={() => onNavigate('add-recipe', { editRecipe: recipe })}
+                      onMoveRecipe={() => handleMoveSingleRecipe(recipe.id)}
                       onDelete={() => handleDeleteRecipe(recipe.id)}
                       removeLabel="Poista resepti"
                       onShareComplete={async () => {}}
                       itemId={recipe.id}
                       itemType="recipe"
-                      showCheckbox={selectionMode}
+                      showCheckbox={selectionMode || isPickMode}
                       isChecked={selectedRecipes.has(recipe.id)}
                       onCheckChange={(checked) => handleCheckChange(recipe.id, checked)}
+                      disableSwipe={isPickMode}
                     />
                   ))}
                 </ScrollView>
+                {isPickMode && selectedRecipes.size > 0 && (
+                  <View style={styles.bottomBar}>
+                    <TouchableOpacity
+                      style={[
+                        styles.addButton,
+                        { backgroundColor: theme.colors.primary, opacity: pickSaving ? 0.6 : 1 },
+                      ]}
+                      onPress={handleMoveRecipes}
+                      disabled={pickSaving}
+                    >
+                      <Text style={[styles.addButtonText, { color: theme.colors.onPrimary }]}
+                      >
+                        {pickSaving
+                          ? 'Lisätään...'
+                          : `Lisää valitut (${selectedRecipes.size})`}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
               </View>
             )
           )}
@@ -519,6 +589,19 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     flex: 1,
+  },
+  bottomBar: {
+    padding: 16,
+    paddingBottom: 32,
+  },
+  addButton: {
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  addButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
   },
   loadingContainer: {
     flex: 1,
