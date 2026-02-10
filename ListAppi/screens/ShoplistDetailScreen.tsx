@@ -9,6 +9,7 @@ import type { Shoplist } from '../firebase/shoplistUtils'
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 import {
   addShoplistItem,
+  addShoplistItemHistoryEntries,
   deleteShoplistItem,
   deleteCheckedShoplistItems,
   getShoplistItems,
@@ -76,11 +77,17 @@ const ShoplistDetailScreen: React.FC<ShoplistDetailScreenProps> = ({ activeScree
   }
 
   const toggleChecked = async (itemId: string, next: boolean) => {
+    const targetItem = items.find((item) => item.id === itemId)
     // Optimistinen UI
     setItems(prev => prev.map(i => (i.id === itemId ? { ...i, checked: next } : i)))
 
     try {
       await setShoplistItemChecked(shoplist.id, itemId, next)
+      if (next && user?.uid && targetItem?.text) {
+        await addShoplistItemHistoryEntries(user.uid, shoplist.id, [
+          { text: targetItem.text },
+        ])
+      }
     } catch (e) {
       console.error('Error toggling item:', e)
       // rollback

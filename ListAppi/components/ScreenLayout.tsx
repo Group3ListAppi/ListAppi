@@ -46,7 +46,7 @@ const ScreenLayout: React.FC<ScreenLayoutProps> = ({ activeScreen, onNavigate, c
       case "settings":
         return "Asetukset";
       case "account-settings":
-        return "Tilin asetukset";
+        return "Profiili";
       case "notifications":
         return "Ilmoitukset";
       case "trash":

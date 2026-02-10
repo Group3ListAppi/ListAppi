@@ -21,6 +21,15 @@ export interface ShoplistItem {
   createdAt?: Date
 }
 
+export interface ShoplistItemHistory {
+  id: string
+  userId: string
+  shoplistId: string
+  text: string
+  normalizedText: string
+  checkedAt?: Date
+}
+
 const itemsCol = (shoplistId: string) =>
   collection(db, 'shoplists', shoplistId, 'items')
 
@@ -80,4 +89,61 @@ export const deleteCheckedShoplistItems = async (shoplistId: string) => {
 
   await batch.commit()
   return snap.size // palautetaan montako poistettiin
+}
+
+const historyCol = () => collection(db, 'shoplistItemHistory')
+
+export const addShoplistItemHistoryEntries = async (
+  userId: string,
+  shoplistId: string,
+  items: Array<{ text: string }>
+) => {
+  if (items.length === 0) return
+
+  const batch = writeBatch(db)
+  items.forEach((item) => {
+    const normalizedText = item.text.trim().replace(/\s+/g, ' ').toLowerCase()
+    if (!normalizedText) return
+
+    const docRef = doc(historyCol())
+    batch.set(docRef, {
+      userId,
+      shoplistId,
+      text: item.text.trim(),
+      normalizedText,
+      checkedAt: serverTimestamp(),
+    })
+  })
+
+  await batch.commit()
+}
+
+export const getShoplistItemHistory = async (
+  userId: string,
+  since: Date
+): Promise<ShoplistItemHistory[]> => {
+  const q = query(
+    historyCol(),
+    where('userId', '==', userId),
+    where('checkedAt', '>=', since),
+    orderBy('checkedAt', 'desc')
+  )
+  const snap = await getDocs(q)
+
+  return snap.docs.map((d) => {
+    const data = d.data() as any
+    const checkedAt =
+      data.checkedAt instanceof Timestamp
+        ? data.checkedAt.toDate()
+        : data.checkedAt
+
+    return {
+      id: d.id,
+      userId: data.userId ?? '',
+      shoplistId: data.shoplistId ?? '',
+      text: data.text ?? '',
+      normalizedText: data.normalizedText ?? '',
+      checkedAt,
+    }
+  })
 }

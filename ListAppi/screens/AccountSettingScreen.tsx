@@ -5,6 +5,7 @@ import * as ImagePicker from 'expo-image-picker';
 import ScreenLayout from '../components/ScreenLayout';
 import { AdBanner } from '../components/AdBanner';
 import { useAuth } from '../auth/useAuth';
+import AccountStatsSection from '../components/AccountStatsSection';
 import EditDisplayNameDialog from "../components/EditDisplayNameDialog"
 import { getUserProfile, removeMyAvatar, updateMyAvatar } from "../firebase/userProfileUtils"
 import { convertImageToBase64 } from "../firebase/imageUtils"
@@ -12,6 +13,10 @@ import { ActionModal } from "../components/ActionModal"
 import ChangePasswordDialog from "../components/ChangePasswordDialog"
 import DeleteAccountDialog from "../components/DeleteAccountDialog"
 import ChangeEmailDialog from "../components/ChangeEmailDialog"
+import { getUserRecipes } from "../firebase/recipeUtils"
+import { getShoplistItemHistory } from "../firebase/shoplistItemUtils"
+import { MEAL_TYPES } from "../types/filterConstants"
+import type { MealType } from "../types/RecipeMeta"
 
 
 interface AccountSettingScreenProps {
@@ -32,6 +37,17 @@ const AccountSettingScreen: React.FC<AccountSettingScreenProps> = ({ activeScree
   const [changePwOpen, setChangePwOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [savingAvatar, setSavingAvatar] = useState(false)
+  const [mealTypeCounts, setMealTypeCounts] = useState<Record<MealType, number> | null>(null)
+  const [loadingMeals, setLoadingMeals] = useState(false)
+  const [shoplistItemCounts, setShoplistItemCounts] = useState<Array<{ label: string; count: number }>>([])
+  const [loadingShoplistStats, setLoadingShoplistStats] = useState(false)
+  const [chartType, setChartType] = useState<'pie' | 'bars'>('pie')
+  const [shoplistChartType, setShoplistChartType] = useState<'pie' | 'bars'>('bars')
+  const [shoplistRangeDays, setShoplistRangeDays] = useState(30)
+  const [shoplistRangeOpen, setShoplistRangeOpen] = useState(false)
+  const [dataSource, setDataSource] = useState<'recipes' | 'shoplist'>('recipes')
+  const [recipeDataset, setRecipeDataset] = useState<'meal' | 'diet' | 'main'>('meal')
+  const [recipeMenuOpen, setRecipeMenuOpen] = useState(false)
 
 // Lataa näyttönimi Firestoresta kun screen aukeaa / user vaihtuu
   useEffect(() => {
@@ -53,6 +69,83 @@ const AccountSettingScreen: React.FC<AccountSettingScreenProps> = ({ activeScree
   useEffect(() => {
     setPhotoURL(user?.photoURL || "")
   }, [user?.photoURL])
+
+  useEffect(() => {
+    const run = async () => {
+      if (!user?.uid || dataSource !== 'shoplist') return
+      setLoadingShoplistStats(true)
+
+      try {
+        const now = new Date()
+        const since = new Date(now)
+        since.setDate(now.getDate() - shoplistRangeDays)
+
+        const history = await getShoplistItemHistory(user.uid, since)
+        const countMap = new Map<string, { label: string; count: number }>()
+
+        history.forEach((item) => {
+          const normalized = item.normalizedText
+            ? item.normalizedText.trim()
+            : item.text.trim().replace(/\s+/g, ' ').toLowerCase()
+
+          if (!normalized) return
+
+          const existing = countMap.get(normalized)
+          if (existing) {
+            existing.count += 1
+          } else {
+            countMap.set(normalized, {
+              label: item.text.trim(),
+              count: 1,
+            })
+          }
+        })
+
+        const sorted = Array.from(countMap.values())
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 10)
+
+        setShoplistItemCounts(sorted)
+      } catch (error) {
+        console.error('Failed to load shoplist stats', error)
+        setShoplistItemCounts([])
+      } finally {
+        setLoadingShoplistStats(false)
+      }
+    }
+
+    run()
+  }, [user?.uid, dataSource, shoplistRangeDays])
+
+  useEffect(() => {
+    const run = async () => {
+      if (!user?.uid) return
+      setLoadingMeals(true)
+      try {
+        const recipes = await getUserRecipes(user.uid)
+        const nextCounts = MEAL_TYPES.reduce((acc, mealType) => {
+          acc[mealType] = 0
+          return acc
+        }, {} as Record<MealType, number>)
+
+        recipes.forEach((recipe) => {
+          if (recipe.mealType) {
+            nextCounts[recipe.mealType] = (nextCounts[recipe.mealType] ?? 0) + 1
+          }
+        })
+
+        setMealTypeCounts(nextCounts)
+      } catch (error) {
+        console.error('Failed to load meal type stats', error)
+        setMealTypeCounts(null)
+      } finally {
+        setLoadingMeals(false)
+      }
+    }
+
+    run()
+  }, [user?.uid])
+
 
   const pickAvatarFromGallery = async () => {
     try {
@@ -135,7 +228,6 @@ const AccountSettingScreen: React.FC<AccountSettingScreenProps> = ({ activeScree
     }
   };
 
-  const avatarLetter = (displayName?.charAt(0) || user?.displayName?.charAt(0) || "U").toUpperCase()
 
 
   return (
@@ -190,9 +282,30 @@ const AccountSettingScreen: React.FC<AccountSettingScreenProps> = ({ activeScree
           </Text>
         </View>
 
+        <AccountStatsSection
+          chartType={chartType}
+          dataSource={dataSource}
+          loadingMeals={loadingMeals}
+          loadingShoplistStats={loadingShoplistStats}
+          mealTypeCounts={mealTypeCounts}
+          recipeDataset={recipeDataset}
+          recipeMenuOpen={recipeMenuOpen}
+          setChartType={setChartType}
+          setDataSource={setDataSource}
+          setRecipeDataset={setRecipeDataset}
+          setRecipeMenuOpen={setRecipeMenuOpen}
+          setShoplistChartType={setShoplistChartType}
+          setShoplistRangeDays={setShoplistRangeDays}
+          setShoplistRangeOpen={setShoplistRangeOpen}
+          shoplistChartType={shoplistChartType}
+          shoplistItemCounts={shoplistItemCounts}
+          shoplistRangeDays={shoplistRangeDays}
+          shoplistRangeOpen={shoplistRangeOpen}
+        />
+
         {/* Tilin hallinta */}
         <List.Section>
-          <List.Subheader>Tilin hallinta</List.Subheader>
+          <Text variant="titleMedium" style={styles.sectionTitle}>Tilin hallinta</Text>
           <List.Item
             title="Vaihda tai poista profiilikuva"
             description="Kamera tai galleria"
@@ -238,6 +351,10 @@ const styles = StyleSheet.create({
   email: {
     marginTop: 12,
     textAlign: 'center',
+  },
+  sectionTitle: {
+    marginLeft: 16,
+    marginBottom: 8,
   },
 })
 
