@@ -19,6 +19,7 @@ export interface ShoplistItem {
   text: string
   checked: boolean
   createdAt?: Date
+  quantity?: number
 }
 
 export interface ShoplistItemHistory {
@@ -48,19 +49,42 @@ export const getShoplistItems = async (shoplistId: string): Promise<ShoplistItem
       id: d.id,
       text: data.text ?? '',
       checked: !!data.checked,
+      quantity: data.quantity ?? 1,
       createdAt,
     } as ShoplistItem
   })
 }
 
 export const addShoplistItem = async (shoplistId: string, text: string, createdBy?: string | null) => {
-  const docRef = await addDoc(itemsCol(shoplistId), {
-    text,
-    checked: false,
-    createdAt: serverTimestamp(),
-    createdBy: createdBy ?? null,
+  const normalizedText = text.trim().toLowerCase()
+
+  const q = query(itemsCol(shoplistId), where('checked', '==', false))
+  const snap = await getDocs(q)
+
+  let existingItem: any = null
+  snap.docs.forEach((doc) => {
+    const data = doc.data()
+    if (data.text?.toLowerCase().trim() === normalizedText) {
+      existingItem = { id: doc.id, ...data }
+    }
   })
-  return docRef.id
+
+  if (existingItem) {
+    const newQuantity = (existingItem.quantity || 1) + 1
+    await updateDoc(doc(db, 'shoplists', shoplistId, 'items', existingItem.id), {
+      quantity: newQuantity,
+    })
+    return existingItem.id
+  } else {
+    const docRef = await addDoc(itemsCol(shoplistId), {
+      text,
+      checked: false,
+      quantity: 1,
+      createdAt: serverTimestamp(),
+      createdBy: createdBy ?? null,
+    })
+    return docRef.id
+  }
 }
 
 export const setShoplistItemChecked = async (
