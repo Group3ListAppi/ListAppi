@@ -16,6 +16,7 @@ import {
   setShoplistItemChecked,
   type ShoplistItem,
 } from '../firebase/shoplistItemUtils'
+import { getShoplistItemHistory } from '../firebase/shoplistItemUtils'
 
 interface ShoplistDetailScreenProps {
   shoplist: Shoplist
@@ -33,6 +34,8 @@ const ShoplistDetailScreen: React.FC<ShoplistDetailScreenProps> = ({ activeScree
   const [items, setItems] = useState<ShoplistItem[]>([])
   const [text, setText] = useState('')
   const [doneCollapsed, setDoneCollapsed] = useState(true)
+  const [suggestions, setSuggestions] = useState<string[]>([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
 
   useEffect(() => {
     loadItems()
@@ -51,6 +54,33 @@ const ShoplistDetailScreen: React.FC<ShoplistDetailScreenProps> = ({ activeScree
     }
   }
 
+  const loadPurchaseHistory = async () => {
+    if (!user?.uid) return
+    try {
+      const thirtyDaysAgo = new Date()
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+      
+      const history = await getShoplistItemHistory(user.uid, thirtyDaysAgo)
+      
+      const countMap = new Map<string, string>()
+      history.forEach((item) => {
+        const normalized = item.normalizedText || item.text.toLowerCase().trim()
+        if (!countMap.has(normalized)) {
+          countMap.set(normalized, item.text)
+        }
+      })
+      
+      const topItems = Array.from(countMap.values()).slice(0, 10)
+      setSuggestions(topItems)
+    } catch (error) {
+      console.error('Error loading purchase history:', error)
+    }
+  }
+
+  useEffect(() => {
+    loadPurchaseHistory()
+  }, [user?.uid])
+
   const activeItems = useMemo(() => items.filter(i => !i.checked), [items])
   const doneItems = useMemo(() => items.filter(i => i.checked), [items])
   const itemsDone = doneItems.length
@@ -62,18 +92,31 @@ const ShoplistDetailScreen: React.FC<ShoplistDetailScreenProps> = ({ activeScree
     setText('')
 
     try {
-      const id = await addShoplistItem(shoplist.id, value, user?.uid ?? null)
-
-      // Optimistinen lisäys UI:hin (UI päivitetään heti ennen kuin Firestore on vastannut)
-      setItems(prev => [
-        ...prev,
-        { id, text: value, checked: false, createdAt: new Date() },
-      ])
+      await addShoplistItem(shoplist.id, value, user?.uid ?? null)
+      await loadItems()
     } catch (e) {
       console.error('Error adding item:', e)
       // palauta teksti kenttään virheessä
       // setText(value)
     }
+  }
+
+  const handleTextChange = (newText: string) => {
+    setText(newText)
+    
+    if (newText.trim().length > 0) {
+      const filtered = suggestions.filter(item =>
+        item.toLowerCase().includes(newText.toLowerCase())
+      )
+      setShowSuggestions(filtered.length > 0)
+    } else {
+      setShowSuggestions(false)
+    }
+  }
+
+  const handleSelectSuggestion = (suggestion: string) => {
+    setText(suggestion)
+    setShowSuggestions(false)
   }
 
   const toggleChecked = async (itemId: string, next: boolean) => {
@@ -155,23 +198,42 @@ const ShoplistDetailScreen: React.FC<ShoplistDetailScreenProps> = ({ activeScree
         {itemsDone}/{itemsTotal} tehty
       </Text>
 
-      <View style={styles.addRow}>
-        <TextInput
-          mode="outlined"
-          placeholder="Lisää tuote…"
-          value={text}
-          onChangeText={setText}
-          style={styles.input}
-          onSubmitEditing={handleAdd}
-          returnKeyType="done"
-        />
-        <TouchableOpacity
-          onPress={handleAdd}
-          style={[styles.addButton, { backgroundColor: theme.colors.primary }]}
-          activeOpacity={0.8}
-        >
-          <Text style={{ color: theme.colors.onPrimary, fontWeight: '700' }}>Lisää</Text>
-        </TouchableOpacity>
+      <View style={styles.inputContainer}>
+        <View style={styles.addRow}>
+          <TextInput
+            mode="outlined"
+            placeholder="Lisää tuote…"
+            value={text}
+            onChangeText={handleTextChange}
+            style={styles.input}
+            onSubmitEditing={handleAdd}
+            returnKeyType="done"
+          />
+          <TouchableOpacity
+            onPress={handleAdd}
+            style={[styles.addButton, { backgroundColor: theme.colors.primary }]}
+            activeOpacity={0.8}
+          >
+            <Text style={{ color: theme.colors.onPrimary, fontWeight: '700' }}>Lisää</Text>
+          </TouchableOpacity>
+        </View>
+
+        {showSuggestions && text.trim().length > 0 && (
+          <ScrollView style={[styles.suggestionsContainer, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outline }]} scrollEnabled={true}>
+            {suggestions
+              .filter(item => item.toLowerCase().includes(text.toLowerCase()))
+              .map((suggestion, index) => (
+                <TouchableOpacity
+                  key={index}
+                  onPress={() => handleSelectSuggestion(suggestion)}
+                  style={[styles.suggestionItem, { borderBottomColor: theme.colors.outlineVariant }]}
+                  activeOpacity={0.7}
+                >
+                  <Text style={{ color: theme.colors.onSurface, fontSize: 16 }}>{suggestion}</Text>
+                </TouchableOpacity>
+              ))}
+          </ScrollView>
+        )}
       </View>
 
       {loading ? (
@@ -184,7 +246,7 @@ const ShoplistDetailScreen: React.FC<ShoplistDetailScreenProps> = ({ activeScree
             {activeItems.map((item) => (
               <ListItem
                 key={item.id}
-                title={item.text}
+                title={item.quantity && item.quantity > 1 ? `${item.quantity}kpl ${item.text}` : item.text}
                 isChecked={item.checked}
                 onCheckChange={(next) => toggleChecked(item.id, next)}
                 onLongPress={() => removeItem(item.id)}
@@ -226,7 +288,7 @@ const ShoplistDetailScreen: React.FC<ShoplistDetailScreenProps> = ({ activeScree
             {!doneCollapsed && doneItems.map((item) => (
               <ListItem
                 key={item.id}
-                title={item.text}
+                title={item.quantity && item.quantity > 1 ? `${item.quantity}kpl ${item.text}` : item.text}
                 isChecked={item.checked}
                 onCheckChange={(next) => toggleChecked(item.id, next)}
                 onLongPress={() => removeItem(item.id)}
@@ -250,11 +312,13 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 12,
   },
+  inputContainer: {
+    marginBottom: 8,
+  },
   addRow: {
     flexDirection: 'row',
     gap: 10,
     alignItems: 'center',
-    marginBottom: 8,
   },
   input: {
     flex: 1,
@@ -288,6 +352,19 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 8,
     borderWidth: 1,
+  },
+  suggestionsContainer: {
+    maxHeight: 240,
+    marginHorizontal: 16,
+    marginTop: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  suggestionItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
   },
 })
 
