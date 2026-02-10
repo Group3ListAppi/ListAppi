@@ -4,8 +4,8 @@ import { StyleSheet, View, Pressable } from 'react-native'
 import { Text, useTheme } from 'react-native-paper'
 import Svg, { G, Path, Text as SvgText } from 'react-native-svg'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
-import { MEAL_TYPES, MEAL_TYPE_LABELS } from '../types/filterConstants'
-import type { MealType } from '../types/RecipeMeta'
+import { MEAL_TYPES, MEAL_TYPE_LABELS, MAIN_INGREDIENTS, MAIN_INGREDIENT_LABELS } from '../types/filterConstants'
+import type { MealType, MainIngredient } from '../types/RecipeMeta'
 
 const MEAL_CHART_COLORS = [
   '#8fb6d6',
@@ -65,6 +65,7 @@ interface AccountStatsSectionProps {
   loadingMeals: boolean
   loadingShoplistStats: boolean
   mealTypeCounts: Record<MealType, number> | null
+  mainIngredientCounts: Record<MainIngredient, number> | null
   recipeDataset: 'meal' | 'diet' | 'main'
   recipeMenuOpen: boolean
   setChartType: Dispatch<SetStateAction<'pie' | 'bars'>>
@@ -86,6 +87,7 @@ const AccountStatsSection = ({
   loadingMeals,
   loadingShoplistStats,
   mealTypeCounts,
+  mainIngredientCounts,
   recipeDataset,
   recipeMenuOpen,
   setChartType,
@@ -111,6 +113,17 @@ const AccountStatsSection = ({
   }))
   const mealSlices = mealLegend.filter((slice) => slice.count > 0)
   const maxMealCount = mealLegend.reduce((max, slice) => Math.max(max, slice.count), 0)
+
+  const totalMainIngredients = mainIngredientCounts ? Object.values(mainIngredientCounts).reduce((sum, value) => sum + value, 0) : 0
+  const mainIngredientLegend = MAIN_INGREDIENTS.map((mainIng, index) => ({
+    mainIngredient: mainIng,
+    label: MAIN_INGREDIENT_LABELS[mainIng],
+    count: mainIngredientCounts?.[mainIng] ?? 0,
+    color: MEAL_CHART_COLORS[index % MEAL_CHART_COLORS.length],
+  }))
+  const mainIngredientSlices = mainIngredientLegend.filter((slice) => slice.count > 0)
+  const maxMainIngredientCount = mainIngredientLegend.reduce((max, slice) => Math.max(max, slice.count), 0)
+
   const recipeDatasetLabel = RECIPE_DATASETS.find((dataset) => dataset.key === recipeDataset)?.label ?? ''
   const maxShoplistCount = shoplistItemCounts.reduce((max, item) => Math.max(max, item.count), 0)
   const totalShoplistItems = shoplistItemCounts.reduce((sum, item) => sum + item.count, 0)
@@ -274,7 +287,7 @@ const AccountStatsSection = ({
           )}
         </View>
       </View>
-      {dataSource === 'recipes' && recipeDataset === 'meal' && (
+      {dataSource === 'recipes' && (recipeDataset === 'meal' || recipeDataset === 'main') && (
         <View style={styles.chartToggle}>
           <Pressable
             onPress={() => setChartType('pie')}
@@ -393,7 +406,97 @@ const AccountStatsSection = ({
           })}
         </View>
       )}
-      {!loadingMeals && dataSource === 'recipes' && recipeDataset !== 'meal' && (
+      {!loadingMeals && dataSource === 'recipes' && recipeDataset === 'main' && totalMainIngredients === 0 && (
+        <Text style={styles.chartHelper}>Ei vielä reseptejä pääraaka-aineilla.</Text>
+      )}
+      {!loadingMeals && dataSource === 'recipes' && recipeDataset === 'main' && totalMainIngredients > 0 && chartType === 'pie' && (
+        <View style={styles.pieLayout}>
+          <View style={styles.legendColumn}>
+            <Text style={styles.shoplistTitle}>
+              {`Reseptien jakauma (${recipeDistributionLabel})`}
+            </Text>
+            {mainIngredientLegend.map((slice) => (
+              <View key={slice.mainIngredient} style={styles.legendRow}>
+                <View style={[styles.legendDot, { backgroundColor: slice.color }]} />
+                <Text style={styles.legendLabel}>{slice.label}</Text>
+              </View>
+            ))}
+          </View>
+          <View style={styles.pieChart}>
+            <Svg width={200} height={200} viewBox="0 0 200 200">
+              <G>
+                {mainIngredientSlices.map((slice, index) => {
+                  const startAngle = mainIngredientSlices
+                    .slice(0, index)
+                    .reduce((sum, item) => sum + (item.count / totalMainIngredients) * 360, 0)
+                  const angle = (slice.count / totalMainIngredients) * 360
+                  const endAngle = startAngle + angle
+                  const percent = Math.round((slice.count / totalMainIngredients) * 100)
+                  const showLabel = percent >= 4
+                  const labelAngle = startAngle + angle / 2
+                  const labelPos = polarToCartesian(100, 100, 60, labelAngle)
+
+                  return (
+                    <G key={slice.mainIngredient}>
+                      <Path
+                        d={describeArc(100, 100, 90, startAngle, endAngle)}
+                        fill={slice.color}
+                      />
+                      {showLabel && (
+                        <SvgText
+                          x={labelPos.x}
+                          y={labelPos.y}
+                          fill="#ffffff"
+                          fontSize="16"
+                          fontWeight="700"
+                          textAnchor="middle"
+                          alignmentBaseline="middle"
+                        >
+                          {`${percent}%`}
+                        </SvgText>
+                      )}
+                    </G>
+                  )
+                })}
+              </G>
+            </Svg>
+          </View>
+        </View>
+      )}
+      {!loadingMeals && dataSource === 'recipes' && recipeDataset === 'main' && totalMainIngredients > 0 && chartType === 'bars' && (
+        <View style={styles.hBarList}>
+          <Text style={styles.shoplistTitle}>
+            {`Reseptien jakauma (${recipeDistributionLabel})`}
+          </Text>
+          {mainIngredientLegend.map((slice) => {
+            const ratio = maxMainIngredientCount > 0 ? slice.count / maxMainIngredientCount : 0
+            const widthPercent = Math.max(ratio * 100, slice.count > 0 ? 6 : 0)
+            return (
+              <View key={slice.mainIngredient} style={styles.hBarRow}>
+                <View style={styles.hBarLabelRow}>
+                  <View style={[styles.legendDot, { backgroundColor: slice.color }]} />
+                  <Text style={styles.hBarLabel}>{slice.label}</Text>
+                  <Text style={styles.hBarCount}>{slice.count}</Text>
+                </View>
+                <View
+                  style={[
+                    styles.hBarTrack,
+                    { backgroundColor: theme.colors.surfaceVariant || theme.colors.surface },
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.hBarFill,
+                      { width: `${widthPercent}%`, backgroundColor: slice.color },
+                    ]}
+                  />
+                </View>
+              </View>
+            )
+          })}
+        </View>
+      )}
+      {!loadingMeals && dataSource === 'recipes' && recipeDataset === 'diet' && (
         <Text style={styles.chartHelper}>Valittu reseptidata: {recipeDatasetLabel}</Text>
       )}
       {dataSource === 'shoplist' && loadingShoplistStats && (
