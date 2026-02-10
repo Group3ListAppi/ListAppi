@@ -15,9 +15,8 @@ import DeleteAccountDialog from "../components/DeleteAccountDialog"
 import ChangeEmailDialog from "../components/ChangeEmailDialog"
 import { getUserRecipes } from "../firebase/recipeUtils"
 import { getShoplistItemHistory } from "../firebase/shoplistItemUtils"
-import { MEAL_TYPES } from "../types/filterConstants"
-import type { MealType } from "../types/RecipeMeta"
-
+import { MEAL_TYPES, MAIN_INGREDIENTS } from "../types/filterConstants"
+import type { MealType, MainIngredient } from "../types/RecipeMeta"
 
 interface AccountSettingScreenProps {
   activeScreen: string
@@ -38,6 +37,7 @@ const AccountSettingScreen: React.FC<AccountSettingScreenProps> = ({ activeScree
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [savingAvatar, setSavingAvatar] = useState(false)
   const [mealTypeCounts, setMealTypeCounts] = useState<Record<MealType, number> | null>(null)
+  const [mainIngredientCounts, setMainIngredientCounts] = useState<Record<MainIngredient, number> | null>(null)
   const [loadingMeals, setLoadingMeals] = useState(false)
   const [shoplistItemCounts, setShoplistItemCounts] = useState<Array<{ label: string; count: number }>>([])
   const [loadingShoplistStats, setLoadingShoplistStats] = useState(false)
@@ -123,21 +123,31 @@ const AccountSettingScreen: React.FC<AccountSettingScreenProps> = ({ activeScree
       setLoadingMeals(true)
       try {
         const recipes = await getUserRecipes(user.uid)
-        const nextCounts = MEAL_TYPES.reduce((acc, mealType) => {
+        const nextMealCounts = MEAL_TYPES.reduce((acc, mealType) => {
           acc[mealType] = 0
           return acc
         }, {} as Record<MealType, number>)
 
+        const nextMainCounts = MAIN_INGREDIENTS.reduce((acc, mainIng) => {
+          acc[mainIng] = 0
+          return acc
+        }, {} as Record<MainIngredient, number>)
+
         recipes.forEach((recipe) => {
           if (recipe.mealType) {
-            nextCounts[recipe.mealType] = (nextCounts[recipe.mealType] ?? 0) + 1
+            nextMealCounts[recipe.mealType] = (nextMealCounts[recipe.mealType] ?? 0) + 1
+          }
+          if (recipe.mainIngredient) {
+            nextMainCounts[recipe.mainIngredient] = (nextMainCounts[recipe.mainIngredient] ?? 0) + 1
           }
         })
 
-        setMealTypeCounts(nextCounts)
+        setMealTypeCounts(nextMealCounts)
+        setMainIngredientCounts(nextMainCounts)
       } catch (error) {
-        console.error('Failed to load meal type stats', error)
+        console.error('Failed to load stats', error)
         setMealTypeCounts(null)
+        setMainIngredientCounts(null)
       } finally {
         setLoadingMeals(false)
       }
@@ -288,6 +298,7 @@ const AccountSettingScreen: React.FC<AccountSettingScreenProps> = ({ activeScree
           loadingMeals={loadingMeals}
           loadingShoplistStats={loadingShoplistStats}
           mealTypeCounts={mealTypeCounts}
+          mainIngredientCounts={mainIngredientCounts}
           recipeDataset={recipeDataset}
           recipeMenuOpen={recipeMenuOpen}
           setChartType={setChartType}
