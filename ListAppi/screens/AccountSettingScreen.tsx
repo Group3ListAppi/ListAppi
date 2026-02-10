@@ -90,13 +90,14 @@ const AccountSettingScreen: React.FC<AccountSettingScreenProps> = ({ activeScree
 
           if (!normalized) return
 
+          const itemCount = item.quantity ?? 1
           const existing = countMap.get(normalized)
           if (existing) {
-            existing.count += 1
+            existing.count += itemCount
           } else {
             countMap.set(normalized, {
               label: item.text.trim(),
-              count: 1,
+              count: itemCount,
             })
           }
         })

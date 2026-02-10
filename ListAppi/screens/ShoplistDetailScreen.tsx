@@ -128,7 +128,7 @@ const ShoplistDetailScreen: React.FC<ShoplistDetailScreenProps> = ({ activeScree
       await setShoplistItemChecked(shoplist.id, itemId, next)
       if (next && user?.uid && targetItem?.text) {
         await addShoplistItemHistoryEntries(user.uid, shoplist.id, [
-          { text: targetItem.text },
+          { text: targetItem.text, quantity: targetItem.quantity ?? 1 },
         ])
       }
     } catch (e) {

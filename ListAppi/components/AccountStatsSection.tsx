@@ -22,8 +22,8 @@ const MEAL_CHART_COLORS = [
 
 const RECIPE_DATASETS = [
   { key: 'meal', label: 'Ruokalajit' },
-  { key: 'diet', label: 'Ruokavaliot' },
   { key: 'main', label: 'Pääraaka-aineet' },
+  { key: 'diet', label: 'Ruokavaliot' },
 ] as const
 
 const SHOPLIST_RANGES = [
@@ -129,10 +129,10 @@ const AccountStatsSection = ({
   const totalShoplistItems = shoplistItemCounts.reduce((sum, item) => sum + item.count, 0)
   const shoplistRangeLabel = SHOPLIST_RANGES.find((range) => range.days === shoplistRangeDays)?.label ?? ''
   const recipeDistributionLabel = recipeDataset === 'meal'
-    ? 'ruokalajeittain'
+    ? 'ruokalajit'
     : recipeDataset === 'main'
-      ? 'pääraaka-aineittain'
-      : 'ruokavalioittain'
+      ? 'pääraaka-aineet'
+      : 'ruokavaliot'
 
   return (
     <View style={styles.chartSection}>
@@ -153,7 +153,7 @@ const AccountStatsSection = ({
             }}
           >
             <Text style={styles.dataSourceButtonText}>
-              {recipeDatasetLabel ? `Reseptit: ${recipeDatasetLabel}` : 'Reseptit'}
+              {recipeDatasetLabel ? `Reseptit` : 'Reseptit'}
             </Text>
             <MaterialCommunityIcons
               name={recipeMenuOpen ? 'chevron-up' : 'chevron-down'}
@@ -227,7 +227,7 @@ const AccountStatsSection = ({
           >
             <Text style={styles.dataSourceButtonText}>
               {shoplistRangeLabel
-                ? `Ostoslistat: ${shoplistRangeLabel}`
+                ? `Ostoslistat`
                 : 'Ostoslistat'}
             </Text>
             <MaterialCommunityIcons
@@ -298,7 +298,7 @@ const AccountStatsSection = ({
                 : { backgroundColor: theme.colors.surfaceVariant || theme.colors.surface },
             ]}
           >
-            <Text style={styles.chartToggleText}>Piirakka</Text>
+            <Text style={styles.chartToggleText}>Piirakkakaavio</Text>
           </Pressable>
           <Pressable
             onPress={() => setChartType('bars')}
@@ -309,7 +309,7 @@ const AccountStatsSection = ({
                 : { backgroundColor: theme.colors.surfaceVariant || theme.colors.surface },
             ]}
           >
-            <Text style={styles.chartToggleText}>Palkit</Text>
+            <Text style={styles.chartToggleText}>Vaakapalkkikaavio</Text>
           </Pressable>
         </View>
       )}
@@ -516,7 +516,7 @@ const AccountStatsSection = ({
                 : { backgroundColor: theme.colors.surfaceVariant || theme.colors.surface },
             ]}
           >
-            <Text style={styles.chartToggleText}>Piirakka</Text>
+            <Text style={styles.chartToggleText}>Piirakkakaavio</Text>
           </Pressable>
           <Pressable
             onPress={() => setShoplistChartType('bars')}
@@ -527,7 +527,7 @@ const AccountStatsSection = ({
                 : { backgroundColor: theme.colors.surfaceVariant || theme.colors.surface },
             ]}
           >
-            <Text style={styles.chartToggleText}>Palkit</Text>
+            <Text style={styles.chartToggleText}>Vaakapalkkikaavio</Text>
           </Pressable>
         </View>
       )}
