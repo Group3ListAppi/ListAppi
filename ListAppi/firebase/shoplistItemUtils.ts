@@ -28,6 +28,7 @@ export interface ShoplistItemHistory {
   shoplistId: string
   text: string
   normalizedText: string
+  quantity?: number
   checkedAt?: Date
 }
 
@@ -120,7 +121,7 @@ const historyCol = () => collection(db, 'shoplistItemHistory')
 export const addShoplistItemHistoryEntries = async (
   userId: string,
   shoplistId: string,
-  items: Array<{ text: string }>
+  items: Array<{ text: string; quantity?: number }>
 ) => {
   if (items.length === 0) return
 
@@ -135,6 +136,7 @@ export const addShoplistItemHistoryEntries = async (
       shoplistId,
       text: item.text.trim(),
       normalizedText,
+      quantity: Math.max(1, item.quantity ?? 1),
       checkedAt: serverTimestamp(),
     })
   })
@@ -167,6 +169,7 @@ export const getShoplistItemHistory = async (
       shoplistId: data.shoplistId ?? '',
       text: data.text ?? '',
       normalizedText: data.normalizedText ?? '',
+      quantity: data.quantity ?? 1,
       checkedAt,
     }
   })
