@@ -129,6 +129,11 @@ export const addRecipeToCollection = async (collectionId: string, recipeId: stri
         const recipeData = recipeDoc.data();
         const recipeOwnerId = recipeData.userId;
         const recipeSharedWith = recipeData.sharedWith || [];
+
+        if (!updatedBy || updatedBy !== recipeOwnerId) {
+          // Only the recipe owner can change sharing for their recipe.
+          return;
+        }
         
         // Include collection owner and all shared users, but exclude the recipe owner
         const allCollectionMembers = [collectionOwnerId, ...collectionSharedWith];
@@ -343,6 +348,10 @@ export const stopSharingRecipeCollection = async (collectionId: string, userId: 
       });
     }
   } catch (error) {
+    const code = (error as { code?: string })?.code
+    if (code === 'permission-denied') {
+      return
+    }
     console.error('Error stopping recipe collection sharing:', error);
     throw error;
   }
@@ -376,9 +385,24 @@ export const moveRecipeCollectionToTrash = async (
 
 export const restoreRecipeCollectionFromTrash = async (
   collectionId: string,
-  collectionData?: RecipeCollection | any
+  collectionData?: RecipeCollection | any,
+  currentUserId?: string
 ): Promise<void> => {
   try {
+    const ownerId = collectionData?.userId ?? null
+    const isOwner = currentUserId ? ownerId === currentUserId : true
+
+    if (currentUserId && !isOwner) {
+      const q = query(
+        collection(db, 'trash'),
+        where('collectionId', '==', collectionId),
+        where('userId', '==', currentUserId)
+      )
+      const querySnapshot = await getDocs(q)
+      await Promise.all(querySnapshot.docs.map((doc) => deleteDoc(doc.ref)))
+      return
+    }
+
     // Recreate the collection
     if (collectionData) {
       await setDoc(doc(db, 'recipeCollections', collectionId), {
@@ -390,14 +414,18 @@ export const restoreRecipeCollectionFromTrash = async (
     }
     
     // Delete trash entry
-    const q = query(
-      collection(db, 'trash'),
-      where('collectionId', '==', collectionId)
-    );
+    const q = currentUserId
+      ? query(
+          collection(db, 'trash'),
+          where('collectionId', '==', collectionId),
+          where('userId', '==', currentUserId)
+        )
+      : query(
+          collection(db, 'trash'),
+          where('collectionId', '==', collectionId)
+        );
     const querySnapshot = await getDocs(q);
-    querySnapshot.forEach(async (doc) => {
-      await deleteDoc(doc.ref);
-    });
+    await Promise.all(querySnapshot.docs.map((doc) => deleteDoc(doc.ref)));
   } catch (error) {
     console.error('Error restoring recipe collection from trash:', error);
     throw error;
@@ -410,6 +438,22 @@ export const permanentlyDeleteRecipeCollection = async (
   userId?: string
 ): Promise<void> => {
   try {
+    const trashDoc = await getDoc(doc(db, 'trash', trashItemId))
+    if (trashDoc.exists() && collectionId && userId) {
+      const trashData = trashDoc.data()
+      const isOwner = trashData.data?.userId === userId
+
+      if (!isOwner) {
+        try {
+          await stopSharingRecipeCollection(collectionId, userId, false)
+        } catch {
+          // Ignore if user no longer has access
+        }
+        await deleteDoc(doc(db, 'trash', trashItemId))
+        return
+      }
+    }
+
     // Delete trash entry
     await deleteDoc(doc(db, 'trash', trashItemId));
     

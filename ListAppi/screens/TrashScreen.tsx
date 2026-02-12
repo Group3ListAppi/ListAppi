@@ -55,16 +55,16 @@
       const targetId = getTargetId(item)
 
       if (item.type === 'recipe') {
-        await restoreRecipeFromTrash(targetId, item.data, item.collectionId)
+        await restoreRecipeFromTrash(targetId, item.data, item.collectionId, user?.uid)
         onNavigate('recipes')
       } else if (item.type === 'shoplist') {
-        await restoreShoplistFromTrash(targetId, item.data)
+        await restoreShoplistFromTrash(targetId, item.data, user?.uid)
         onNavigate('shoplist')
       } else if (item.type === 'menu') {
-        await restoreMenuListFromTrash(targetId, item.data)
+        await restoreMenuListFromTrash(targetId, item.data, user?.uid)
         onNavigate('menu')
       } else if (item.type === 'recipe-collection') {
-        await restoreRecipeCollectionFromTrash(targetId, item.data)
+        await restoreRecipeCollectionFromTrash(targetId, item.data, user?.uid)
         onNavigate('recipes')
       }
 

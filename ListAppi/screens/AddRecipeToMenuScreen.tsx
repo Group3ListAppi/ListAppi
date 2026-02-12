@@ -7,7 +7,7 @@ import { ListButton } from '../components/ListButton'
 import { SearchBar } from '../components/SearchBar'
 import { FilterModal, type FilterOptions } from '../components/FilterModal'
 import { getUserRecipes } from '../firebase/recipeUtils'
-import { addRecipeToMenuList } from '../firebase/menuUtils'
+import { addRecipeToMenuList, getMenuListById } from '../firebase/menuUtils'
 import { useAuth } from '../auth/useAuth'
 import type { MenuList } from '../firebase/menuUtils'
 import type { Recipe } from '../firebase/recipeUtils'
@@ -29,6 +29,7 @@ const AddRecipeToMenuScreen: React.FC<AddRecipeToMenuScreenProps> = ({
   const { user } = useAuth()
 
   const [recipes, setRecipes] = useState<Recipe[]>([])
+  const [currentMenuList, setCurrentMenuList] = useState<MenuList>(menuList)
   const [selectedRecipeIds, setSelectedRecipeIds] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -43,14 +44,23 @@ const AddRecipeToMenuScreen: React.FC<AddRecipeToMenuScreenProps> = ({
 
   useEffect(() => {
     loadRecipes()
-  }, [menuList.id])
+  }, [menuList.id, user?.uid])
 
   const loadRecipes = async () => {
     try {
       setLoading(true)
-      const userRecipes = await getUserRecipes(menuList.userId)
+      if (!user?.uid) {
+        setRecipes([])
+        return
+      }
 
-      const alreadyInMenu = new Set(menuList.recipes.map((r) => r.recipeId))
+      const latestMenuList = await getMenuListById(menuList.id)
+      const menuListToUse = latestMenuList ?? menuList
+      setCurrentMenuList(menuListToUse)
+
+      const userRecipes = await getUserRecipes(user.uid)
+
+      const alreadyInMenu = new Set(menuListToUse.recipes.map((r) => r.recipeId))
       const available = userRecipes.filter((r) => !alreadyInMenu.has(r.id))
 
       setRecipes(available)
@@ -93,7 +103,7 @@ const AddRecipeToMenuScreen: React.FC<AddRecipeToMenuScreenProps> = ({
     if (selectedRecipeIds.length === 0) return
     try {
       setSaving(true)
-      await Promise.all(selectedRecipeIds.map((id) => addRecipeToMenuList(menuList.id, id, user?.uid ?? null)))
+      await Promise.all(selectedRecipeIds.map((id) => addRecipeToMenuList(currentMenuList.id, id, user?.uid ?? null)))
       onBack()
     } catch (e) {
       console.error('Error adding recipes to menu:', e)
