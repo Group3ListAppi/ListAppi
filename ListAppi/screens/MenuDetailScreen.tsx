@@ -2,9 +2,10 @@ import React, { useState, useEffect } from "react";
 import { StyleSheet, ScrollView, View } from "react-native";
 import { useTheme } from "react-native-paper";
 import { ListButton } from "../components/ListButton";
+import { ActionModal } from "../components/ActionModal";
 import { AdBanner } from "../components/AdBanner";
-import { getUserRecipes } from "../firebase/recipeUtils";
-import { removeRecipeFromMenuList, toggleRecipeDoneInMenuList, getUserMenuLists } from "../firebase/menuUtils";
+import { getRecipesByIds } from "../firebase/recipeUtils";
+import { removeRecipeFromMenuList, toggleRecipeDoneInMenuList, getMenuListById } from "../firebase/menuUtils";
 import type { MenuList } from "../firebase/menuUtils";
 import type { Recipe } from "../firebase/recipeUtils";
 import ScreenLayout from "../components/ScreenLayout";
@@ -29,6 +30,7 @@ const MenuDetailScreen: React.FC<MenuDetailScreenProps> = ({
   const { user } = useAuth();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [menuList, setMenuList] = useState<MenuList>(initialMenuList);
+  const [actionModalVisible, setActionModalVisible] = useState(false);
 
   useEffect(() => {
     if (activeScreen === "menu-detail") {
@@ -38,22 +40,19 @@ const MenuDetailScreen: React.FC<MenuDetailScreenProps> = ({
 
   const loadMenuList = async () => {
     try {
-      const userMenuLists = await getUserMenuLists(menuList.userId);
-      const updatedMenuList = userMenuLists.find(m => m.id === menuList.id);
-      if (updatedMenuList) {
-        setMenuList(updatedMenuList);
-        loadRecipes(updatedMenuList);
-      }
+      const updatedMenuList = await getMenuListById(menuList.id)
+      if (!updatedMenuList) return
+      setMenuList(updatedMenuList)
+      loadRecipes(updatedMenuList)
     } catch (error) {
       console.error('Error loading menu list:', error);
     }
   };
 
   const loadRecipes = async (currentMenuList = menuList) => {
-    const allUserRecipes = await getUserRecipes(currentMenuList.userId);
     const ids = currentMenuList.recipes.map(r => r.recipeId);
-    const filteredRecipes = allUserRecipes.filter(r => ids.includes(r.id));
-    setRecipes(filteredRecipes);
+    const fetched = await getRecipesByIds(ids)
+    setRecipes(fetched)
   };
 
   const getRecipeDone = (recipeId: string) => {
@@ -82,7 +81,7 @@ const MenuDetailScreen: React.FC<MenuDetailScreenProps> = ({
       onBack={onBack}
       customTitle={menuList.name}
       showFAB={true}
-      onFABPress={() => onNavigate("add-recipe-to-menu", menuList)}
+      onFABPress={() => setActionModalVisible(true)}
       hideActions={true}
       fabLabel="Lisää resepti"
     >
@@ -109,6 +108,14 @@ const MenuDetailScreen: React.FC<MenuDetailScreenProps> = ({
         <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}>
           <AdBanner onPress={() => onNavigate('premium')} isPremium={isPremium} />
         </View>
+        <ActionModal
+          visible={actionModalVisible}
+          onClose={() => setActionModalVisible(false)}
+          title={menuList.name}
+          actionIds={['createRecipe', 'moveRecipes']}
+          onCreateRecipe={() => onNavigate("add-recipe", { menuListId: menuList.id })}
+          onMoveRecipes={() => onNavigate("add-recipe-to-menu", menuList)}
+        />
       </>
     </ScreenLayout>
   );

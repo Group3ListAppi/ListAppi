@@ -107,6 +107,22 @@ export const getUserMenuLists = async (userId: string): Promise<MenuList[]> => {
   return menuLists;
 };
 
+export const getMenuListById = async (menuListId: string): Promise<MenuList | null> => {
+  const docSnap = await getDoc(doc(db, 'menulists', menuListId))
+  if (!docSnap.exists()) return null
+
+  const data = docSnap.data() as any
+  return {
+    id: docSnap.id,
+    name: data.name,
+    type: 'menu',
+    userId: data.userId,
+    createdAt: data.createdAt?.toDate?.() ?? new Date(),
+    recipes: (data.recipes || []) as MenuListRecipe[],
+    sharedWith: data.sharedWith || [],
+  } as MenuList
+}
+
   export const addRecipeToMenuList = async (menuListId: string, recipeId: string, updatedBy?: string | null) => {
     const ref = doc(db, "menulists", menuListId);
     await updateDoc(ref, {
@@ -155,9 +171,12 @@ export const moveMenuListToTrash = async (
       deletedAt: new Date(),
     })
 
-    await updateDoc(doc(db, 'menulists', menuListId), {
-      deletedAt: new Date(),
-    })
+    const isOwner = menuList.userId === userId
+    if (isOwner) {
+      await updateDoc(doc(db, 'menulists', menuListId), {
+        deletedAt: new Date(),
+      })
+    }
   } catch (error) {
     console.error('Error moving menu to trash:', error)
     throw error
@@ -192,27 +211,54 @@ export const stopSharingMenuList = async (menuListId: string, userId: string, is
       })
     }
   } catch (error) {
+    const code = (error as { code?: string })?.code
+    if (code === 'permission-denied') {
+      return
+    }
     console.error('Error stopping menu list sharing:', error)
     throw error
   }
 }
 
-export const restoreMenuListFromTrash = async (menuListId: string, menuListData?: any): Promise<void> => {
+export const restoreMenuListFromTrash = async (
+  menuListId: string,
+  menuListData?: any,
+  currentUserId?: string
+): Promise<void> => {
   try {
+    const listDoc = await getDoc(doc(db, 'menulists', menuListId))
+    const ownerId = menuListData?.userId || (listDoc.exists() ? listDoc.data().userId : null)
+    const isOwner = currentUserId ? ownerId === currentUserId : true
+
+    if (currentUserId && !isOwner) {
+      const q = query(
+        collection(db, 'trash'),
+        where('menuListId', '==', menuListId),
+        where('userId', '==', currentUserId)
+      )
+      const querySnapshot = await getDocs(q)
+      await Promise.all(querySnapshot.docs.map((docSnapshot) => deleteDoc(docSnapshot.ref)))
+      return
+    }
+
     // Remove the deletedAt timestamp
     await updateDoc(doc(db, 'menulists', menuListId), {
       deletedAt: null,
     })
     
     // Delete trash entry
-    const q = query(
-      collection(db, 'trash'),
-      where('menuListId', '==', menuListId)
-    )
+    const q = currentUserId
+      ? query(
+          collection(db, 'trash'),
+          where('menuListId', '==', menuListId),
+          where('userId', '==', currentUserId)
+        )
+      : query(
+          collection(db, 'trash'),
+          where('menuListId', '==', menuListId)
+        )
     const querySnapshot = await getDocs(q)
-    querySnapshot.forEach(async (docSnapshot) => {
-      await deleteDoc(docSnapshot.ref)
-    })
+    await Promise.all(querySnapshot.docs.map((docSnapshot) => deleteDoc(docSnapshot.ref)))
   } catch (error) {
     console.error('Error restoring menu list from trash:', error)
     throw error
@@ -221,6 +267,22 @@ export const restoreMenuListFromTrash = async (menuListId: string, menuListData?
 
 export const permanentlyDeleteMenuList = async (trashItemId: string, menuListId?: string, userId?: string): Promise<void> => {
   try {
+    const trashDoc = await getDoc(doc(db, 'trash', trashItemId))
+    if (trashDoc.exists() && menuListId && userId) {
+      const trashData = trashDoc.data()
+      const isOwner = trashData.data?.userId === userId
+
+      if (!isOwner) {
+        try {
+          await stopSharingMenuList(menuListId, userId, false)
+        } catch {
+          // Ignore if user no longer has access
+        }
+        await deleteDoc(doc(db, 'trash', trashItemId))
+        return
+      }
+    }
+
     // Delete from trash
     await deleteDoc(doc(db, 'trash', trashItemId))
     

@@ -39,6 +39,7 @@ import type { MenuList } from './firebase/menuUtils';
 import type { RecipeCollection } from './firebase/recipeCollectionUtils';
 import type { CreateRecipeFormData } from './components/RecipeModal'
 import { saveRecipeToFirestore, updateRecipeInFirestore } from './firebase/recipeUtils'
+import { addRecipeToMenuList } from './firebase/menuUtils'
 import ChooseNameScreen from "./screens/ChooseNameScreen"
 import { ensureUserProfile, getUserProfile, activatePremium, cancelPremium } from "./firebase/userProfileUtils"
 import { registerForPushNotificationsAsync } from "./utils/notifications"
@@ -83,6 +84,7 @@ export default function App() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [selectedShoplist, setSelectedShoplist] = useState<Shoplist | null>(null)
   const [collectionId, setCollectionId] = useState<string | null>(null);
+  const [menuListId, setMenuListId] = useState<string | null>(null);
   const [moveRecipesData, setMoveRecipesData] = useState<{ sourceCollectionId: string; recipeIds: string[] } | null>(null);
   const [pickForCollectionId, setPickForCollectionId] = useState<string | null>(null);
   const [pickForCollection, setPickForCollection] = useState<RecipeCollection | null>(null);
@@ -127,6 +129,7 @@ export default function App() {
       setSelectedShoplist(null);
       setEditRecipe(null);
       setCollectionId(null);
+      setMenuListId(null);
       setRecipes([]);
       setSelectedMealDbId(null); 
       setPickForCollectionId(null);
@@ -192,11 +195,13 @@ export default function App() {
       if (data?.editRecipe) {
         setEditRecipe(data.editRecipe);
         setCollectionId(data.collectionId || null);
+        setMenuListId(null);
         setPrefillRecipe(null);
       } else {
         // create-mode (uusi resepti)
         setEditRecipe(null);
         setCollectionId(data?.collectionId ?? null);
+        setMenuListId(data?.menuListId ?? null);
 
         // prefill (TheMealDB import)
         setPrefillRecipe(data?.prefillRecipe ?? null);
@@ -204,6 +209,7 @@ export default function App() {
     } else {
       // poistuttaessa add-recipe:stä nollaa prefill
       setPrefillRecipe(null);
+      setMenuListId(null);
     }
     
     if ((screen === 'menu-detail' || screen === 'add-recipe-to-menu') && data) {
@@ -308,14 +314,22 @@ export default function App() {
           sharedWith: [],
         }
         setRecipes([...recipes, newRecipe])
+
+        if (menuListId) {
+          await addRecipeToMenuList(menuListId, recipeId, user.uid)
+        }
       }
       setEditRecipe(null)
       const wasInCollection = collectionId !== null;
+      const wasInMenu = menuListId !== null;
       const savedCollectionId = collectionId;
       setCollectionId(null)
+      setMenuListId(null)
       
       // Jos lisätään resepti kokoelmaan, ladataan kokoelma uudelleen ja palataan siihen
-      if (wasInCollection && savedCollectionId && selectedCollection) {
+      if (wasInMenu) {
+        handleBack();
+      } else if (wasInCollection && savedCollectionId && selectedCollection) {
         // Lataa kokoelma uudelleen näyttääksesi uuden reseptin
         const { getUserRecipeCollections } = await import('./firebase/recipeCollectionUtils');
         const collections = await getUserRecipeCollections(user.uid);

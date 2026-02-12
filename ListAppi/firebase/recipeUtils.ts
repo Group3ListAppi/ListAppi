@@ -102,17 +102,15 @@ export const getUserRecipes = async (userId: string): Promise<Recipe[]> => {
       }
     })
     
-    // Include recipes that are in collections owned by the user
+    // Include recipes that are in collections owned by or shared with the user
     try {
       const { getUserRecipeCollections } = await import('./recipeCollectionUtils')
-      const ownerCollections = await getUserRecipeCollections(userId)
+      const accessibleCollections = await getUserRecipeCollections(userId)
       const collectionRecipeIds = new Set<string>()
 
-      ownerCollections
-        .filter(collection => collection.userId === userId)
-        .forEach(collection => {
-          collection.recipeIds?.forEach(id => collectionRecipeIds.add(id))
-        })
+      accessibleCollections.forEach(collection => {
+        collection.recipeIds?.forEach(id => collectionRecipeIds.add(id))
+      })
 
       const missingIds = Array.from(collectionRecipeIds).filter(id => !recipeIds.has(id))
       if (missingIds.length > 0) {
@@ -206,10 +204,29 @@ export const moveRecipeToTrash = async (
   }
 }
 
-export const restoreRecipeFromTrash = async (recipeId: string, recipeData?: Recipe | any, collectionId?: string): Promise<void> => {
+export const restoreRecipeFromTrash = async (
+  recipeId: string,
+  recipeData?: Recipe | any,
+  collectionId?: string,
+  currentUserId?: string
+): Promise<void> => {
   try {
     // Check if recipe document exists
     const recipeDoc = await getDoc(doc(db, 'recipes', recipeId))
+    const ownerId = recipeData?.userId || (recipeDoc.exists() ? recipeDoc.data().userId : null)
+    const isOwner = currentUserId ? ownerId === currentUserId : true
+
+    if (currentUserId && !isOwner) {
+      // Shared user: just remove their trash entry and return.
+      const q = query(
+        collection(db, 'trash'),
+        where('recipeId', '==', recipeId),
+        where('userId', '==', currentUserId)
+      )
+      const querySnapshot = await getDocs(q)
+      await Promise.all(querySnapshot.docs.map((doc) => deleteDoc(doc.ref)))
+      return
+    }
     
     if (recipeDoc.exists()) {
       // If it exists, just remove the deletedAt timestamp
@@ -227,7 +244,7 @@ export const restoreRecipeFromTrash = async (recipeId: string, recipeData?: Reci
     }
 
     // Add recipe back to collection if collectionId is provided
-    const userId = recipeData?.userId || (recipeDoc.exists() ? recipeDoc.data().userId : null);
+    const userId = ownerId
     
     if (userId && collectionId) {
       // Import inline to avoid circular dependency
@@ -249,14 +266,18 @@ export const restoreRecipeFromTrash = async (recipeId: string, recipeData?: Reci
     }
     
     // Delete trash entry
-    const q = query(
-      collection(db, 'trash'),
-      where('recipeId', '==', recipeId)
-    )
+    const q = currentUserId
+      ? query(
+          collection(db, 'trash'),
+          where('recipeId', '==', recipeId),
+          where('userId', '==', currentUserId)
+        )
+      : query(
+          collection(db, 'trash'),
+          where('recipeId', '==', recipeId)
+        )
     const querySnapshot = await getDocs(q)
-    querySnapshot.forEach(async (doc) => {
-      await deleteDoc(doc.ref)
-    })
+    await Promise.all(querySnapshot.docs.map((doc) => deleteDoc(doc.ref)))
   } catch (error) {
     console.error('Error restoring recipe from trash:', error)
     throw error
@@ -301,7 +322,11 @@ export const permanentlyDeleteTrashItem = async (trashItemId: string, recipeId?:
       
       if (!isOwner) {
         // If not owner, just stop sharing and remove from trash
-        await stopSharingRecipe(recipeId, userId, false)
+        try {
+          await stopSharingRecipe(recipeId, userId, false)
+        } catch {
+          // Ignore if user no longer has access
+        }
         await deleteDoc(doc(db, 'trash', trashItemId))
         return
       }
@@ -341,6 +366,9 @@ export const stopSharingRecipe = async (recipeId: string, userId: string, isOwne
         sharedWith: [],
       })
     } else {
+      if (!sharedWith.includes(userId)) {
+        return
+      }
       // Shared user wants to leave
       const updatedSharedWith = sharedWith.filter((id: string) => id !== userId)
       await updateDoc(recipeRef, {
@@ -348,6 +376,10 @@ export const stopSharingRecipe = async (recipeId: string, userId: string, isOwne
       })
     }
   } catch (error) {
+    const code = (error as { code?: string })?.code
+    if (code === 'permission-denied') {
+      return
+    }
     console.error('Error stopping recipe sharing:', error)
     throw error
   }
@@ -383,7 +415,7 @@ export const duplicateRecipeToUser = async (recipeId: string, targetUserId: stri
     
     if (defaultCollection) {
       // Add to default collection
-      await addRecipeToCollection(defaultCollection.id, newRecipeRef.id)
+      await addRecipeToCollection(defaultCollection.id, newRecipeRef.id, targetUserId)
     }
     
     console.log(`Recipe ${recipeId} duplicated to user ${targetUserId} as ${newRecipeRef.id}`)

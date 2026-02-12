@@ -1,5 +1,5 @@
 import * as admin from "firebase-admin";
-import { onDocumentCreated } from "firebase-functions/v2/firestore";
+import { onDocumentCreated, onDocumentUpdated } from "firebase-functions/v2/firestore";
 import { logger } from "firebase-functions";
 
 admin.initializeApp();
@@ -80,6 +80,68 @@ export const notifyInvitationCreated = onDocumentCreated(
       logger.warn("Some notifications failed", {
         failedTokensCount: failedTokens.length,
       });
+    }
+  }
+);
+
+export const handleInvitationAccepted = onDocumentUpdated(
+  "invitations/{invitationId}",
+  async (event) => {
+    const before = event.data?.before.data() as
+      | { status?: string; itemType?: string; itemId?: string; toUserId?: string }
+      | undefined;
+    const after = event.data?.after.data() as
+      | { status?: string; itemType?: string; itemId?: string; toUserId?: string }
+      | undefined;
+
+    if (!before || !after) return;
+    if (before.status === "accepted" || after.status !== "accepted") return;
+
+    const toUserId = after.toUserId;
+    const itemId = after.itemId;
+    const itemType = after.itemType;
+
+    if (!toUserId || !itemId || !itemType) {
+      logger.warn("Missing invitation fields for acceptance", {
+        invitationId: event.params.invitationId,
+      });
+      return;
+    }
+
+    const db = admin.firestore();
+
+    if (itemType === "recipeCollection") {
+      const collectionRef = db.collection("recipeCollections").doc(itemId);
+      const collectionSnap = await collectionRef.get();
+      if (!collectionSnap.exists) return;
+
+      const recipeIds = (collectionSnap.data()?.recipeIds as string[]) || [];
+
+      await Promise.all(
+        recipeIds.map(async (recipeId) => {
+          try {
+            await db
+              .collection("recipes")
+              .doc(recipeId)
+              .update({ sharedWith: admin.firestore.FieldValue.arrayUnion(toUserId) });
+          } catch (error) {
+            logger.warn("Failed to share recipe", { recipeId, error });
+          }
+        })
+      );
+
+      await collectionRef.update({
+        sharedWith: admin.firestore.FieldValue.arrayUnion(toUserId),
+      });
+      return;
+    }
+
+    if (itemType === "shoplist" || itemType === "menu") {
+      const collectionName = itemType === "shoplist" ? "shoplists" : "menulists";
+      await db
+        .collection(collectionName)
+        .doc(itemId)
+        .update({ sharedWith: admin.firestore.FieldValue.arrayUnion(toUserId) });
     }
   }
 );

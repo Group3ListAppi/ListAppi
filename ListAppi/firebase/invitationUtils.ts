@@ -10,6 +10,7 @@ import {
   deleteDoc,
   getDoc,
   arrayUnion,
+  arrayRemove,
 } from 'firebase/firestore'
 
 export interface Invitation {
@@ -77,6 +78,7 @@ export const sendInvitation = async (
     // Check if invite already exists
     const q = query(
       collection(db, 'invitations'),
+      where('fromUserId', '==', fromUserId),
       where('toUserId', '==', toUser.uid),
       where('itemId', '==', itemId),
       where('status', '==', 'pending')
@@ -99,6 +101,39 @@ export const sendInvitation = async (
           throw new Error(`Käyttäjällä ${toUserEmail} on jo pääsy tähän kohteeseen`)
         }
       }
+    }
+
+    if (itemType === 'recipeCollection') {
+      const collectionRef = doc(db, 'recipeCollections', itemId)
+      const collectionDoc = await getDoc(collectionRef)
+
+      if (!collectionDoc.exists()) {
+        throw new Error('Kokoelma ei ole enää saatavilla')
+      }
+
+      const collectionData = collectionDoc.data()
+      const recipeIds = collectionData.recipeIds || []
+
+      await Promise.all(
+        recipeIds.map(async (recipeId: string) => {
+          try {
+            await updateDoc(doc(db, 'recipes', recipeId), {
+              pendingInvitees: arrayUnion(toUser.uid),
+            })
+          } catch (error) {
+            console.error(`Error adding pending invite to recipe ${recipeId}:`, error)
+          }
+        })
+      )
+
+      await updateDoc(collectionRef, {
+        pendingInvitees: arrayUnion(toUser.uid),
+      })
+    } else if (itemType === 'shoplist' || itemType === 'menu') {
+      const collectionName = itemType === 'shoplist' ? 'shoplists' : 'menulists'
+      await updateDoc(doc(db, collectionName, itemId), {
+        pendingInvitees: arrayUnion(toUser.uid),
+      })
     }
     
     // Luo kutsu
@@ -164,45 +199,45 @@ export const acceptInvitation = async (invitationId: string): Promise<void> => {
       const { duplicateRecipeToUser } = await import('./recipeUtils')
       await duplicateRecipeToUser(invitation.itemId, invitation.toUserId)
     } else if (invitation.itemType === 'recipeCollection') {
-      // For recipe collections, add user to sharedWith
+      // For recipe collections, add user to sharedWith and clear pending invite
       const collectionRef = doc(db, 'recipeCollections', invitation.itemId)
       const collectionDoc = await getDoc(collectionRef)
-      
+
       if (!collectionDoc.exists()) {
         throw new Error('Kokoelma ei ole enää saatavilla')
       }
-      
+
       const collectionData = collectionDoc.data()
       const recipeIds = collectionData.recipeIds || []
-      
-      // Share all recipes in the collection with the user
+
       for (const recipeId of recipeIds) {
         try {
           const recipeRef = doc(db, 'recipes', recipeId)
           const recipeDoc = await getDoc(recipeRef)
-          
+
           if (recipeDoc.exists()) {
             await updateDoc(recipeRef, {
-              sharedWith: arrayUnion(invitation.toUserId)
+              sharedWith: arrayUnion(invitation.toUserId),
+              pendingInvitees: arrayRemove(invitation.toUserId),
             })
           }
         } catch (error) {
           console.error(`Error sharing recipe ${recipeId}:`, error)
-          // Continue with other recipes even if one fails
         }
       }
-      
-      // Add user to collection's sharedWith
+
       await updateDoc(collectionRef, {
-        sharedWith: arrayUnion(invitation.toUserId)
+        sharedWith: arrayUnion(invitation.toUserId),
+        pendingInvitees: arrayRemove(invitation.toUserId),
       })
     } else {
-      // For shoplists and menus, add user to sharedWith
+      // For shoplists and menus, add user to sharedWith and clear pending invite
       const collectionName = invitation.itemType === 'shoplist' ? 'shoplists' : 'menulists'
       const itemRef = doc(db, collectionName, invitation.itemId)
-      
+
       await updateDoc(itemRef, {
-        sharedWith: arrayUnion(invitation.toUserId)
+        sharedWith: arrayUnion(invitation.toUserId),
+        pendingInvitees: arrayRemove(invitation.toUserId),
       })
     }
     

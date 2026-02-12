@@ -139,10 +139,24 @@ export const moveShoplistToTrash = async (
 
 export const restoreShoplistFromTrash = async (
   shoplistId: string,
-  shoplistData?: Shoplist | any
+  shoplistData?: Shoplist | any,
+  currentUserId?: string
 ): Promise<void> => {
   try {
     const listDoc = await getDoc(doc(db, 'shoplists', shoplistId))
+    const ownerId = shoplistData?.userId || (listDoc.exists() ? listDoc.data().userId : null)
+    const isOwner = currentUserId ? ownerId === currentUserId : true
+
+    if (currentUserId && !isOwner) {
+      const q = query(
+        collection(db, 'trash'),
+        where('shoplistId', '==', shoplistId),
+        where('userId', '==', currentUserId)
+      )
+      const snap = await getDocs(q)
+      await Promise.all(snap.docs.map((d) => deleteDoc(d.ref)))
+      return
+    }
 
     if (listDoc.exists()) {
       await updateDoc(doc(db, 'shoplists', shoplistId), { deletedAt: null })
@@ -156,7 +170,13 @@ export const restoreShoplistFromTrash = async (
     }
 
     // remove trash entries
-    const q = query(collection(db, 'trash'), where('shoplistId', '==', shoplistId))
+    const q = currentUserId
+      ? query(
+          collection(db, 'trash'),
+          where('shoplistId', '==', shoplistId),
+          where('userId', '==', currentUserId)
+        )
+      : query(collection(db, 'trash'), where('shoplistId', '==', shoplistId))
     const snap = await getDocs(q)
     await Promise.all(snap.docs.map((d) => deleteDoc(d.ref)))
   } catch (error) {
@@ -176,7 +196,11 @@ export const permanentlyDeleteShoplist = async (trashItemId: string, shoplistId?
       
       if (!isOwner) {
         // If not owner, just stop sharing and remove from trash
-        await stopSharingShoplist(shoplistId, userId, false)
+        try {
+          await stopSharingShoplist(shoplistId, userId, false)
+        } catch {
+          // Ignore if user no longer has access
+        }
         await deleteDoc(doc(db, 'trash', trashItemId))
         return
       }
@@ -221,6 +245,10 @@ export const stopSharingShoplist = async (shoplistId: string, userId: string, is
       })
     }
   } catch (error) {
+    const code = (error as { code?: string })?.code
+    if (code === 'permission-denied') {
+      return
+    }
     console.error('Error stopping shoplist sharing:', error)
     throw error
   }
