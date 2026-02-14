@@ -153,6 +153,24 @@ export const getMenuListById = async (menuListId: string): Promise<MenuList | nu
     }
   }
 
+  export const deleteDoneRecipesFromMenuList = async (
+    menuListId: string,
+    recipes: MenuListRecipe[],
+    updatedBy?: string | null
+  ) => {
+    const ref = doc(db, "menulists", menuListId)
+
+    const kept = recipes.filter(r => !r.done)
+
+    await updateDoc(ref, {
+      recipes: kept,
+      updatedBy: updatedBy ?? null,
+      updatedAt: serverTimestamp(),
+    })
+
+    return recipes.length - kept.length // montako poistettiin
+  }
+
 
 export const moveMenuListToTrash = async (
   menuListId: string,

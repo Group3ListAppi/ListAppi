@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, ScrollView, View, Image } from 'react-native';
-import { Text, ActivityIndicator, useTheme } from 'react-native-paper';
+import { Text, ActivityIndicator, useTheme, IconButton, Button } from 'react-native-paper';
 import ScreenLayout from '../components/ScreenLayout';
 import { ListButton } from '../components/ListButton';
 import { RecipeButton } from '../components/RecipeButton';
@@ -12,7 +12,6 @@ import { getUserMenuLists, type MenuList } from '../firebase/menuUtils';
 import { getUserProfiles } from '../firebase/userProfileUtils';
 import { fetchRandomMeals, type MealDbMeal } from "../api/themealdb";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { IconButton } from "react-native-paper";
 
 const MEALDB_CACHE_KEY = "themealdb:suggestions:v1";
 const MEALDB_CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 tuntia
@@ -168,7 +167,13 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ activeScreen, onNavigate, isPre
 
   const renderMealDbSection = () => (
     <View style={styles.section}>
-      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
         <Text
           variant="titleLarge"
           style={[styles.sectionTitle, { color: theme.colors.onSurface, marginBottom: 0 }]}
@@ -176,13 +181,22 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ activeScreen, onNavigate, isPre
           Kokeile näitä (TheMealDB)
         </Text>
 
-        <IconButton
-          icon={suggestLoading ? "loading" : "refresh"}
-          onPress={refreshMealDb}
-          disabled={suggestLoading}
-          iconColor={theme.colors.primary}
-          size={22}
-        />
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <IconButton
+            icon="magnify"
+            onPress={() => onNavigate("recipe-search-themealdb")}
+            iconColor={theme.colors.primary}
+            size={22}
+          />
+
+          <IconButton
+            icon={suggestLoading ? "loading" : "refresh"}
+            onPress={refreshMealDb}
+            disabled={suggestLoading}
+            iconColor={theme.colors.primary}
+            size={22}
+          />
+        </View>
       </View>
 
       {suggestLoading ? (

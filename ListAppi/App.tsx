@@ -26,6 +26,7 @@ import NotificationsScreen from './screens/NotificationsScreen';
 import NotificationSettingsScreen from './screens/NotificationSettingsScreen';
 import NotificationPushEditScreen from './screens/NotificationPushEditScreen';
 import RecipeSuggestionDetailScreen from './screens/RecipeSuggestionDetailScreen';
+import MealDbSearchScreen from "./screens/MealDbSearchScreen";
 /* Email settings screen (re-enable later)
 import NotificationEmailEditScreen from './screens/NotificationEmailEditScreen';
 */
@@ -443,6 +444,14 @@ export default function App() {
             isPremium={isPremium}
           />
         ) : null;
+      case "recipe-search-themealdb":
+        return (
+          <MealDbSearchScreen
+            activeScreen={activeScreen}
+            onNavigate={handleNavigate}
+            onBack={handleBack}
+          />
+        );
       case "settings":
         return <SettingsScreen activeScreen={activeScreen} onBack={handleBack} onNavigate={handleNavigate} />;
       case "StyleScreen":

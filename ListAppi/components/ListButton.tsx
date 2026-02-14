@@ -46,6 +46,7 @@ interface ListButtonProps {
   itemType?: 'recipe' | 'recipeCollection' | 'shoplist' | 'menu'
   isDefault?: boolean
   disableSwipe?: boolean
+  doneStyle?: boolean
 }
 
 export const ListButton: React.FC<ListButtonProps> = ({
@@ -83,6 +84,7 @@ export const ListButton: React.FC<ListButtonProps> = ({
   itemType,
   isDefault = false,
   disableSwipe = false,
+  doneStyle = false,
 }) => {
   const theme = useTheme()
   const [modalVisible, setModalVisible] = useState(false)
@@ -174,8 +176,8 @@ export const ListButton: React.FC<ListButtonProps> = ({
           <View style={[
             styles.container,
             imageUrl ? styles.containerWithImage : styles.containerNoImage,
-            { backgroundColor: theme.colors.primaryContainer }
-          ]}> 
+            { backgroundColor: doneStyle ? theme.colors.surfaceVariant : theme.colors.primaryContainer }
+          ]}>
             <TouchableOpacity 
               onPress={onPress} 
               onLongPress={onLongPress}
@@ -192,14 +194,18 @@ export const ListButton: React.FC<ListButtonProps> = ({
               )}
               <View style={styles.contentWrapper}>
                 <Text
-                  style={[
-                    styles.listName,
-                    { color: theme.colors.onSurface },
-                  ]}
-                  numberOfLines={2}
-                >
-                  {listName}
-                </Text>
+                style={[
+                  styles.listName,
+                  {
+                    color: doneStyle ? theme.colors.onSurfaceVariant : theme.colors.onSurface,
+                    textDecorationLine: doneStyle ? "line-through" : "none",
+                    opacity: doneStyle ? 0.75 : 1,
+                  },
+                ]}
+                numberOfLines={2}
+              >
+                {listName}
+              </Text>
                 {createdAt && (
                   <Text
                     style={[
@@ -325,17 +331,20 @@ export const ListButton: React.FC<ListButtonProps> = ({
             </TouchableOpacity>
 
             {showCheckbox && (
-              <View style={{ backgroundColor: 'white', borderRadius: 4 }}>
-                <Checkbox
-                  status={isChecked ? "checked" : "unchecked"}
-                  onPress={() => onCheckChange?.(!isChecked)}
-                  color={theme.colors.primary}
-                  uncheckedColor={theme.colors.primary}
-                />
+              <View style={styles.rightSlot}>
+                <View style={{ backgroundColor: 'white', borderRadius: 4 }}>
+                  <Checkbox
+                    status={isChecked ? "checked" : "unchecked"}
+                    onPress={() => onCheckChange?.(!isChecked)}
+                    color={theme.colors.primary}
+                    uncheckedColor={theme.colors.primary}
+                  />
+                </View>
               </View>
             )}
 
             {showRadioButton && (
+              <View style={styles.rightSlot}>
               <TouchableOpacity
                 onPress={onPress}
                 style={styles.radioButtonWrapper}
@@ -352,20 +361,19 @@ export const ListButton: React.FC<ListButtonProps> = ({
                   )}
                 </View>
               </TouchableOpacity>
+              </View>
             )}
 
             {!showCheckbox && !showRadioButton && (
-              <TouchableOpacity
-                onPress={() => setModalVisible(true)}
-                style={styles.menuIconWrapper}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                <MaterialCommunityIcons
-                  name="dots-vertical"
-                  size={24}
-                  color={theme.colors.onSurface}
-                />
-              </TouchableOpacity>
+              <View style={styles.rightSlot}>
+                <TouchableOpacity
+                  onPress={() => setModalVisible(true)}
+                  style={styles.menuIconWrapper}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <MaterialCommunityIcons name="dots-vertical" size={24} color={theme.colors.onSurface} />
+                </TouchableOpacity>
+              </View>
             )}
           </View>
 
@@ -470,6 +478,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flex: 1,
     alignItems: "center",
+    minWidth: 0,
   },
   imageWrapper: {
     marginRight: 12,
@@ -488,6 +497,14 @@ const styles = StyleSheet.create({
   contentWrapper: {
     flex: 1,
     justifyContent: "flex-start",
+    minWidth: 0,
+  },
+
+  rightSlot: {
+    width: 52,
+    alignItems: "flex-end",
+    justifyContent: "center",
+    flexShrink: 0,
   },
   listName: {
     fontSize: 16,

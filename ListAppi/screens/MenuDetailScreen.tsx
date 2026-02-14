@@ -1,15 +1,16 @@
-import React, { useState, useEffect } from "react";
-import { StyleSheet, ScrollView, View } from "react-native";
-import { useTheme } from "react-native-paper";
+import React, { useState, useEffect, useMemo } from "react";
+import { Alert, StyleSheet, ScrollView, View, TouchableOpacity } from "react-native";
+import { useTheme, Text } from "react-native-paper";
 import { ListButton } from "../components/ListButton";
 import { ActionModal } from "../components/ActionModal";
 import { AdBanner } from "../components/AdBanner";
 import { getRecipesByIds } from "../firebase/recipeUtils";
-import { removeRecipeFromMenuList, toggleRecipeDoneInMenuList, getMenuListById } from "../firebase/menuUtils";
+import { removeRecipeFromMenuList, toggleRecipeDoneInMenuList, getMenuListById, deleteDoneRecipesFromMenuList } from "../firebase/menuUtils";
 import type { MenuList } from "../firebase/menuUtils";
 import type { Recipe } from "../firebase/recipeUtils";
 import ScreenLayout from "../components/ScreenLayout";
 import { useAuth } from "../auth/useAuth";
+import { MaterialCommunityIcons } from "@expo/vector-icons"
 
 interface MenuDetailScreenProps {
   menuList: MenuList;
@@ -31,6 +32,7 @@ const MenuDetailScreen: React.FC<MenuDetailScreenProps> = ({
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [menuList, setMenuList] = useState<MenuList>(initialMenuList);
   const [actionModalVisible, setActionModalVisible] = useState(false);
+  const [doneCollapsed, setDoneCollapsed] = useState(true)
 
   useEffect(() => {
     if (activeScreen === "menu-detail") {
@@ -72,6 +74,55 @@ const MenuDetailScreen: React.FC<MenuDetailScreenProps> = ({
     }
   };
 
+  const removeDoneRecipes = () => {
+    const doneCount = menuList.recipes.filter(r => r.done).length
+    if (doneCount === 0) return
+
+    Alert.alert(
+      "Poistetaanko tehdyt ruoat?",
+      `Olet poistamassa ${doneCount} tehtyä reseptiä tältä ruokalistalta.`,
+      [
+        { text: "Peruuta", style: "cancel" },
+        {
+          text: "Poista",
+          style: "destructive",
+          onPress: async () => {
+            const backup = menuList
+
+            // optimistinen UI: poistetaan tehdyt paikallisesti heti
+            setMenuList(prev => ({
+              ...prev,
+              recipes: prev.recipes.filter(r => !r.done),
+            }))
+
+            try {
+              await deleteDoneRecipesFromMenuList(menuList.id, menuList.recipes, user?.uid ?? null)
+              loadMenuList()
+            } catch (e) {
+              console.error("Error removing done recipes:", e)
+              setMenuList(backup) // rollback
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    )
+  }
+
+  const activeRecipes = useMemo(
+    () => recipes.filter(r => !getRecipeDone(r.id)),
+    [recipes, menuList]
+  )
+
+  const doneRecipes = useMemo(
+    () => recipes.filter(r => getRecipeDone(r.id)),
+    [recipes, menuList]
+  )
+
+  const doneCount = doneRecipes.length
+
+  
+
   return (
     <ScreenLayout 
       activeScreen={activeScreen} 
@@ -87,7 +138,8 @@ const MenuDetailScreen: React.FC<MenuDetailScreenProps> = ({
     >
       <>
         <ScrollView style={styles.container}>
-          {recipes.map((recipe) => (
+          {/* Aktiiviset */}
+          {activeRecipes.map((recipe) => (
             <ListButton
               key={recipe.id}
               listName={recipe.title}
@@ -95,14 +147,65 @@ const MenuDetailScreen: React.FC<MenuDetailScreenProps> = ({
               ownerAvatar={user?.photoURL || undefined}
               ownerInitials={user?.displayName?.charAt(0).toUpperCase() || "U"}
               showCheckbox={true}
-              isChecked={getRecipeDone(recipe.id)}
+              isChecked={false}
               onCheckChange={() => handleToggleDone(recipe.id)}
               onPress={() => onNavigate("recipe-detail", recipe)}
               customActionIds={['remove']}
               onDelete={() => handleRemoveRecipe(recipe.id)}
               removeLabel="Poista listalta"
+              doneStyle={false}
             />
           ))}
+
+          {/* Tehdyt collapsible */}
+          {doneCount > 0 && (
+            <TouchableOpacity
+              onPress={() => setDoneCollapsed(v => !v)}
+              style={[styles.doneHeader, { borderColor: theme.colors.outlineVariant }]}
+              activeOpacity={0.8}
+            >
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                <Text style={{ color: theme.colors.onSurfaceVariant, fontWeight: "700" }}>
+                  Tehdyt ({doneCount})
+                </Text>
+
+                <TouchableOpacity
+                  onPress={removeDoneRecipes}
+                  activeOpacity={0.7}
+                  style={[styles.clearDoneBtn, { borderColor: theme.colors.outlineVariant }]}
+                >
+                  <Text style={{ color: theme.colors.onSurfaceVariant, fontWeight: "700" }}>
+                    Poista
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              <MaterialCommunityIcons
+                name={doneCollapsed ? "chevron-down" : "chevron-up"}
+                size={24}
+                color={theme.colors.onSurfaceVariant}
+              />
+            </TouchableOpacity>
+          )}
+
+          {!doneCollapsed && doneRecipes.map((recipe) => (
+            <ListButton
+              key={recipe.id}
+              listName={recipe.title}
+              imageUrl={recipe.image}
+              ownerAvatar={user?.photoURL || undefined}
+              ownerInitials={user?.displayName?.charAt(0).toUpperCase() || "U"}
+              showCheckbox={true}
+              isChecked={true}
+              onCheckChange={() => handleToggleDone(recipe.id)}
+              onPress={() => onNavigate("recipe-detail", recipe)}
+              customActionIds={['remove']}
+              onDelete={() => handleRemoveRecipe(recipe.id)}
+              removeLabel="Poista listalta"
+              doneStyle={true}
+            />
+          ))}
+
           <View style={{ height: 180 }} />
         </ScrollView>
         <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}>
@@ -133,6 +236,23 @@ const styles = StyleSheet.create({
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#ccc',
+  },
+  doneHeader: {
+    marginTop: 8,
+    marginHorizontal: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  clearDoneBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
   },
 });
 
