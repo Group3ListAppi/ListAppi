@@ -15,8 +15,8 @@ import DeleteAccountDialog from "../components/DeleteAccountDialog"
 import ChangeEmailDialog from "../components/ChangeEmailDialog"
 import { getUserRecipes } from "../firebase/recipeUtils"
 import { getShoplistItemHistory } from "../firebase/shoplistItemUtils"
-import { MEAL_TYPES, MAIN_INGREDIENTS } from "../types/filterConstants"
-import type { MealType, MainIngredient } from "../types/RecipeMeta"
+import { MEAL_TYPES, MAIN_INGREDIENTS, DIET_TYPES } from "../types/filterConstants"
+import type { MealType, MainIngredient, DietType } from "../types/RecipeMeta"
 
 interface AccountSettingScreenProps {
   activeScreen: string
@@ -38,6 +38,7 @@ const AccountSettingScreen: React.FC<AccountSettingScreenProps> = ({ activeScree
   const [savingAvatar, setSavingAvatar] = useState(false)
   const [mealTypeCounts, setMealTypeCounts] = useState<Record<MealType, number> | null>(null)
   const [mainIngredientCounts, setMainIngredientCounts] = useState<Record<MainIngredient, number> | null>(null)
+  const [dietCounts, setDietCounts] = useState<Record<DietType, number> | null>(null)
   const [loadingMeals, setLoadingMeals] = useState(false)
   const [shoplistItemCounts, setShoplistItemCounts] = useState<Array<{ label: string; count: number }>>([])
   const [loadingShoplistStats, setLoadingShoplistStats] = useState(false)
@@ -134,6 +135,11 @@ const AccountSettingScreen: React.FC<AccountSettingScreenProps> = ({ activeScree
           return acc
         }, {} as Record<MainIngredient, number>)
 
+        const nextDietCounts = DIET_TYPES.reduce((acc, diet) => {
+          acc[diet] = 0
+          return acc
+        }, {} as Record<DietType, number>)
+
         recipes.forEach((recipe) => {
           if (recipe.mealType) {
             nextMealCounts[recipe.mealType] = (nextMealCounts[recipe.mealType] ?? 0) + 1
@@ -141,14 +147,26 @@ const AccountSettingScreen: React.FC<AccountSettingScreenProps> = ({ activeScree
           if (recipe.mainIngredient) {
             nextMainCounts[recipe.mainIngredient] = (nextMainCounts[recipe.mainIngredient] ?? 0) + 1
           }
+
+          // dietType voi olla joko yksi arvo tai lista
+          const diets = (recipe as any).dietType
+          if (Array.isArray(diets)) {
+            diets.forEach((d) => {
+              if (d) nextDietCounts[d] = (nextDietCounts[d] ?? 0) + 1
+            })
+          } else if (diets) {
+            nextDietCounts[diets] = (nextDietCounts[diets] ?? 0) + 1
+          }
         })
 
         setMealTypeCounts(nextMealCounts)
         setMainIngredientCounts(nextMainCounts)
+        setDietCounts(nextDietCounts)
       } catch (error) {
         console.error('Failed to load stats', error)
         setMealTypeCounts(null)
         setMainIngredientCounts(null)
+        setDietCounts(null)
       } finally {
         setLoadingMeals(false)
       }
@@ -300,6 +318,7 @@ const AccountSettingScreen: React.FC<AccountSettingScreenProps> = ({ activeScree
           loadingShoplistStats={loadingShoplistStats}
           mealTypeCounts={mealTypeCounts}
           mainIngredientCounts={mainIngredientCounts}
+          dietCounts={dietCounts}
           recipeDataset={recipeDataset}
           recipeMenuOpen={recipeMenuOpen}
           setChartType={setChartType}
