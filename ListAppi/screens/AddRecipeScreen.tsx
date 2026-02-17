@@ -160,7 +160,10 @@ const AddRecipeScreen: React.FC<AddRecipeScreenProps> = ({ activeScreen, onNavig
                     setIsSaving(false);
                     return;
                 }
-                }
+            } else if (isEditMode) {
+                // In edit mode, explicitly set image to null if removed
+                formData.image = null;
+            }
             
             await onSave?.(formData);
         } finally {

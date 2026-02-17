@@ -250,6 +250,7 @@ const ShoplistDetailScreen: React.FC<ShoplistDetailScreenProps> = ({ activeScree
                 isChecked={item.checked}
                 onCheckChange={(next) => toggleChecked(item.id, next)}
                 onLongPress={() => removeItem(item.id)}
+                onDelete={() => removeItem(item.id)}
                 delayLongPress={700}
               />
             ))}
@@ -292,6 +293,7 @@ const ShoplistDetailScreen: React.FC<ShoplistDetailScreenProps> = ({ activeScree
                 isChecked={item.checked}
                 onCheckChange={(next) => toggleChecked(item.id, next)}
                 onLongPress={() => removeItem(item.id)}
+                onDelete={() => removeItem(item.id)}
                 delayLongPress={700}
               />
             ))}
@@ -311,6 +313,7 @@ const styles = StyleSheet.create({
   subtitle: {
     marginTop: 8,
     marginBottom: 12,
+    marginHorizontal: 16,
   },
   inputContainer: {
     marginBottom: 8,
@@ -319,6 +322,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 10,
     alignItems: 'center',
+    paddingHorizontal: 16,
   },
   input: {
     flex: 1,

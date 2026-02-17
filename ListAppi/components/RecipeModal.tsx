@@ -23,7 +23,7 @@ export interface CreateRecipeFormData {
     mainIngredient: MainIngredient | null;
     dietType: DietType[];
     link?: string;
-    image?: string;
+    image?: string | null;
 }
 
 const RecipeModal: React.FC<RecipeModalProps> = ({ visible, onClose, onSave }) => {
