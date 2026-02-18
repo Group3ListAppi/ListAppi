@@ -47,6 +47,7 @@ interface ListButtonProps {
   isDefault?: boolean
   disableSwipe?: boolean
   doneStyle?: boolean
+  noMargin?: boolean
 }
 
 export const ListButton: React.FC<ListButtonProps> = ({
@@ -85,6 +86,7 @@ export const ListButton: React.FC<ListButtonProps> = ({
   isDefault = false,
   disableSwipe = false,
   doneStyle = false,
+  noMargin = false,
 }) => {
   const theme = useTheme()
   const [modalVisible, setModalVisible] = useState(false)
@@ -155,7 +157,7 @@ export const ListButton: React.FC<ListButtonProps> = ({
 
   return (
     <>
-      <View style={styles.swipeContainer}>
+      <View style={[styles.swipeContainer, noMargin && styles.swipeContainerNoMargin]}>
         {onDelete && !isDefault && (
           <View style={styles.actionsContainer} pointerEvents="none">
             <View style={[styles.actionButton, styles.lastActionButton, { backgroundColor: '#F44336' }]}
@@ -420,6 +422,9 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderRadius: 8,
     position: 'relative',
+  },
+  swipeContainerNoMargin: {
+    marginHorizontal: 0,
   },
   animatedRow: {
     flexDirection: 'row',

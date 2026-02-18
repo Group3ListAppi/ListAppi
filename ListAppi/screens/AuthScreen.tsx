@@ -347,7 +347,8 @@ const AuthScreen: React.FC = () => {
             </Button>
           ) : null}
 
-          <Divider style={styles.divider} />
+          {/* Google Sign-In Hidden */}
+          {/* <Divider style={styles.divider} />
 
           <Button
             mode="outlined"
@@ -359,7 +360,7 @@ const AuthScreen: React.FC = () => {
             contentStyle={styles.buttonContent}
           >
             Kirjaudu Googlella
-          </Button>
+          </Button> */}
 
           <Button
             mode="text"

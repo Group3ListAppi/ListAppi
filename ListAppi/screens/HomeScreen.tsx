@@ -285,6 +285,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ activeScreen, onNavigate, isPre
                           isOwnedByUser={list.userId === user?.uid}
                           onPress={() => onNavigate('shoplist-detail', list)}
                           disableSwipe={true}
+                          noMargin={true}
                         />
                       </View>
                     ))}
@@ -316,6 +317,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ activeScreen, onNavigate, isPre
                           isOwnedByUser={menu.userId === user?.uid}
                           onPress={() => onNavigate('menu-detail', menu)}
                           disableSwipe={true}
+                          noMargin={true}
                         />
                       </View>
                     ))}
@@ -396,7 +398,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   itemContainer: {
-    marginRight: 12,
+    marginRight: 16,
     width: 280,
   },
   recipeItemContainer: {
