@@ -40,11 +40,9 @@ export const usePasswordReset = (auth: Auth) => {
     setLoading(true);
     try {
       await resetPassword(auth, emailTrimmed);
-      // Hyvä käytäntö: sama viesti aina (ei user enumeration)
       setMessage("Jos sähköposti on rekisteröity, saat pian palautuslinkin.");
       setCooldown(60);
     } catch (e: any) {
-      // Voit halutessasi näyttää myös geneerisen viestin tässä
       setMessage(e?.message ?? "Palautuslinkin lähetys epäonnistui.");
     } finally {
       setLoading(false);
