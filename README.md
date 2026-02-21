@@ -66,16 +66,26 @@ Tämä sovellus on osa Mobiilikehitysprojekti-kurssin suoritusta.
 ### Projektin rakenne
 
 ListAppi/
+
 │
-├── api/          Ulkoiset API-kutsut (esim. TheMealDB) ja niihin liittyvä logiikka
-├── auth/         Autentikointiin liittyvä logiikka (kirjautuminen, rekisteröinti, ym.)
-├── assets/       Sovelluksessa käytetyt kuvat ja muut staattiset resurssit
-├── components/   Uudelleenkäytettävät UI-komponentit
-├── firebase/     Firebase-konfiguraatio sekä Firestoreen liittyvät toiminnot
-├── screens/      Sovelluksen näkymät (screen-komponentit)
-├── types/        TypeScript-tyypit ja vakioarvot (esim. reseptien suodatus- ja metatiedot)
-├── utils/        Aputoiminnot ja yleiskäyttöiset helper-funktiot
-└── App.tsx       Sovelluksen aloituspiste
+
+├── api/         # Ulkoiset API-kutsut (esim. TheMealDB) ja niihin liittyvä logiikka
+
+├── auth/        # Autentikointiin liittyvä logiikka (kirjautuminen, rekisteröinti, ym.)
+
+├── assets/      # Sovelluksessa käytetyt kuvat ja muut staattiset resurssit
+
+├── components/  # Uudelleenkäytettävät UI-komponentit
+
+├── firebase/    # Firebase-konfiguraatio sekä Firestoreen liittyvät toiminnot
+
+├── screens/     # Sovelluksen näkymät (screen-komponentit)
+
+├── types/       # TypeScript-tyypit ja vakioarvot (esim. reseptien suodatus- ja metatiedot)
+
+├── utils/       # Aputoiminnot ja yleiskäyttöiset helper-funktiot
+
+└── App.tsx      # Sovelluksen aloituspiste
 
 
 ### Asennus ja käynnistys
