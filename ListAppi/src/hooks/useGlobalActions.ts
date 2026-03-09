@@ -16,5 +16,11 @@ export const useGlobalActions = () => {
     { ...ACTION_DEFS.logout, onPress: handleLogout },
   ];
 
-  return { appBarActions };
+  const recipeActions = [
+    { ...ACTION_DEFS.edit, onPress: () => navigation.navigate('EditRecipe' as never) },
+    { ...ACTION_DEFS.share, onPress: () => navigation.navigate('ShareRecipe' as never) },
+    { ...ACTION_DEFS.delete, onPress: () => navigation.navigate('DeleteRecipe' as never) },
+  ];
+
+  return { appBarActions, recipeActions };
 };

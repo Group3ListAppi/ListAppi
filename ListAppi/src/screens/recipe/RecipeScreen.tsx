@@ -6,12 +6,11 @@ import { useNavigation } from '@react-navigation/native';
 import { ScreenWrapper } from '../../components/layout/ScreenWrapper';
 import { AnimatedFAB } from '../../components/shared/AnimatedFAB';
 import { ActionModal } from '../../components/shared/ActionModal';
-import { ACTION_DEFS } from '../../constants/actions';
 import { useGlobalActions } from '../../hooks/useGlobalActions'; // Hook käyttöön
 
 export const RecipeScreen = () => {
   const navigation = useNavigation();
-  const { appBarActions } = useGlobalActions(); // Haetaan globaalit toiminnot
+  const { appBarActions, recipeActions } = useGlobalActions(); // Haetaan globaalit toiminnot
   
   const [isModalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState<'appbar' | 'recipe'>('appbar');
@@ -26,13 +25,6 @@ export const RecipeScreen = () => {
       },
     });
   }, [navigation]);
-
-  // Sivukohtaiset toiminnot
-  const recipeActions = [
-    { ...ACTION_DEFS.edit, onPress: () => console.log('Muokkaa:', selectedRecipe) },
-    { ...ACTION_DEFS.share, label: 'Jaa resepti', onPress: () => console.log('Jaa:', selectedRecipe) },
-    { ...ACTION_DEFS.delete, onPress: () => console.log('Poista:', selectedRecipe) },
-  ];
 
   return (
     <>
@@ -64,7 +56,7 @@ export const RecipeScreen = () => {
         visible={isModalOpen} 
         onClose={() => setModalOpen(false)} 
         title={modalType === 'appbar' ? "Toiminnot" : selectedRecipe?.title}
-        actions={modalType === 'appbar' ? appBarActions : recipeActions}
+        actions={modalType === 'appbar' ? appBarActions : recipeActions} // Näytä oikeat toiminnot
       />
     </>
   );
