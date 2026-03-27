@@ -8,8 +8,8 @@ import {
   MEAL_TYPES, MEAL_TYPE_LABELS, 
   MAIN_INGREDIENTS, MAIN_INGREDIENT_LABELS,
   DIET_TYPES, DIET_TYPE_LABELS 
-} from '../types/filterConstants'
-import type { MealType, MainIngredient, DietType } from '../types/RecipeMeta'
+} from '../src/constants/recipeFilters'
+import type { MealType, MainIngredient, DietType } from '../src/types/recipe'
 
 const MEAL_CHART_COLORS = [
   '#8fb6d6',

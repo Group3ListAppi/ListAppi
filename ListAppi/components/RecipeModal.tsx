@@ -5,7 +5,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { ModalBase } from "../components/ModalBase";
 import { SubmitButton } from "../components/SubmitButton";
 import { ActionModal } from "../components/ActionModal";
-import { DietType, MainIngredient, MealType } from "../types/RecipeMeta";
+import { DietType, MainIngredient, MealType } from "../src/types/recipe";
 import { Chip, Text } from "react-native-paper";
 import { convertImageToBase64 } from "../utils/imageUtils";
 

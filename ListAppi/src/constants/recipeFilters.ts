@@ -1,4 +1,4 @@
-import type { MealType, MainIngredient, DietType } from "./RecipeMeta";
+import type { MealType, MainIngredient, DietType } from "../types/recipe";
 
 export const MEAL_TYPES: MealType[] = [
   "airfryer-ruoat",

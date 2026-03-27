@@ -1,6 +1,6 @@
 import { addDoc, collection, deleteDoc, doc, getDocs, getDoc, orderBy, query, serverTimestamp, where, updateDoc, arrayUnion, arrayRemove, setDoc } from "firebase/firestore";
-import { db } from "./config";
-import type { CreateListFormData } from "../components/ListModal";
+import { db } from "../firebase/config";
+import type { CreateListFormData } from "../../../components/ListModal";
 
 export interface RecipeCollection {
   id: string;

@@ -7,8 +7,8 @@ import { ModalBase } from "./ModalBase";
 import { SubmitButton } from "./SubmitButton";
 import { TouchableOpacity } from "react-native";
 import { Input } from "./Input";
-import { sendInvitation } from "../firebase/invitationUtils";
-import { useAuth } from "../auth/useAuth";
+import { sendInvitation } from "../src/api/social/invitationApi";
+import { useAuth } from "../src/hooks/useAuth";
 
 export interface ActionButton {
   id: string

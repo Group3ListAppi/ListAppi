@@ -4,7 +4,7 @@ import { useTheme } from 'react-native-paper';
 import Navbar from './Navbar';
 import AppBar from './AppBar';
 import { AddNewButton } from './AddNewButton';
-import { logout } from '../auth/signOut';
+import { logout } from '../src/api/users/userAuthApi';
 
 interface ScreenLayoutProps {
   activeScreen: string
@@ -112,3 +112,4 @@ const styles = StyleSheet.create({
 })
 
 export default ScreenLayout
+

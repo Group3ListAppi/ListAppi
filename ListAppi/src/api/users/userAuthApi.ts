@@ -8,7 +8,52 @@ import {
   writeBatch,
   arrayRemove,
 } from "firebase/firestore"
-import { db } from "./config"
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  sendPasswordResetEmail,
+  sendEmailVerification,
+  signOut,
+  reload,
+  GoogleAuthProvider,
+  signInWithCredential,
+  type Auth,
+} from "firebase/auth"
+import { db, auth } from "../firebase/config"
+
+export const registerWithEmail = async (
+  authInstance: Auth,
+  email: string,
+  password: string
+) => {
+  const cred = await createUserWithEmailAndPassword(authInstance, email, password)
+  await sendEmailVerification(cred.user)
+  await signOut(authInstance)
+  return cred
+}
+
+export const loginWithEmail = async (
+  authInstance: Auth,
+  email: string,
+  password: string
+) => {
+  const cred = await signInWithEmailAndPassword(authInstance, email, password)
+  await reload(cred.user)
+  return cred
+}
+
+export const resetPassword = async (authInstance: Auth, email: string) => {
+  await sendPasswordResetEmail(authInstance, email)
+}
+
+export const logout = async () => {
+  await signOut(auth)
+}
+
+export const signInWithGoogleIdToken = async (idToken: string) => {
+  const credential = GoogleAuthProvider.credential(idToken)
+  await signInWithCredential(auth, credential)
+}
 
 
 export const deleteUserProfileAndOwnedData = async (uid: string) => {

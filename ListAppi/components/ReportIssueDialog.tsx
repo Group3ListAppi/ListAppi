@@ -14,7 +14,7 @@ import * as Linking from "expo-linking"
 import * as Device from "expo-device"
 import * as Application from "expo-application"
 import * as Clipboard from "expo-clipboard"
-import { useAuth } from "../auth/useAuth"
+import { useAuth } from "../src/hooks/useAuth"
 
 type Props = {
   visible: boolean

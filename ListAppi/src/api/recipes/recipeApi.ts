@@ -1,4 +1,4 @@
-import { db } from './config'
+import { db } from '../firebase/config'
 import {
   collection,
   addDoc,
@@ -13,7 +13,7 @@ import {
   Timestamp,
   and,
 } from 'firebase/firestore'
-import type { CreateRecipeFormData } from '../components/RecipeModal'
+import type { CreateRecipeFormData } from '../../../components/RecipeModal'
 
 export interface Recipe extends CreateRecipeFormData {
   id: string
@@ -104,7 +104,7 @@ export const getUserRecipes = async (userId: string): Promise<Recipe[]> => {
     
     // Include recipes that are in collections owned by or shared with the user
     try {
-      const { getUserRecipeCollections } = await import('./recipeCollectionUtils')
+      const { getUserRecipeCollections } = await import('../recipes/recipeCollectionApi')
       const accessibleCollections = await getUserRecipeCollections(userId)
       const collectionRecipeIds = new Set<string>()
 
@@ -129,7 +129,7 @@ export const getUserRecipes = async (userId: string): Promise<Recipe[]> => {
 
     // Fetch owner profiles for all recipes
     if (ownerIds.size > 0) {
-      const { getUserProfiles } = await import('./userProfileUtils')
+      const { getUserProfiles } = await import('../users/userProfileApi')
       const profileMap = await getUserProfiles(Array.from(ownerIds))
       
       // Enrich recipes with owner info
@@ -248,7 +248,7 @@ export const restoreRecipeFromTrash = async (
     
     if (userId && collectionId) {
       // Import inline to avoid circular dependency
-      const { addRecipeToCollection, getUserRecipeCollections } = await import('./recipeCollectionUtils');
+      const { addRecipeToCollection, getUserRecipeCollections } = await import('../recipes/recipeCollectionApi');
       
       try {
         // Check if the collection still exists
@@ -409,7 +409,7 @@ export const duplicateRecipeToUser = async (recipeId: string, targetUserId: stri
     })
     
     // Get or create the user's default recipe collection
-    const { getUserRecipeCollections, addRecipeToCollection } = await import('./recipeCollectionUtils')
+    const { getUserRecipeCollections, addRecipeToCollection } = await import('../recipes/recipeCollectionApi')
     const collections = await getUserRecipeCollections(targetUserId)
     const defaultCollection = collections.find(c => c.isDefault && c.userId === targetUserId)
     
@@ -453,7 +453,7 @@ export const getRecipesByIds = async (recipeIds: string[]): Promise<Recipe[]> =>
     
     // Fetch owner profiles for all recipes
     if (ownerIds.size > 0) {
-      const { getUserProfiles } = await import('./userProfileUtils')
+      const { getUserProfiles } = await import('../users/userProfileApi')
       const profileMap = await getUserProfiles(Array.from(ownerIds))
       
       // Enrich recipes with owner info

@@ -14,8 +14,8 @@ import {
   reauthenticateWithCredential,
   verifyBeforeUpdateEmail,
 } from "firebase/auth"
-import { auth } from "../firebase/config"
-import { updateMyEmail } from "../firebase/userProfileUtils"
+import { auth } from "../src/api/firebase/config"
+import { updateMyEmail } from "../src/api/users/userProfileApi"
 
 type Props = {
   visible: boolean

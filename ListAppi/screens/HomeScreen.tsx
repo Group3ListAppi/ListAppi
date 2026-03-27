@@ -1,20 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, ScrollView, View, Image } from 'react-native';
-import { Text, ActivityIndicator, useTheme, IconButton, Button } from 'react-native-paper';
+import { Text, ActivityIndicator, useTheme } from 'react-native-paper';
 import ScreenLayout from '../components/ScreenLayout';
 import { ListButton } from '../components/ListButton';
 import { RecipeButton } from '../components/RecipeButton';
 import { AdBanner } from '../components/AdBanner';
-import { useAuth } from '../auth/useAuth';
-import { getUserShoplists, type Shoplist } from '../firebase/shoplistUtils';
-import { getUserRecipes, type Recipe } from '../firebase/recipeUtils';
-import { getUserMenuLists, type MenuList } from '../firebase/menuUtils';
-import { getUserProfiles } from '../firebase/userProfileUtils';
-import { fetchRandomMeals, type MealDbMeal } from "../api/themealdb";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-
-const MEALDB_CACHE_KEY = "themealdb:suggestions:v1";
-const MEALDB_CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 tuntia
+import { useAuth } from '../src/hooks/useAuth';
+import { getUserShoplists, type Shoplist } from "../src/api/shoplists/shoplistApi";
+import { getUserRecipes, type Recipe } from "../src/api/recipes/recipeApi";
+import { getUserMenuLists, type MenuList } from "../src/api/menus/menuApi";
+import { getUserProfiles } from "../src/api/users/userProfileApi";
 
 
 
@@ -31,63 +26,12 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ activeScreen, onNavigate, isPre
   const [shoplists, setShoplists] = useState<Shoplist[]>([]);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [menus, setMenus] = useState<MenuList[]>([]);
-  const [suggestedMeals, setSuggestedMeals] = useState<MealDbMeal[]>([]);
-  const [suggestLoading, setSuggestLoading] = useState(false);
-  const [suggestError, setSuggestError] = useState<string | null>(null);
 
   useEffect(() => {
     if (user?.uid && activeScreen === 'home') {
       loadData();
     }
   }, [user?.uid, activeScreen]);
-
-  
-  const loadMealDb = async (force = false) => {
-    setSuggestError(null);
-
-    try {
-      // force = true -> ohita cache
-      if (!force) {
-        // jos state jo sisältää ehdotukset, älä tee mitään
-        if (suggestedMeals.length > 0) return;
-
-        const cached = await AsyncStorage.getItem(MEALDB_CACHE_KEY);
-        if (cached) {
-          const parsed = JSON.parse(cached) as { ts: number; meals: MealDbMeal[] };
-          const fresh = Date.now() - parsed.ts < MEALDB_CACHE_TTL_MS;
-
-          if (fresh && Array.isArray(parsed.meals) && parsed.meals.length > 0) {
-            setSuggestedMeals(parsed.meals);
-            return;
-          }
-        }
-      }
-
-      setSuggestLoading(true);
-
-      const meals = await fetchRandomMeals(6);
-      setSuggestedMeals(meals);
-
-      await AsyncStorage.setItem(
-        MEALDB_CACHE_KEY,
-        JSON.stringify({ ts: Date.now(), meals })
-      );
-    } catch (e) {
-      console.error("TheMealDB load error:", e);
-      setSuggestError("Reseptiehdotusten haku epäonnistui.");
-    } finally {
-      setSuggestLoading(false);
-    }
-  };
-
-  const refreshMealDb = async () => {
-    // estä tuplaklikkaus
-    if (suggestLoading) return;
-
-    await AsyncStorage.removeItem(MEALDB_CACHE_KEY);
-    setSuggestedMeals([]);
-    await loadMealDb(true); // force refresh
-  };
 
   const loadData = async () => {
     if (!user?.uid) return;
@@ -143,18 +87,6 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ activeScreen, onNavigate, isPre
       setRecipes(enrichedRecipes);
       setMenus(enrichedMenus);
 
-      // TheMealDB: käytä cachea, ettei vaihdu joka navilla
-    if (suggestedMeals.length === 0) {
-      setSuggestLoading(true);
-      setSuggestError(null);
-
-      try {
-        await loadMealDb(false);
-      } finally {
-        setSuggestLoading(false);
-      }
-    }
-
     } catch (error) {
       console.error('Error loading home screen data:', error);
     } finally {
@@ -164,73 +96,6 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ activeScreen, onNavigate, isPre
   };
 
   const isEmptyHome = shoplists.length === 0 && menus.length === 0 && recipes.length === 0;
-
-  const renderMealDbSection = () => (
-    <View style={styles.section}>
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
-        <Text
-          variant="titleLarge"
-          style={[styles.sectionTitle, { color: theme.colors.onSurface, marginBottom: 0 }]}
-        >
-          Kokeile näitä (TheMealDB)
-        </Text>
-
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <IconButton
-            icon="magnify"
-            onPress={() => onNavigate("recipe-search-themealdb")}
-            iconColor={theme.colors.primary}
-            size={22}
-          />
-
-          <IconButton
-            icon={suggestLoading ? "loading" : "refresh"}
-            onPress={refreshMealDb}
-            disabled={suggestLoading}
-            iconColor={theme.colors.primary}
-            size={22}
-          />
-        </View>
-      </View>
-
-      {suggestLoading ? (
-        <View style={{ marginTop: 12 }}>
-          <ActivityIndicator animating />
-        </View>
-      ) : suggestError ? (
-        <Text style={[styles.emptyStateText, { color: theme.colors.onSurfaceVariant }]}>
-          {suggestError}
-        </Text>
-      ) : suggestedMeals.length > 0 ? (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.horizontalScroll}
-        >
-          {suggestedMeals.map((m) => (
-            <View key={m.idMeal} style={styles.recipeItemContainer}>
-              <RecipeButton
-                title={m.strMeal}
-                imageUrl={m.strMealThumb}
-                onPress={() =>
-                  onNavigate("recipe-suggestion-detail", {
-                    source: "themealdb",
-                    idMeal: m.idMeal,
-                  })
-                }
-              />
-            </View>
-          ))}
-        </ScrollView>
-      ) : null}
-    </View>
-  );
 
   return (
     <ScreenLayout activeScreen={activeScreen} onNavigate={onNavigate}>
@@ -243,7 +108,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ activeScreen, onNavigate, isPre
         <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
           <View style={styles.headerContainer}>
             <Image
-              source={require('../assets/PikkuKokki2.png')}
+              source={require('../src/assets/PikkuKokki2.png')}
               style={styles.headerImage}
               resizeMode="contain"
             />
@@ -254,8 +119,11 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ activeScreen, onNavigate, isPre
 
           {isEmptyHome ? (
             <>
-              {/* tyhjä home: näytä VAIN TheMealDB */}
-              {renderMealDbSection()}
+              <View style={styles.section}>
+                <Text style={[styles.emptyStateText, { color: theme.colors.onSurfaceVariant }]}> 
+                  Etusivu on vielä tyhjä. Lisää ensimmäinen ostoslista, ruokalista tai resepti.
+                </Text>
+              </View>
             </>
           ) : (
             <>
@@ -350,9 +218,6 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ activeScreen, onNavigate, isPre
                   </ScrollView>
                 </View>
               ) : null}
-
-              {/* TheMealDB näkyy AINA myös tässä */}
-              {renderMealDbSection()}
             </>
           )}
 
@@ -412,3 +277,4 @@ const styles = StyleSheet.create({
 });
 
 export default HomeScreen;
+

@@ -1,7 +1,7 @@
 import React, { useState } from "react"
 import { View, StyleSheet } from "react-native"
 import { Button, Text, TextInput, useTheme, HelperText, Surface } from "react-native-paper"
-import { saveMyDisplayName } from "../firebase/userProfileUtils"
+import { saveMyDisplayName } from "../src/api/users/userProfileApi"
 
 type Props = {
   onDone: () => void

@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { KeyboardAvoidingView, Platform, StyleSheet, View } from "react-native";
 import { Button, HelperText, Surface, Text, TextInput, useTheme } from "react-native-paper";
-import { auth } from "../firebase/config";
-import { useGoogleSignIn } from "../auth/googleSignIn";
+import { auth } from "../src/api/firebase/config";
+import { useGoogleSignIn } from "../src/hooks/useGoogleSignIn";
 
-import { useAuthForm } from "../auth/hooks/useAuthForm";
-import { usePasswordReset } from "../auth/hooks/usePasswordReset";
+import { useAuthForm } from "../src/hooks/useAuthForm";
+import { usePasswordReset } from "../src/hooks/usePasswordReset";
 import { ResetPasswordDialog } from "../components/ResetPasswordDialog";
 
 const AuthScreen: React.FC = () => {

@@ -19,7 +19,7 @@ export const AdBanner: React.FC<AdBannerProps> = ({ style, onPress, isPremium })
       onPress={onPress}
     >
       <Image
-        source={require('../assets/Ad.png')}
+        source={require('../src/assets/Ad.png')}
         style={styles.image}
         resizeMode="contain"
       />

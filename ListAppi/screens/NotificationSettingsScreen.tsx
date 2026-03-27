@@ -2,13 +2,13 @@ import React, { useEffect, useMemo, useState } from "react";
 import { StyleSheet, ScrollView, View } from "react-native";
 import { Button, List, Switch, Text, useTheme } from "react-native-paper";
 import ScreenLayout from "../components/ScreenLayout";
-import { useAuth } from "../auth/useAuth";
+import { useAuth } from "../src/hooks/useAuth";
 import {
   getNotificationSettings,
   saveNotificationSettings,
   NotificationSettings,
   /* email settings to be re-enabled later */
-} from "../firebase/notificationUtils";
+} from "../src/api/common/notificationApi";
 
 interface NotificationSettingsScreenProps {
   activeScreen: string;
@@ -202,3 +202,4 @@ const styles = StyleSheet.create({
 });
 
 export default NotificationSettingsScreen;
+

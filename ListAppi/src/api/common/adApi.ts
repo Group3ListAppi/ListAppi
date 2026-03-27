@@ -1,5 +1,5 @@
 import { collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
-import { db } from './config';
+import { db } from '../firebase/config';
 
 export interface Ad {
   id: string;

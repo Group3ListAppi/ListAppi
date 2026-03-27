@@ -3,10 +3,10 @@
   import { Text, ActivityIndicator, useTheme } from "react-native-paper";
   import AppBar from "../components/AppBar";
   import { ListButton } from "../components/ListButton";
-  import { useAuth } from "../auth/useAuth";
-  import { getTrashItems, permanentlyDeleteTrashItem, restoreRecipeFromTrash } from "../firebase/recipeUtils";
-  import { restoreShoplistFromTrash, permanentlyDeleteShoplist } from "../firebase/shoplistUtils";
-  import { restoreMenuListFromTrash, permanentlyDeleteMenuList } from "../firebase/menuUtils";import { restoreRecipeCollectionFromTrash, permanentlyDeleteRecipeCollection } from "../firebase/recipeCollectionUtils";  import type { DeletedItem } from "../firebase/recipeUtils";
+  import { useAuth } from "../src/hooks/useAuth";
+  import { getTrashItems, permanentlyDeleteTrashItem, restoreRecipeFromTrash } from "../src/api/recipes/recipeApi";
+  import { restoreShoplistFromTrash, permanentlyDeleteShoplist } from "../src/api/shoplists/shoplistApi";
+  import { restoreMenuListFromTrash, permanentlyDeleteMenuList } from "../src/api/menus/menuApi";import { restoreRecipeCollectionFromTrash, permanentlyDeleteRecipeCollection } from "../src/api/recipes/recipeCollectionApi";  import type { DeletedItem } from "../src/api/recipes/recipeApi";
   import ScreenLayout from "../components/ScreenLayout";
 
   type Props = {
@@ -240,3 +240,4 @@
       textAlign: "center",
     },
   });
+

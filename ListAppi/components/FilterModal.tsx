@@ -11,7 +11,7 @@ import {
   MAIN_INGREDIENT_LABELS,
   DIET_TYPES,
   DIET_TYPE_LABELS,
-} from "../types/filterConstants";
+} from "../src/constants/recipeFilters";
 
 export interface FilterOptions {
   mealTypes: string[];

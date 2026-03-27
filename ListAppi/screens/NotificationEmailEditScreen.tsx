@@ -2,12 +2,12 @@ import React, { useEffect, useRef, useState } from "react";
 import { StyleSheet, ScrollView, View } from "react-native";
 import { Checkbox, List, Switch, useTheme } from "react-native-paper";
 import ScreenLayout from "../components/ScreenLayout";
-import { useAuth } from "../auth/useAuth";
+import { useAuth } from "../src/hooks/useAuth";
 import {
   getNotificationSettings,
   saveNotificationSettings,
   NotificationSettings,
-} from "../firebase/notificationUtils";
+} from "../src/api/common/notificationApi";
 
 interface NotificationEmailEditScreenProps {
   activeScreen: string;
@@ -167,3 +167,4 @@ const styles = StyleSheet.create({
 });
 
 export default NotificationEmailEditScreen;
+

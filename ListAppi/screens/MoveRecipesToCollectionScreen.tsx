@@ -4,9 +4,9 @@ import { ActivityIndicator, Text, useTheme } from "react-native-paper";
 import { ListButton } from "../components/ListButton";
 import ScreenLayout from "../components/ScreenLayout";
 import ListModal, { type CreateListFormData } from "../components/ListModal";
-import { useAuth } from "../auth/useAuth";
-import { getUserRecipeCollections, moveRecipesToCollection, addRecipeToCollection, saveRecipeCollectionToFirestore } from "../firebase/recipeCollectionUtils";
-import type { RecipeCollection } from "../firebase/recipeCollectionUtils";
+import { useAuth } from "../src/hooks/useAuth";
+import { getUserRecipeCollections, moveRecipesToCollection, addRecipeToCollection, saveRecipeCollectionToFirestore } from "../src/api/recipes/recipeCollectionApi";
+import type { RecipeCollection } from "../src/api/recipes/recipeCollectionApi";
 
 interface MoveRecipesToCollectionScreenProps {
   sourceCollectionId?: string;
@@ -110,7 +110,7 @@ const MoveRecipesToCollectionScreen: React.FC<MoveRecipesToCollectionScreenProps
       ) : collections.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Image
-            source={require('../assets/PikkuKokki.png')}
+            source={require('../src/assets/PikkuKokki.png')}
             style={styles.emptyImage}
             resizeMode="contain"
           />
@@ -199,3 +199,4 @@ const styles = StyleSheet.create({
 });
 
 export default MoveRecipesToCollectionScreen;
+

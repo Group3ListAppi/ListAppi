@@ -14,7 +14,7 @@ import {
   reauthenticateWithCredential,
   updatePassword,
 } from "firebase/auth"
-import { auth } from "../firebase/config" 
+import { auth } from "../src/api/firebase/config" 
 
 type Props = {
   visible: boolean

@@ -1,5 +1,5 @@
 export const mapAuthError = (e: any): string => {
-  const code = e?.code;
+  const code = e?.code
 
   return code === "auth/email-already-in-use"
     ? "Sähköposti on jo käytössä."
@@ -11,5 +11,5 @@ export const mapAuthError = (e: any): string => {
     ? "Salasana on liian lyhyt (min 6 merkkiä)."
     : code === "auth/invalid-email"
     ? "Sähköpostiosoite ei ole kelvollinen."
-    : e?.message ?? "Kirjautuminen epäonnistui.";
-};
+    : e?.message ?? "Kirjautuminen epäonnistui."
+}

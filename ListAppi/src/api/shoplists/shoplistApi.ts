@@ -1,4 +1,4 @@
-import { db } from './config'
+import { db } from '../firebase/config'
 import {
   addDoc,
   collection,
@@ -12,7 +12,7 @@ import {
   where,
 } from 'firebase/firestore'
 
-import type { CreateListFormData } from '../components/ListModal'
+import type { CreateListFormData } from '../../../components/ListModal'
 
 export interface Shoplist extends CreateListFormData {
   id: string

@@ -1,4 +1,3 @@
-// src/screens/accountsettings/AccountScreen.tsx
 import React from 'react';
 import { FlatList, View } from 'react-native';
 import { Text, Divider } from 'react-native-paper';

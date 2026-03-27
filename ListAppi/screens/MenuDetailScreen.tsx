@@ -4,12 +4,12 @@ import { useTheme, Text } from "react-native-paper";
 import { ListButton } from "../components/ListButton";
 import { ActionModal } from "../components/ActionModal";
 import { AdBanner } from "../components/AdBanner";
-import { getRecipesByIds } from "../firebase/recipeUtils";
-import { removeRecipeFromMenuList, toggleRecipeDoneInMenuList, getMenuListById, deleteDoneRecipesFromMenuList } from "../firebase/menuUtils";
-import type { MenuList } from "../firebase/menuUtils";
-import type { Recipe } from "../firebase/recipeUtils";
+import { getRecipesByIds } from "../src/api/recipes/recipeApi";
+import { removeRecipeFromMenuList, toggleRecipeDoneInMenuList, getMenuListById, deleteDoneRecipesFromMenuList } from "../src/api/menus/menuApi";
+import type { MenuList } from "../src/api/menus/menuApi";
+import type { Recipe } from "../src/api/recipes/recipeApi";
 import ScreenLayout from "../components/ScreenLayout";
-import { useAuth } from "../auth/useAuth";
+import { useAuth } from "../src/hooks/useAuth";
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 
 interface MenuDetailScreenProps {

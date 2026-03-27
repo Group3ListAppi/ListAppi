@@ -3,8 +3,8 @@ import { StyleSheet, View, ScrollView, TouchableOpacity, Alert } from "react-nat
 import { Text, useTheme, Card, Button, ActivityIndicator } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import ScreenLayout from "../components/ScreenLayout";
-import { useAuth } from "../auth/useAuth";
-import { getPendingInvitations, acceptInvitation, declineInvitation, Invitation } from "../firebase/invitationUtils";
+import { useAuth } from "../src/hooks/useAuth";
+import { getPendingInvitations, acceptInvitation, declineInvitation, Invitation } from "../src/api/social/invitationApi";
 
 type Props = {
   activeScreen: string;
@@ -236,4 +236,5 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
 });
+
 

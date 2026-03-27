@@ -10,7 +10,7 @@ import { FilterModal, type FilterOptions } from '../components/FilterModal'
 import { ToolBar } from '../components/ToolBar'
 import { ShareModal } from '../components/ShareModal'
 import ListModal, { type CreateListFormData } from '../components/ListModal'
-import { useAuth } from '../auth/useAuth'
+import { useAuth } from '../src/hooks/useAuth'
 import { 
   getUserRecipeCollections, 
   addRecipeToCollection,
@@ -20,9 +20,9 @@ import {
   deleteRecipeCollection,
   updateRecipeCollectionName,
   type RecipeCollection 
-} from '../firebase/recipeCollectionUtils'
-import { getRecipesByIds, moveRecipeToTrash, getUserRecipes, stopSharingRecipe, type Recipe } from '../firebase/recipeUtils'
-import { getUserProfiles } from '../firebase/userProfileUtils'
+} from "../src/api/recipes/recipeCollectionApi"
+import { getRecipesByIds, moveRecipeToTrash, getUserRecipes, stopSharingRecipe, type Recipe } from "../src/api/recipes/recipeApi"
+import { getUserProfiles } from "../src/api/users/userProfileApi"
 
 interface RecipeScreenProps {
   activeScreen: string;
@@ -414,7 +414,7 @@ const RecipeScreen: React.FC<RecipeScreenProps> = ({ activeScreen, onNavigate, i
             collections.length === 0 ? (
               <View style={styles.emptyContainer}>
                 <Image
-                  source={require('../assets/PikkuKokki.png')}
+                  source={require('../src/assets/PikkuKokki.png')}
                   style={styles.emptyImage}
                   resizeMode="contain"
                 />
@@ -450,7 +450,7 @@ const RecipeScreen: React.FC<RecipeScreenProps> = ({ activeScreen, onNavigate, i
             recipes.length === 0 ? (
               <View style={styles.emptyContainer}>
                 <Image
-                  source={require('../assets/PikkuKokki.png')}
+                  source={require('../src/assets/PikkuKokki.png')}
                   style={styles.emptyImage}
                   resizeMode="contain"
                 />
@@ -611,3 +611,4 @@ const styles = StyleSheet.create({
 })
 
 export default RecipeScreen
+

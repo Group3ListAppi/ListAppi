@@ -14,8 +14,8 @@ import {
   reauthenticateWithCredential,
   deleteUser,
 } from "firebase/auth"
-import { auth } from "../firebase/config"
-import { deleteUserProfileAndOwnedData } from "../firebase/userDeleteUtils"
+import { auth } from "../src/api/firebase/config"
+import { deleteUserProfileAndOwnedData } from "../src/api/users/userAuthApi"
 
 type Props = {
   visible: boolean

@@ -4,19 +4,19 @@ import { Text, useTheme, List, Avatar } from 'react-native-paper';
 import * as ImagePicker from 'expo-image-picker';
 import ScreenLayout from '../components/ScreenLayout';
 import { AdBanner } from '../components/AdBanner';
-import { useAuth } from '../auth/useAuth';
+import { useAuth } from '../src/hooks/useAuth';
 import AccountStatsSection from '../components/AccountStatsSection';
 import EditDisplayNameDialog from "../components/EditDisplayNameDialog"
-import { getUserProfile, removeMyAvatar, updateMyAvatar } from "../firebase/userProfileUtils"
-import { convertImageToBase64 } from "../firebase/imageUtils"
+import { getUserProfile, removeMyAvatar, updateMyAvatar } from "../src/api/users/userProfileApi"
+import { convertImageToBase64 } from "../src/api/common/imageApi"
 import { ActionModal } from "../components/ActionModal"
 import ChangePasswordDialog from "../components/ChangePasswordDialog"
 import DeleteAccountDialog from "../components/DeleteAccountDialog"
 import ChangeEmailDialog from "../components/ChangeEmailDialog"
-import { getUserRecipes } from "../firebase/recipeUtils"
-import { getShoplistItemHistory } from "../firebase/shoplistItemUtils"
-import { MEAL_TYPES, MAIN_INGREDIENTS, DIET_TYPES } from "../types/filterConstants"
-import type { MealType, MainIngredient, DietType } from "../types/RecipeMeta"
+import { getUserRecipes } from "../src/api/recipes/recipeApi"
+import { getShoplistItemHistory } from "../src/api/shoplists/shoplistItemApi"
+import { MEAL_TYPES, MAIN_INGREDIENTS, DIET_TYPES } from "../src/constants/recipeFilters"
+import type { MealType, MainIngredient, DietType } from "../src/types/recipe"
 
 interface AccountSettingScreenProps {
   activeScreen: string
@@ -390,3 +390,4 @@ const styles = StyleSheet.create({
 })
 
 export default AccountSettingScreen
+

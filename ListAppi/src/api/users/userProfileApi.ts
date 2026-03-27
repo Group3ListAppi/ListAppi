@@ -1,5 +1,5 @@
 import { doc, getDoc, serverTimestamp, setDoc, documentId, query, where, getDocs, collection } from "firebase/firestore"
-import { auth, db } from "./config"
+import { auth, db } from "../firebase/config"
 import { updateProfile } from "firebase/auth"
 
 export type UserProfile = {

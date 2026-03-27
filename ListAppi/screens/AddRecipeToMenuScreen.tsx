@@ -6,11 +6,11 @@ import ScreenLayout from '../components/ScreenLayout'
 import { ListButton } from '../components/ListButton'
 import { SearchBar } from '../components/SearchBar'
 import { FilterModal, type FilterOptions } from '../components/FilterModal'
-import { getUserRecipes } from '../firebase/recipeUtils'
-import { addRecipeToMenuList, getMenuListById } from '../firebase/menuUtils'
-import { useAuth } from '../auth/useAuth'
-import type { MenuList } from '../firebase/menuUtils'
-import type { Recipe } from '../firebase/recipeUtils'
+import { getUserRecipes } from "../src/api/recipes/recipeApi"
+import { addRecipeToMenuList, getMenuListById } from "../src/api/menus/menuApi"
+import { useAuth } from '../src/hooks/useAuth'
+import type { MenuList } from "../src/api/menus/menuApi"
+import type { Recipe } from "../src/api/recipes/recipeApi"
 
 interface AddRecipeToMenuScreenProps {
   menuList: MenuList
@@ -244,3 +244,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 })
+

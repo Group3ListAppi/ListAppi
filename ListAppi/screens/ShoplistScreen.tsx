@@ -5,7 +5,7 @@ import ScreenLayout from '../components/ScreenLayout'
 import { AdBanner } from '../components/AdBanner'
 import ListModal, { type CreateListFormData } from '../components/ListModal'
 import { ListButton } from '../components/ListButton'
-import { useAuth } from '../auth/useAuth'
+import { useAuth } from '../src/hooks/useAuth'
 
 import {
   getUserShoplists,
@@ -14,8 +14,8 @@ import {
   updateShoplistName,
   stopSharingShoplist,
   type Shoplist,
-} from '../firebase/shoplistUtils'
-import { getUserProfiles } from '../firebase/userProfileUtils'
+} from "../src/api/shoplists/shoplistApi"
+import { getUserProfiles } from "../src/api/users/userProfileApi"
 
 interface ShoplistScreenProps {
   activeScreen: string;
@@ -152,7 +152,7 @@ const ShoplistScreen: React.FC<ShoplistScreenProps> = ({ activeScreen, onNavigat
       ) : shoplists.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Image
-            source={require('../assets/PikkuKokki.png')}
+            source={require('../src/assets/PikkuKokki.png')}
             style={styles.emptyImage}
             resizeMode="contain"
           />

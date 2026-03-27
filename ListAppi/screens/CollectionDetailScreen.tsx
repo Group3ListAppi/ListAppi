@@ -9,12 +9,12 @@ import { SearchBar } from '../components/SearchBar';
 import { FilterModal, type FilterOptions } from '../components/FilterModal';
 import { ToolBar } from '../components/ToolBar';
 import { ShareModal } from '../components/ShareModal';
-import { getUserRecipes, getRecipesByIds, moveRecipeToTrash, stopSharingRecipe } from "../firebase/recipeUtils";
-import { getUserRecipeCollections, removeRecipeFromCollection } from "../firebase/recipeCollectionUtils";
-import type { RecipeCollection } from "../firebase/recipeCollectionUtils";
-import type { Recipe } from "../firebase/recipeUtils";
+import { getUserRecipes, getRecipesByIds, moveRecipeToTrash, stopSharingRecipe } from "../src/api/recipes/recipeApi";
+import { getUserRecipeCollections, removeRecipeFromCollection } from "../src/api/recipes/recipeCollectionApi";
+import type { RecipeCollection } from "../src/api/recipes/recipeCollectionApi";
+import type { Recipe } from "../src/api/recipes/recipeApi";
 import ScreenLayout from "../components/ScreenLayout";
-import { useAuth } from "../auth/useAuth";
+import { useAuth } from "../src/hooks/useAuth";
 
 interface CollectionDetailScreenProps {
   collection: RecipeCollection;
@@ -215,7 +215,7 @@ const CollectionDetailScreen: React.FC<CollectionDetailScreenProps> = ({
       ) : recipes.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Image
-            source={require('../assets/PikkuKokki.png')}
+            source={require('../src/assets/PikkuKokki.png')}
             style={styles.emptyImage}
             resizeMode="contain"
           />
@@ -373,3 +373,4 @@ const styles = StyleSheet.create({
 });
 
 export default CollectionDetailScreen;
+

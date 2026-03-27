@@ -6,7 +6,7 @@ import { AdBanner } from '../components/AdBanner';
 import ListModal from '../components/ListModal';
 import { AddNewButton } from '../components/AddNewButton';
 import { ListButton } from '../components/ListButton';
-import { useAuth } from '../auth/useAuth';
+import { useAuth } from '../src/hooks/useAuth';
 import {
   saveMenuListToFirestore,
   getUserMenuLists,
@@ -14,8 +14,8 @@ import {
   updateMenuListName,
   stopSharingMenuList,
   type MenuList,
-} from '../firebase/menuUtils';
-import { getUserProfiles } from '../firebase/userProfileUtils';
+} from "../src/api/menus/menuApi";
+import { getUserProfiles } from "../src/api/users/userProfileApi";
 import { type CreateListFormData } from '../components/ListModal';
 
 interface MenuScreenProps {
@@ -157,7 +157,7 @@ const MenuScreen: React.FC<MenuScreenProps> = ({ activeScreen, onNavigate, isPre
       ) : menuLists.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Image
-            source={require('../assets/PikkuKokki.png')}
+            source={require('../src/assets/PikkuKokki.png')}
             style={styles.emptyImage}
             resizeMode="contain"
           />
@@ -237,3 +237,4 @@ const styles = StyleSheet.create({
 });
 
 export default MenuScreen;
+

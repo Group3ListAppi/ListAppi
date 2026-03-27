@@ -7,7 +7,7 @@ import { SubmitButton } from "../components/SubmitButton";
 import { ActionModal } from "../components/ActionModal";
 import { Input } from "../components/Input";
 import { FilterChip } from "../components/FilterChip";
-import { DietType, MainIngredient, MealType } from "../types/RecipeMeta";
+import { DietType, MainIngredient, MealType } from "../src/types/recipe";
 import {
   MEAL_TYPES,
   MEAL_TYPE_LABELS,
@@ -15,9 +15,9 @@ import {
   MAIN_INGREDIENT_LABELS,
   DIET_TYPES,
   DIET_TYPE_LABELS,
-} from "../types/filterConstants";
+} from "../src/constants/recipeFilters";
 import type { CreateRecipeFormData } from "../components/RecipeModal";
-import { convertImageToBase64 } from "../firebase/imageUtils";
+import { convertImageToBase64 } from "../src/api/common/imageApi";
 
 interface AddRecipeScreenProps {
   activeScreen: string;
@@ -149,7 +149,7 @@ const AddRecipeScreen: React.FC<AddRecipeScreenProps> = ({ activeScreen, onNavig
             if (recipeImage) {
                 try {
                     if (recipeImage.startsWith("http")) {
-                    // TheMealDB url → tallenna sellaisenaan
+                    // Kuvan URL → tallenna sellaisenaan
                     formData.image = recipeImage;
                     } else {
                     // local uri → base64

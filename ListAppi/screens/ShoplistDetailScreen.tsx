@@ -3,9 +3,9 @@ import { StyleSheet, View, ScrollView, TouchableOpacity, Alert } from 'react-nat
 import { Text, TextInput, ActivityIndicator, useTheme } from 'react-native-paper'
 import ScreenLayout from '../components/ScreenLayout'
 import { AdBanner } from '../components/AdBanner'
-import { useAuth } from '../auth/useAuth'
+import { useAuth } from '../src/hooks/useAuth'
 import { ListItem } from '../components/ListItem'
-import type { Shoplist } from '../firebase/shoplistUtils'
+import type { Shoplist } from "../src/api/shoplists/shoplistApi"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 import {
   addShoplistItem,
@@ -15,8 +15,8 @@ import {
   getShoplistItems,
   setShoplistItemChecked,
   type ShoplistItem,
-} from '../firebase/shoplistItemUtils'
-import { getShoplistItemHistory } from '../firebase/shoplistItemUtils'
+} from "../src/api/shoplists/shoplistItemApi"
+import { getShoplistItemHistory } from "../src/api/shoplists/shoplistItemApi"
 
 interface ShoplistDetailScreenProps {
   shoplist: Shoplist

@@ -3,8 +3,8 @@ import { View, StyleSheet } from "react-native";
 import { Appbar, Avatar, Badge } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { ActionModal } from "./ActionModal";
-import { useAuth } from "../auth/useAuth";
-import { getPendingInvitations } from "../firebase/invitationUtils";
+import { useAuth } from "../src/hooks/useAuth";
+import { getPendingInvitations } from "../src/api/social/invitationApi";
 
 type TopAppBarProps = {
   title: string;
